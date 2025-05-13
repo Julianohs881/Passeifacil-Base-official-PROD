@@ -1,12 +1,13 @@
-
 import { Link } from "react-router-dom";
 import { ArrowUp, Check, Book, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 const Landing = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const { user } = useAuth();
 
   // Handle scroll events
   useEffect(() => {
@@ -61,21 +62,33 @@ const Landing = () => {
             </nav>
           </div>
           <div className="flex items-center space-x-4">
-            <Link to="/login">
-              <Button
-                variant="ghost"
-                className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 transition-all hover:scale-105"
-              >
-                Login
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button
-                className="bg-violet-600 hover:bg-violet-700 text-white transition-all hover:scale-105"
-              >
-                Criar Conta
-              </Button>
-            </Link>
+            {user ? (
+              <Link to="/quizzes">
+                <Button 
+                  className="bg-violet-600 hover:bg-violet-700 text-white transition-all hover:scale-105"
+                >
+                  Meus Quizzes
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button
+                    variant="ghost"
+                    className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 transition-all hover:scale-105"
+                  >
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button
+                    className="bg-violet-600 hover:bg-violet-700 text-white transition-all hover:scale-105"
+                  >
+                    Criar Conta
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -95,12 +108,12 @@ const Landing = () => {
                 <p className="text-xl text-gray-600 mb-8 max-w-lg">
                   Crie quizzes personalizados, pratique e compartilhe conhecimento de forma divertida e eficiente.
                 </p>
-                <Link to="/register">
+                <Link to={user ? "/quizzes" : "/register"}>
                   <Button 
                     size="lg" 
                     className="bg-blue-600 hover:bg-green-600 text-white px-8 py-6 text-lg font-medium transition-all hover:scale-105"
                   >
-                    Crie seu primeiro Quiz
+                    {user ? "Crie seu quiz" : "Crie seu primeiro Quiz"}
                   </Button>
                 </Link>
               </div>
@@ -143,13 +156,13 @@ const Landing = () => {
             </p>
           </div>
           <div className="flex justify-center mb-10">
-            <Link to="/login">
+            <Link to={user ? "/quizzes" : "/login"}>
               <Button 
                 size="lg" 
                 className="bg-violet-500 hover:bg-violet-600 text-white px-8 py-6 text-lg font-medium transition-all hover:scale-105 flex items-center gap-2"
               >
                 <span className="text-2xl font-bold">+</span>
-                <span>Criar novo Quiz</span>
+                <span>{user ? "Criar novo Quiz" : "Fazer login para começar"}</span>
               </Button>
             </Link>
           </div>
@@ -254,7 +267,7 @@ const Landing = () => {
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
                 <span className="sr-only">YouTube</span>
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M19.812 5.418c.861.23 1.538.907 1.768 1.768C21.998 8.746 22 12 22 12s0 3.255-.418 4.814a2.504 2.504 0 0 1-1.768 1.768c-1.56.419-7.814.419-7.814.419s-6.255 0-7.814-.419a2.505 2.505 0 0 1-1.768-1.768C2 15.255 2 12 2 12s0-3.255.417-4.814a2.507 2.507 0 0 1 1.768-1.768C5.744 5 11.998 5 11.998 5s6.255 0 7.814.418ZM15.194 12 10 15V9l5.194 3Z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M19.812 5.418c.861.23 1.538.907 1.768 1.768C21.998 8.746 22 12 22 12s0 3.255-.418 4.814a2.504 2.504 0 01-1.768 1.768c-1.56.419-7.814.419-7.814.419s-6.255 0-7.814-.419a2.505 2.505 0 01-1.768-1.768C2 15.255 2 12 2 12s0-3.255.417-4.814a2.507 2.507 0 01 1.768-1.768C5.744 5 11.998 5 11.998 5s6.255 0 7.814.418ZM15.194 12 10 15V9l5.194 3Z" clipRule="evenodd" />
                 </svg>
               </a>
             </div>

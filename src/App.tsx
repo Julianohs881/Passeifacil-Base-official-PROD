@@ -5,7 +5,7 @@ import { Toaster as Sonner } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
@@ -25,6 +25,23 @@ const queryClient = new QueryClient({
   },
 });
 
+// AuthAwareRoute component to conditionally redirect based on auth status
+const AuthAwareRoute = ({ element }: { element: React.ReactElement }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
+    </div>
+  );
+  
+  if (user) {
+    return <Navigate to="/quizzes" replace />;
+  }
+  
+  return element;
+};
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -32,8 +49,12 @@ const App = () => {
         <AuthProvider>
           <BrowserRouter>
             <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Landing />} />
+              {/* Public routes with conditional redirection */}
+              <Route path="/" element={
+                <AuthProvider>
+                  <AuthAwareRoute element={<Landing />} />
+                </AuthProvider>
+              } />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
