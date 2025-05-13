@@ -5,6 +5,6 @@
 
 @layer components {
   .quiz-card {
-    @apply w-full h-full rounded-xl shadow-md transition-all duration-200;
+    @apply w-full h-44 rounded-xl shadow-md flex flex-col justify-between transition-all duration-200;
   }
 }

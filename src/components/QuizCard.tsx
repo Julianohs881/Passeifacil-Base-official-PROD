@@ -55,40 +55,43 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange }: QuizCardProps) => {
       className="group relative block"
     >
       <div
-        className={`quiz-card ${quiz.color} p-6 h-48 rounded-xl shadow-md flex flex-col justify-between transition-all duration-200 hover:translate-y-1 hover:scale-105`}
+        className={`quiz-card ${quiz.color} p-5 flex flex-col justify-between`}
       >
-        {/* Action buttons - agora fixos no topo à direita */}
-        <div className="absolute top-2 right-2 flex space-x-1">
+        {/* Action buttons - consistentemente posicionados no canto superior direito */}
+        <div className="absolute top-3 right-3 flex space-x-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 rounded-full bg-white bg-opacity-30 hover:bg-opacity-40 backdrop-blur-sm"
+            className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
             onClick={handleEdit}
           >
-            <Edit className="h-3 w-3 text-white" />
+            <Edit className="h-3 w-3 text-gray-700" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 rounded-full bg-white bg-opacity-30 hover:bg-opacity-40 backdrop-blur-sm"
+            className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
             onClick={handleColorChange}
           >
-            <Palette className="h-3 w-3 text-white" />
+            <Palette className="h-3 w-3 text-gray-700" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 rounded-full bg-white bg-opacity-30 hover:bg-opacity-40 hover:bg-red-500 hover:bg-opacity-40"
+            className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 hover:bg-red-200"
             onClick={handleDelete}
             disabled={isDeleting}
           >
-            <Trash2 className="h-3 w-3 text-white" />
+            <Trash2 className="h-3 w-3 text-gray-700" />
           </Button>
         </div>
 
-        <h3 className="text-lg font-semibold text-white text-center mt-4">
-          {quiz.title}
-        </h3>
+        {/* Título do quiz centralizado verticalmente e horizontalmente */}
+        <div className="flex-grow flex items-center justify-center">
+          <h3 className="text-base font-medium text-white text-center">
+            {quiz.title}
+          </h3>
+        </div>
       </div>
     </Link>
   );

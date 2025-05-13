@@ -377,7 +377,7 @@ const Quiz = () => {
                   </p>
                   <Button 
                     onClick={handleOpenAddModal}
-                    className="bg-[#0D6EFD] hover:bg-blue-600"
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md"
                   >
                     Adicionar Questão
                   </Button>
