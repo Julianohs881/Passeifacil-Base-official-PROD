@@ -56,20 +56,20 @@ const ChangeColorPopover = ({ isOpen, onClose, onSave, quiz }: ChangeColorPopove
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-white border-0 shadow-lg">
         <DialogHeader>
-          <DialogTitle>Mudar Cor do Quiz</DialogTitle>
+          <DialogTitle className="text-gray-800">Mudar Cor do Quiz</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-5 py-4">
             <RadioGroup
               value={color}
               onValueChange={(value) => setColor(value as ColorOption)}
               className="flex flex-wrap gap-4 justify-center"
             >
               {QUIZ_COLORS.map((colorOption) => (
-                <div key={colorOption} className="flex items-center space-x-2">
+                <div key={colorOption} className="flex items-center">
                   <RadioGroupItem
                     value={colorOption}
                     id={colorOption}
@@ -77,7 +77,7 @@ const ChangeColorPopover = ({ isOpen, onClose, onSave, quiz }: ChangeColorPopove
                   />
                   <Label
                     htmlFor={colorOption}
-                    className={`h-10 w-10 rounded-full cursor-pointer ring-offset-background transition-all hover:scale-110 ${colorOption} ${
+                    className={`h-10 w-10 rounded-full cursor-pointer transition-all hover:scale-110 shadow-sm ${colorOption} ${
                       color === colorOption
                         ? "ring-2 ring-offset-2 ring-slate-950"
                         : ""
@@ -94,12 +94,13 @@ const ChangeColorPopover = ({ isOpen, onClose, onSave, quiz }: ChangeColorPopove
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
+              className="border-gray-300 text-gray-700 hover:bg-gray-100"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="bg-violet-500 hover:bg-violet-600"
+              className="bg-violet-500 hover:bg-violet-600 text-white"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Salvando..." : "Salvar"}

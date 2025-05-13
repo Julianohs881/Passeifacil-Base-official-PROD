@@ -7,8 +7,4 @@
   .quiz-card {
     @apply w-full h-full rounded-xl shadow-md transition-all duration-200;
   }
-  
-  .card-actions {
-    @apply flex justify-end mt-auto space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200;
-  }
 }
