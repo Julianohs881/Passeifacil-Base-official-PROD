@@ -1,9 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Quiz as QuizType, Question, QuizResult } from "../types";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ArrowLeft, ArrowRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import SidebarQuestionList, { QuestionStatus } from "@/components/SidebarQuestionList";
 import QuestionCard from "@/components/QuestionCard";
 import AddEditQuestionModal from "@/components/AddEditQuestionModal";
@@ -12,6 +11,7 @@ import { supabase } from "@/utils/supabase";
 import { useToast } from "@/hooks/use-toast";
 import NavBar from "@/components/NavBar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import QuizNavigationButtons from "@/components/QuizNavigationButtons";
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
@@ -354,7 +354,7 @@ const Quiz = () => {
               <SidebarQuestionList 
                 questions={questions}
                 currentQuestionIndex={currentQuestionIndex}
-                onSelectQuestion={selectQuestion}
+                onSelectQuestion={setCurrentQuestionIndex}
                 questionsStatus={questionsStatus}
               />
             )}
@@ -391,30 +391,14 @@ const Quiz = () => {
             </div>
           </div>
           
-          {/* Mobile navigation buttons */}
-          {isMobile && questions.length > 0 && (
-            <div className="fixed bottom-6 right-6 flex gap-2 z-40">
-              <Button
-                variant="outline"
-                size="icon"
-                className={`h-11 w-11 rounded-full shadow-md bg-[#6C757D] text-white hover:bg-[#5a6268] border-none ${
-                  currentQuestionIndex === 0 ? "opacity-40 pointer-events-none" : ""
-                }`}
-                onClick={goToPreviousQuestion}
-                disabled={currentQuestionIndex === 0}
-                aria-label="Ir para questão anterior"
-              >
-                <ArrowLeft size={18} />
-              </Button>
-              <Button
-                size="icon"
-                className="h-11 w-11 rounded-full shadow-md bg-[#0D6EFD] text-white hover:bg-blue-600 border-none"
-                onClick={goToNextQuestion}
-                aria-label="Ir para próxima questão"
-              >
-                <ArrowRight size={18} />
-              </Button>
-            </div>
+          {/* Navigation buttons */}
+          {questions.length > 0 && (
+            <QuizNavigationButtons
+              currentIndex={currentQuestionIndex}
+              totalQuestions={questions.length}
+              onPrevious={goToPreviousQuestion}
+              onNext={goToNextQuestion}
+            />
           )}
           
           <AddEditQuestionModal

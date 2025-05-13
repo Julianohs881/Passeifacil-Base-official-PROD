@@ -1,25 +1,37 @@
 
-import { useEffect, useState } from "react";
-import CardQuiz from "../components/CardQuiz";
-import AddQuizModal from "../components/AddQuizModal";
-import { Quiz, ColorOption, QUIZ_COLORS } from "../types";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/utils/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { Quiz, ColorOption } from "../types";
 import NavBar from "@/components/NavBar";
+import QuizCard from "@/components/QuizCard";
+import CreateQuizCard from "@/components/CreateQuizCard";
+import AddQuizModal from "@/components/AddQuizModal";
+import RenameQuizModal from "@/components/RenameQuizModal";
+import ChangeColorPopover from "@/components/ChangeColorPopover";
+import DeleteQuizDialog from "@/components/DeleteQuizDialog";
 
 const Home = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingQuiz, setEditingQuiz] = useState<Quiz | undefined>(undefined);
-  const { user } = useAuth();
-  const { toast } = useToast();
+  
+  // Modal states
+  const [isAddQuizModalOpen, setIsAddQuizModalOpen] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isColorPopoverOpen, setIsColorPopoverOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
   useEffect(() => {
-    fetchQuizzes();
+    if (user) {
+      fetchQuizzes();
+    }
   }, [user]);
 
   const fetchQuizzes = async () => {
@@ -48,27 +60,32 @@ const Home = () => {
     }
   };
 
-  const handleAddQuiz = async (quiz: { title: string; color: ColorOption }) => {
+  const handleCreateQuiz = async (quizData: Omit<Quiz, "id" | "user_id" | "created_at">) => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase.from("quizzes").insert([
-        {
-          user_id: user.id,
-          title: quiz.title,
-          color: quiz.color,
-        },
-      ]).select();
+      const { data, error } = await supabase
+        .from("quizzes")
+        .insert([
+          {
+            user_id: user.id,
+            title: quizData.title,
+            color: quizData.color,
+          },
+        ])
+        .select();
 
       if (error) throw error;
       
-      setQuizzes([...(data || []), ...quizzes]);
-      toast({
-        title: "Quiz criado com sucesso!",
-        description: "Seu novo quiz foi adicionado à sua coleção.",
-      });
+      if (data) {
+        setQuizzes([...data, ...quizzes]);
+        toast({
+          title: "Quiz criado com sucesso!",
+          description: "Seu novo quiz foi criado.",
+        });
+      }
     } catch (error) {
-      console.error("Error adding quiz:", error);
+      console.error("Error creating quiz:", error);
       toast({
         title: "Erro ao criar quiz",
         description: "Não foi possível criar o quiz.",
@@ -78,62 +95,80 @@ const Home = () => {
     }
   };
 
-  const handleUpdateQuiz = async (quiz: { title: string; color: ColorOption }) => {
-    if (!editingQuiz || !user) return;
-    
+  const handleUpdateQuizTitle = async (quiz: Quiz, newTitle: string) => {
     try {
       const { error } = await supabase
         .from("quizzes")
-        .update({
-          title: quiz.title,
-          color: quiz.color,
-        })
-        .eq("id", editingQuiz.id)
-        .eq("user_id", user.id);
+        .update({ title: newTitle })
+        .eq("id", quiz.id);
 
       if (error) throw error;
       
       setQuizzes(
         quizzes.map((q) =>
-          q.id === editingQuiz.id
-            ? { ...q, title: quiz.title, color: quiz.color }
-            : q
+          q.id === quiz.id ? { ...q, title: newTitle } : q
         )
       );
       
       toast({
-        title: "Quiz atualizado com sucesso!",
-        description: "As alterações foram salvas.",
+        title: "Quiz renomeado com sucesso!",
+        description: "O nome do quiz foi atualizado.",
       });
-      
     } catch (error) {
-      console.error("Error updating quiz:", error);
+      console.error("Error updating quiz title:", error);
       toast({
-        title: "Erro ao atualizar quiz",
-        description: "Não foi possível atualizar o quiz.",
+        title: "Erro ao renomear quiz",
+        description: "Não foi possível renomear o quiz.",
         variant: "destructive",
       });
       throw error;
     }
   };
 
-  const handleDeleteQuiz = async (quizId: string) => {
-    if (!user) return;
-    
+  const handleUpdateQuizColor = async (quiz: Quiz, newColor: ColorOption) => {
+    try {
+      const { error } = await supabase
+        .from("quizzes")
+        .update({ color: newColor })
+        .eq("id", quiz.id);
+
+      if (error) throw error;
+      
+      setQuizzes(
+        quizzes.map((q) =>
+          q.id === quiz.id ? { ...q, color: newColor } : q
+        )
+      );
+      
+      toast({
+        title: "Cor atualizada com sucesso!",
+        description: "A cor do quiz foi atualizada.",
+      });
+    } catch (error) {
+      console.error("Error updating quiz color:", error);
+      toast({
+        title: "Erro ao atualizar cor",
+        description: "Não foi possível atualizar a cor do quiz.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const handleDeleteQuiz = async (quiz: Quiz) => {
     try {
       const { error } = await supabase
         .from("quizzes")
         .delete()
-        .eq("id", quizId)
-        .eq("user_id", user.id);
+        .eq("id", quiz.id);
 
       if (error) throw error;
       
-      setQuizzes(quizzes.filter((q) => q.id !== quizId));
+      setQuizzes(quizzes.filter((q) => q.id !== quiz.id));
       
       toast({
         title: "Quiz excluído com sucesso!",
-        description: "O quiz foi removido da sua coleção.",
+        description: "O quiz foi removido.",
       });
     } catch (error) {
       console.error("Error deleting quiz:", error);
@@ -146,73 +181,76 @@ const Home = () => {
     }
   };
 
-  const handleEditQuiz = (quiz: Quiz) => {
-    setEditingQuiz(quiz);
-    setIsAddModalOpen(true);
+  // Modal handlers
+  const openRenameModal = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setIsRenameModalOpen(true);
   };
 
-  const handleSaveQuiz = async (quiz: { title: string; color: ColorOption }) => {
-    if (editingQuiz) {
-      await handleUpdateQuiz(quiz);
-    } else {
-      await handleAddQuiz(quiz);
-    }
+  const openColorPopover = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setIsColorPopoverOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsAddModalOpen(false);
-    setEditingQuiz(undefined);
+  const openDeleteDialog = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setIsDeleteDialogOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
-      
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Meus Quizzes</h1>
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-violet-500 hover:bg-violet-600 flex items-center space-x-2"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Novo Quiz</span>
-          </Button>
-        </div>
+      <main className="container mx-auto py-8 px-4">
+        <h1 className="text-2xl font-bold mb-8">Meus Quizzes</h1>
         
         {loading ? (
           <div className="flex justify-center my-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
-          </div>
-        ) : quizzes.length === 0 ? (
-          <div className="text-center my-16">
-            <h2 className="text-xl font-semibold text-gray-600 mb-4">
-              Você ainda não tem quizzes
-            </h2>
-            <p className="text-gray-500 mb-8">
-              Comece criando seu primeiro quiz clicando no botão acima.
-            </p>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0D6EFD]"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+            <CreateQuizCard onClick={() => setIsAddQuizModalOpen(true)} />
+            
             {quizzes.map((quiz) => (
-              <CardQuiz
+              <QuizCard
                 key={quiz.id}
                 quiz={quiz}
-                onDelete={handleDeleteQuiz}
-                onEdit={handleEditQuiz}
+                onEdit={openRenameModal}
+                onColorChange={openColorPopover}
+                onDelete={openDeleteDialog}
               />
             ))}
           </div>
         )}
-        
-        <AddQuizModal
-          isOpen={isAddModalOpen}
-          onClose={handleCloseModal}
-          onSave={handleSaveQuiz}
-          quiz={editingQuiz}
-        />
       </main>
+      
+      {/* Modals */}
+      <AddQuizModal
+        isOpen={isAddQuizModalOpen}
+        onClose={() => setIsAddQuizModalOpen(false)}
+        onSave={handleCreateQuiz}
+      />
+      
+      <RenameQuizModal
+        isOpen={isRenameModalOpen}
+        onClose={() => setIsRenameModalOpen(false)}
+        onSave={handleUpdateQuizTitle}
+        quiz={selectedQuiz}
+      />
+      
+      <ChangeColorPopover
+        isOpen={isColorPopoverOpen}
+        onClose={() => setIsColorPopoverOpen(false)}
+        onSave={handleUpdateQuizColor}
+        quiz={selectedQuiz}
+      />
+      
+      <DeleteQuizDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteQuiz}
+        quiz={selectedQuiz}
+      />
     </div>
   );
 };
