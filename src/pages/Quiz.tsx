@@ -307,7 +307,7 @@ const Quiz = () => {
             )}
             
             {/* Question content */}
-            <div className="flex-1 overflow-auto p-6">
+            <div className="flex-1 overflow-auto p-6 md:p-6 sm:p-4">
               {questions.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-lg shadow-sm">
                   <h3 className="text-xl font-semibold text-gray-600 mb-4">
@@ -332,6 +332,7 @@ const Quiz = () => {
                   onOpenEditModal={handleOpenEditModal}
                   onDeleteQuestion={handleDeleteQuestion}
                   currentIndex={currentQuestionIndex}
+                  totalQuestions={questions.length}
                 />
               ) : null}
             </div>

@@ -13,6 +13,7 @@ interface QuestionCardProps {
   onOpenEditModal: (question: Question) => void;
   onDeleteQuestion: (questionId: string) => void;
   currentIndex: number;
+  totalQuestions: number;
 }
 
 const QuestionCard = ({
@@ -23,6 +24,7 @@ const QuestionCard = ({
   onOpenEditModal,
   onDeleteQuestion,
   currentIndex,
+  totalQuestions,
 }: QuestionCardProps) => {
   const { toast } = useToast();
   const showResult = userAnswers[question.id] !== undefined;
@@ -64,21 +66,23 @@ const QuestionCard = ({
         <div className="border-b border-[#E9ECEF] mt-2 mb-4"></div>
       </div>
 
-      <div className="max-w-[680px]">
-        <p className="text-base leading-6 mb-6">{question.statement}</p>
+      <div className="w-full max-w-[960px] mx-auto">
+        <p className="text-base leading-7 mb-6">{question.statement}</p>
+
+        <h3 className="font-medium text-sm text-[#6C757D] uppercase mb-3">Alternativas</h3>
 
         <div className="space-y-3">
           {question.options.map((option, index) => {
             const isSelected = userAnswers[question.id] === index;
             const isCorrect = index === question.correct_index;
             
-            let buttonClass = "justify-start w-full text-left border border-[#CED4DA] font-normal hover:bg-[#F8F9FA] rounded-md";
+            let buttonClass = "justify-start w-full text-left p-3 px-4 border border-[#E9ECEF] font-normal bg-[#F8F9FA] rounded-md";
             
             if (showResult) {
               if (isCorrect) {
-                buttonClass = "justify-start w-full text-left font-normal bg-[#d1e7dd] border-[#198754] text-[#198754] hover:bg-[#d1e7dd] rounded-md";
+                buttonClass = "justify-start w-full text-left p-3 px-4 font-normal bg-[#D1F7E9] border border-[#1FAD7B] text-[#155D40] rounded-md";
               } else if (isSelected) {
-                buttonClass = "justify-start w-full text-left font-normal bg-[#f8d7da] border-[#DC3545] text-[#DC3545] hover:bg-[#f8d7da] rounded-md";
+                buttonClass = "justify-start w-full text-left p-3 px-4 font-normal bg-[#FDEDEB] border border-[#E3503E] text-[#B02A1D] rounded-md";
               }
             }
             
@@ -86,7 +90,7 @@ const QuestionCard = ({
               <Button
                 key={index}
                 variant="outline"
-                className={`h-auto py-3 px-4 ${buttonClass}`}
+                className={`h-auto flex items-center ${buttonClass}`}
                 onClick={() => handleAnswer(index)}
                 disabled={showResult}
               >
@@ -105,6 +109,10 @@ const QuestionCard = ({
             <p className="text-gray-700">{question.explanation}</p>
           </div>
         )}
+
+        <div className="quiz-progress text-sm text-[#6C757D] pt-4 mt-6">
+          Questão {currentIndex + 1} de {totalQuestions}
+        </div>
       </div>
     </div>
   );
