@@ -9,6 +9,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
+import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import Quiz from "./pages/Quiz";
 import Login from "./pages/Login";
@@ -32,12 +33,13 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Public routes */}
+              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
               {/* Protected routes */}
               <Route
-                path="/"
+                path="/quizzes"
                 element={
                   <ProtectedRoute>
                     <Home />
