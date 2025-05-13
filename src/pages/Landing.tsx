@@ -3,11 +3,12 @@ import { ArrowUp, Check, Book, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-
 const Landing = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
 
   // Handle scroll events
   useEffect(() => {
@@ -17,30 +18,24 @@ const Landing = () => {
       } else {
         setIsScrolled(false);
       }
-
       if (window.scrollY > 300) {
         setShowScrollTop(true);
       } else {
         setShowScrollTop(false);
       }
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header
-        className={`fixed top-0 left-0 w-full bg-white z-50 transition-all duration-300 ${
-          isScrolled ? "shadow-md py-2" : "py-4"
-        }`}
-      >
+      <header className={`fixed top-0 left-0 w-full bg-white z-50 transition-all duration-300 ${isScrolled ? "shadow-md py-2" : "py-4"}`}>
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
@@ -62,33 +57,22 @@ const Landing = () => {
             </nav>
           </div>
           <div className="flex items-center space-x-4">
-            {user ? (
-              <Link to="/quizzes">
-                <Button 
-                  className="bg-violet-600 hover:bg-violet-700 text-white transition-all hover:scale-105"
-                >
+            {user ? <Link to="/quizzes">
+                <Button className="bg-violet-600 hover:bg-violet-700 text-white transition-all hover:scale-105">
                   Meus Quizzes
                 </Button>
-              </Link>
-            ) : (
-              <>
+              </Link> : <>
                 <Link to="/login">
-                  <Button
-                    variant="ghost"
-                    className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 transition-all hover:scale-105"
-                  >
+                  <Button variant="ghost" className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 transition-all hover:scale-105">
                     Login
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button
-                    className="bg-violet-600 hover:bg-violet-700 text-white transition-all hover:scale-105"
-                  >
+                  <Button className="bg-violet-600 hover:bg-violet-700 text-white transition-all hover:scale-105">
                     Criar Conta
                   </Button>
                 </Link>
-              </>
-            )}
+              </>}
           </div>
         </div>
       </header>
@@ -109,10 +93,7 @@ const Landing = () => {
                   Crie quizzes personalizados, pratique e compartilhe conhecimento de forma divertida e eficiente.
                 </p>
                 <Link to={user ? "/quizzes" : "/register"}>
-                  <Button 
-                    size="lg" 
-                    className="bg-blue-600 hover:bg-green-600 text-white px-8 py-6 text-lg font-medium transition-all hover:scale-105"
-                  >
+                  <Button size="lg" className="bg-blue-600 hover:bg-green-600 text-white px-8 py-6 text-lg font-medium transition-all hover:scale-105">
                     {user ? "Crie seu quiz" : "Crie seu primeiro Quiz"}
                   </Button>
                 </Link>
@@ -124,11 +105,7 @@ const Landing = () => {
                 <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
                 <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
                 <div className="relative">
-                  <img 
-                    src="/placeholder.svg" 
-                    alt="Estudantes usando o Passei Fácil" 
-                    className="rounded-lg shadow-2xl"
-                  />
+                  <img src="/placeholder.svg" alt="Estudantes usando o Passei Fácil" className="rounded-lg shadow-2xl" />
                   <div className="absolute -right-10 top-10 bg-white rounded-full p-4 shadow-lg animate-float">
                     <Check size={30} className="text-green-500" />
                   </div>
@@ -157,10 +134,7 @@ const Landing = () => {
           </div>
           <div className="flex justify-center mb-10">
             <Link to={user ? "/quizzes" : "/login"}>
-              <Button 
-                size="lg" 
-                className="bg-violet-500 hover:bg-violet-600 text-white px-8 py-6 text-lg font-medium transition-all hover:scale-105 flex items-center gap-2"
-              >
+              <Button size="lg" className="bg-violet-500 hover:bg-violet-600 text-white px-8 py-6 text-lg font-medium transition-all hover:scale-105 flex items-center gap-2">
                 <span className="text-2xl font-bold">+</span>
                 <span>{user ? "Criar novo Quiz" : "Fazer login para começar"}</span>
               </Button>
@@ -186,26 +160,10 @@ const Landing = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 max-w-6xl mx-auto">
-            <BenefitCard
-              icon="📊"
-              title="Estatísticas de Desempenho"
-              description="Acompanhe seu progresso com gráficos detalhados e análises de desempenho."
-            />
-            <BenefitCard
-              icon="🎯"
-              title="Progresso Personalizado"
-              description="Desenvolvemos um algoritmo que se adapta ao seu ritmo de aprendizagem."
-            />
-            <BenefitCard
-              icon="🤓"
-              title="Aprenda de Forma Divertida"
-              description="Transforme o estudo em uma experiência agradável e motivadora."
-            />
-            <BenefitCard
-              icon="🥇"
-              title="Desafie seus Amigos"
-              description="Crie competições com seus amigos e veja quem obtém a melhor pontuação."
-            />
+            <BenefitCard icon="📊" title="Estatísticas de Desempenho" description="Acompanhe seu progresso com gráficos detalhados e análises de desempenho." />
+            <BenefitCard icon="🎯" title="Progresso Personalizado" description="Desenvolvemos um algoritmo que se adapta ao seu ritmo de aprendizagem." />
+            <BenefitCard icon="🤓" title="Aprenda de Forma Divertida" description="Transforme o estudo em uma experiência agradável e motivadora." />
+            <BenefitCard icon="🥇" title="Desafie seus Amigos" description="Crie competições com seus amigos e veja quem obtém a melhor pontuação." />
           </div>
         </div>
       </section>
@@ -276,23 +234,21 @@ const Landing = () => {
       </footer>
 
       {/* Scroll to top button */}
-      {showScrollTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-8 right-8 bg-violet-600 text-white rounded-full p-3 shadow-lg hover:bg-violet-700 transition-all z-50"
-          aria-label="Voltar ao topo"
-        >
+      {showScrollTop && <button onClick={scrollToTop} className="fixed bottom-8 right-8 bg-violet-600 text-white rounded-full p-3 shadow-lg hover:bg-violet-700 transition-all z-50" aria-label="Voltar ao topo">
           <ArrowUp size={24} />
-        </button>
-      )}
-    </div>
-  );
+        </button>}
+    </div>;
 };
 
 // Helper components
-const SampleQuizCard = ({ title, color }: { title: string; color: string }) => {
-  return (
-    <div className={`quiz-card ${color} group relative`}>
+const SampleQuizCard = ({
+  title,
+  color
+}: {
+  title: string;
+  color: string;
+}) => {
+  return <div className={`quiz-card ${color} group relative`}>
       <h3 className="text-lg font-semibold text-white">{title}</h3>
       <div className="card-actions">
         <button className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2">
@@ -311,18 +267,21 @@ const SampleQuizCard = ({ title, color }: { title: string; color: string }) => {
           </svg>
         </button>
       </div>
-    </div>
-  );
+    </div>;
 };
-
-const BenefitCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+const BenefitCard = ({
+  icon,
+  title,
+  description
+}: {
+  icon: string;
+  title: string;
+  description: string;
+}) => {
+  return <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
       <div className="text-4xl mb-4">{icon}</div>
       <h3 className="text-xl font-semibold mb-2 text-gray-800">{title}</h3>
       <p className="text-gray-600">{description}</p>
-    </div>
-  );
+    </div>;
 };
-
 export default Landing;
