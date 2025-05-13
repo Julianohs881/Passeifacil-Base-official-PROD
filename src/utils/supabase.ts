@@ -1,13 +1,8 @@
 
-import { createClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+// This file is deprecated as we're now using the official Supabase client
+// from @/integrations/supabase/client.ts
 
-// Since we can't use environment variables in Lovable directly,
-// we will initialize the client in a way that allows for easy configuration
-// later through Supabase integration
+import { supabase } from '@/integrations/supabase/client';
 
-// This will be replaced with actual values when connected to Supabase
-const supabaseUrl = "https://your-supabase-url.supabase.co";
-const supabaseAnonKey = "your-supabase-anon-key";
-
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// Re-export for backward compatibility
+export { supabase };
