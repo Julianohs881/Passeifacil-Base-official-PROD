@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -181,6 +180,15 @@ const Home = () => {
     }
   };
 
+  // Helper function to handle the QuizCard's onDelete prop
+  const handleQuizDelete = (id: string) => {
+    const quizToDelete = quizzes.find(q => q.id === id);
+    if (quizToDelete) {
+      setSelectedQuiz(quizToDelete);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
   // Modal handlers
   const openRenameModal = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
@@ -190,11 +198,6 @@ const Home = () => {
   const openColorPopover = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
     setIsColorPopoverOpen(true);
-  };
-
-  const openDeleteDialog = (quiz: Quiz) => {
-    setSelectedQuiz(quiz);
-    setIsDeleteDialogOpen(true);
   };
 
   return (
@@ -217,7 +220,7 @@ const Home = () => {
                 quiz={quiz}
                 onEdit={openRenameModal}
                 onColorChange={openColorPopover}
-                onDelete={openDeleteDialog}
+                onDelete={handleQuizDelete}
               />
             ))}
           </div>
