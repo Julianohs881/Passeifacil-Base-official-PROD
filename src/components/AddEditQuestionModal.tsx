@@ -147,12 +147,12 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-white border-0 rounded-lg shadow-lg">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-gray-800">
             {question ? "Editar Questão" : "Nova Questão"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-600">
             {question
               ? "Modifique os detalhes da questão abaixo."
               : "Crie uma nova questão preenchendo os detalhes abaixo."}
@@ -161,27 +161,27 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="statement">Enunciado</Label>
+            <Label htmlFor="statement" className="text-gray-700">Enunciado</Label>
             <Textarea
               id="statement"
               value={statement}
               onChange={(e) => setStatement(e.target.value)}
               placeholder="Digite o enunciado da questão..."
-              className="min-h-[100px]"
+              className="min-h-[100px] border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               required
             />
           </div>
           
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Label>Alternativas</Label>
+              <Label className="text-gray-700">Alternativas</Label>
               {options.length < MAX_OPTIONS && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={addOption}
-                  className="flex items-center space-x-1"
+                  className="flex items-center space-x-1 border-blue-400 text-blue-600 hover:bg-blue-50"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Adicionar Alternativa</span>
@@ -197,17 +197,18 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
               {options.map((option, index) => (
                 <div
                   key={index}
-                  className="flex items-center space-x-2 border rounded-lg p-3"
+                  className="flex items-center space-x-2 border rounded-lg p-3 bg-white hover:bg-gray-50 transition-colors"
                 >
                   <RadioGroupItem
                     value={index.toString()}
                     id={`option-${index}`}
+                    className="text-blue-600"
                   />
                   <Input
                     value={option}
                     onChange={(e) => handleOptionChange(index, e.target.value)}
                     placeholder={`Alternativa ${index + 1}`}
-                    className="flex-1"
+                    className="flex-1 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     required
                   />
                   <Button
@@ -215,26 +216,26 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={() => removeOption(index)}
-                    className="h-8 w-8 text-gray-400 hover:text-red-500"
+                    className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
             </RadioGroup>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               Selecione o círculo à esquerda para marcar a alternativa correta.
             </p>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="explanation">Explicação</Label>
+            <Label htmlFor="explanation" className="text-gray-700">Explicação</Label>
             <Textarea
               id="explanation"
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
               placeholder="Explique por que a resposta correta é a escolhida..."
-              className="min-h-[80px]"
+              className="min-h-[80px] border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             />
           </div>
           
@@ -244,12 +245,13 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
+              className="border-gray-300 text-gray-700 hover:bg-gray-100"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="bg-[#0D6EFD] hover:bg-blue-600"
+              className="bg-[#0D6EFD] hover:bg-blue-600 text-white"
               disabled={isSubmitting}
             >
               {isSubmitting
