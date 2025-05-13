@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/utils/supabase";
-import { Quiz, ColorOption } from "../types";
+import { Quiz, ColorOption, parseColorOption } from "../types";
 import NavBar from "@/components/NavBar";
 import QuizCard from "@/components/QuizCard";
 import CreateQuizCard from "@/components/CreateQuizCard";
@@ -46,7 +47,13 @@ const Home = () => {
 
       if (error) throw error;
       
-      setQuizzes(data || []);
+      // Transform the data to ensure color is a valid ColorOption
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        color: parseColorOption(item.color)
+      })) as Quiz[];
+      
+      setQuizzes(transformedData);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
       toast({
@@ -77,7 +84,13 @@ const Home = () => {
       if (error) throw error;
       
       if (data) {
-        setQuizzes([...data, ...quizzes]);
+        // Transform the data to ensure color is a valid ColorOption
+        const transformedData = data.map(item => ({
+          ...item,
+          color: parseColorOption(item.color)
+        })) as Quiz[];
+        
+        setQuizzes([...transformedData, ...quizzes]);
         toast({
           title: "Quiz criado com sucesso!",
           description: "Seu novo quiz foi criado.",

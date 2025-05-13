@@ -29,7 +29,7 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
   quiz,
 }) => {
   const [title, setTitle] = useState("");
-  const [color, setColor] = useState<ColorOption>("violet-500");
+  const [color, setColor] = useState<ColorOption>("bg-violet-500");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -37,7 +37,7 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setTitle(quiz?.title || "");
-      setColor((quiz?.color || "violet-500") as ColorOption);
+      setColor((quiz?.color || "bg-violet-500") as ColorOption);
     }
   }, [isOpen, quiz]);
 

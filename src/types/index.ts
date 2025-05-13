@@ -41,6 +41,14 @@ export const QUIZ_COLORS: ColorOption[] = [
   "bg-violet-500"
 ];
 
+// Helper function to safely convert string to ColorOption
+export const parseColorOption = (color: string | null | undefined): ColorOption => {
+  if (!color) return "bg-violet-500";
+  return QUIZ_COLORS.includes(color as ColorOption) 
+    ? (color as ColorOption) 
+    : "bg-violet-500";
+};
+
 export interface Question {
   id: string;
   quiz_id: string;

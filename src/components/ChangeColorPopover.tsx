@@ -21,14 +21,14 @@ interface ChangeColorPopoverProps {
 }
 
 const ChangeColorPopover = ({ isOpen, onClose, onSave, quiz }: ChangeColorPopoverProps) => {
-  const [color, setColor] = useState<ColorOption>("violet-500");
+  const [color, setColor] = useState<ColorOption>("bg-violet-500");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   // Reset form when modal opens/closes or quiz changes
   useState(() => {
     if (isOpen && quiz) {
-      setColor((quiz.color || "violet-500") as ColorOption);
+      setColor((quiz.color || "bg-violet-500") as ColorOption);
     }
   });
 

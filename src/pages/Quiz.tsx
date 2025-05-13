@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Quiz as QuizType, Question, QuizResult } from "../types";
+import { Quiz as QuizType, Question, QuizResult, parseColorOption } from "../types";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import SidebarQuestionList, { QuestionStatus } from "@/components/SidebarQuestionList";
@@ -91,7 +91,13 @@ const Quiz = () => {
 
       if (error) throw error;
       
-      setQuiz(data);
+      // Transform the data to ensure color is a valid ColorOption
+      const transformedData = {
+        ...data,
+        color: parseColorOption(data.color)
+      } as QuizType;
+      
+      setQuiz(transformedData);
     } catch (error) {
       console.error("Error fetching quiz:", error);
       toast({
