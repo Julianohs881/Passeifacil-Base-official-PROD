@@ -1,9 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Quiz as QuizType, Question, QuizResult } from "../types";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ArrowLeft, ArrowRight } from "lucide-react";
-import SidebarQuestionList from "@/components/SidebarQuestionList";
+import SidebarQuestionList, { QuestionStatus } from "@/components/SidebarQuestionList";
 import QuestionCard from "@/components/QuestionCard";
 import AddEditQuestionModal from "@/components/AddEditQuestionModal";
 import { useAuth } from "@/context/AuthContext";
@@ -24,6 +25,7 @@ const Quiz = () => {
   const [loading, setLoading] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
+  const [questionsStatus, setQuestionsStatus] = useState<Record<string, QuestionStatus>>({});
   const [showExplanation, setShowExplanation] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizResult | undefined>();
 
@@ -58,6 +60,24 @@ const Quiz = () => {
       fetchQuestions();
     }
   }, [id, user]);
+
+  // Update question status when user answers
+  useEffect(() => {
+    const newQuestionStatus: Record<string, QuestionStatus> = {};
+    
+    Object.entries(userAnswers).forEach(([questionId, answerIndex]) => {
+      const question = questions.find(q => q.id === questionId);
+      if (question) {
+        if (answerIndex === question.correct_index) {
+          newQuestionStatus[questionId] = 'correct';
+        } else {
+          newQuestionStatus[questionId] = 'incorrect';
+        }
+      }
+    });
+    
+    setQuestionsStatus(newQuestionStatus);
+  }, [userAnswers, questions]);
 
   const fetchQuiz = async () => {
     if (!id) return;
@@ -118,10 +138,18 @@ const Quiz = () => {
     const currentQuestion = questions[currentQuestionIndex];
     if (!currentQuestion || userAnswers[currentQuestion.id] !== undefined) return;
     
-    setUserAnswers({
+    const newUserAnswers = {
       ...userAnswers,
       [currentQuestion.id]: optionIndex,
-    });
+    };
+    
+    setUserAnswers(newUserAnswers);
+    
+    // Update question status
+    const newQuestionsStatus = { ...questionsStatus };
+    newQuestionsStatus[currentQuestion.id] = 
+      optionIndex === currentQuestion.correct_index ? 'correct' : 'incorrect';
+    setQuestionsStatus(newQuestionsStatus);
     
     setShowExplanation(true);
   };
@@ -202,6 +230,19 @@ const Quiz = () => {
         )
       );
       
+      // If this question was already answered, update its status
+      if (userAnswers[editingQuestion.id] !== undefined) {
+        const newUserAnswers = { ...userAnswers };
+        const newQuestionsStatus = { ...questionsStatus };
+        
+        newQuestionsStatus[editingQuestion.id] = 
+          userAnswers[editingQuestion.id] === questionData.correct_index 
+            ? 'correct' 
+            : 'incorrect';
+            
+        setQuestionsStatus(newQuestionsStatus);
+      }
+      
       toast({
         title: "Questão atualizada com sucesso!",
         description: "As alterações foram salvas.",
@@ -229,6 +270,17 @@ const Quiz = () => {
       
       const newQuestions = questions.filter((q) => q.id !== questionId);
       setQuestions(newQuestions);
+      
+      // Remove from user answers and status
+      if (userAnswers[questionId]) {
+        const newUserAnswers = { ...userAnswers };
+        delete newUserAnswers[questionId];
+        setUserAnswers(newUserAnswers);
+        
+        const newQuestionsStatus = { ...questionsStatus };
+        delete newQuestionsStatus[questionId];
+        setQuestionsStatus(newQuestionsStatus);
+      }
       
       // Adjust currentQuestionIndex if needed
       if (currentQuestionIndex >= newQuestions.length && newQuestions.length > 0) {
@@ -303,6 +355,7 @@ const Quiz = () => {
                 questions={questions}
                 currentQuestionIndex={currentQuestionIndex}
                 onSelectQuestion={selectQuestion}
+                questionsStatus={questionsStatus}
               />
             )}
             
