@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,11 +26,11 @@ const ChangeColorPopover = ({ isOpen, onClose, onSave, quiz }: ChangeColorPopove
   const { toast } = useToast();
 
   // Reset form when modal opens/closes or quiz changes
-  useState(() => {
+  useEffect(() => {
     if (isOpen && quiz) {
-      setColor((quiz.color || "bg-violet-500") as ColorOption);
+      setColor(quiz.color || "bg-violet-500");
     }
-  });
+  }, [isOpen, quiz]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +77,7 @@ const ChangeColorPopover = ({ isOpen, onClose, onSave, quiz }: ChangeColorPopove
                   />
                   <Label
                     htmlFor={colorOption}
-                    className={`h-10 w-10 rounded-full cursor-pointer ring-offset-background transition-all hover:scale-110 bg-${colorOption} ${
+                    className={`h-10 w-10 rounded-full cursor-pointer ring-offset-background transition-all hover:scale-110 ${colorOption} ${
                       color === colorOption
                         ? "ring-2 ring-offset-2 ring-slate-950"
                         : ""
