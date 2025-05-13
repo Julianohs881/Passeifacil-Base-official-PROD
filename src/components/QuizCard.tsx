@@ -57,11 +57,11 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange }: QuizCardProps) => {
       <div
         className={`quiz-card ${quiz.color} p-6 h-48 rounded-xl shadow-md flex flex-col justify-between transition-all duration-200 hover:translate-y-1 hover:scale-105`}
       >
-        <h3 className="text-lg font-semibold text-white line-clamp-2">
+        <h3 className="text-lg font-semibold text-white text-center">
           {quiz.title}
         </h3>
         
-        <div className="card-actions flex justify-end mt-auto space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="card-actions flex justify-center mt-auto space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button
             variant="outline"
             size="icon"

@@ -1,10 +1,16 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "./ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const NavBar = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -22,7 +28,7 @@ const NavBar = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={signOut}
+                onClick={handleSignOut}
                 className="text-sm"
               >
                 Sair
