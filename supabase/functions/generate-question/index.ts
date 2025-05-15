@@ -80,7 +80,7 @@ async function performOCR(base64Image: string) {
         messages: [
           {
             role: "system", 
-            content: "Você é um assistente especializado em extrair texto de imagens com precisão. Extraia todo o texto visível da imagem sem adicionar interpretações ou comentários."
+            content: "Você é um assistente especializado em extrair texto de imagens com precisão. Extraia todo o texto visível da imagem sem adicionar interpretações ou comentários. Preserve a formatação quando possível, incluindo quebras de linha e espaçamentos importantes. Não omita nenhuma parte do texto, mesmo que pareça irrelevante. Se houver tabelas, diagramas ou elementos gráficos, descreva-os e extraia qualquer texto contido neles."
           },
           {
             role: "user",
@@ -93,7 +93,7 @@ async function performOCR(base64Image: string) {
             ]
           }
         ],
-        max_tokens: 1500
+        max_tokens: 4000
       }),
     });
 
@@ -127,21 +127,27 @@ async function generateQuestionWithOpenAI(text: string) {
         messages: [
           {
             role: "system",
-            content: `Você é um assistente especializado em criar questões de múltipla escolha de alta qualidade.
+            content: `Você recebe um texto que foi extraído de uma imagem contendo uma questão completa, incluindo o enunciado, alternativas, referências e demais informações.
 
-Baseado no texto fornecido, crie uma questão seguindo estas regras:
-1. Crie um enunciado claro e educativo.
-2. Forneça 5 alternativas (A, B, C, D e E).
-3. Apenas uma alternativa deve ser correta.
-4. As alternativas incorretas devem ser plausíveis.
-5. Indique qual é a alternativa correta.
+Sua tarefa é:
+
+1. Analisar todo o texto, sem omitir nenhuma parte importante.
+2. Extrair e organizar o texto integralmente para que nenhuma informação da questão se perca.
+3. A partir do texto completo, gerar a questão de múltipla escolha completa com enunciado, alternativas, resposta correta e fonte, no formato JSON.
+4. Se o texto estiver fragmentado ou difícil de entender, indique isso na resposta.
+5. Sempre respeite e preserve o máximo do conteúdo original extraído da imagem.
 
 Forneça o resultado como um objeto JSON com os seguintes campos:
-- statement: o enunciado da questão
+- statement: texto completo do enunciado
 - options: array com as 5 alternativas sem os identificadores (A, B, C, D, E)
 - correct_index: índice da alternativa correta (0 para A, 1 para B, etc.)
-- explanation: explicação sobre por que a resposta correta é a correta
-- source: fonte da informação (deixe em branco se não for possível identificar)
+- explanation: explicação sobre por que a resposta correta é a correta (se disponível no texto)
+- source: fonte da informação (se mencionada no texto)
+- originalFormat: um objeto adicional com o formato original da questão:
+  - enunciado: texto completo do enunciado
+  - alternativas: objeto com chaves A, B, C, D, E e os textos das alternativas
+  - correta: a letra da alternativa correta (A, B, C, D ou E)
+  - fonte: fonte da questão (se disponível)
 
 Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
           },
@@ -150,8 +156,8 @@ Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
             content: text
           }
         ],
-        temperature: 0.7,
-        max_tokens: 1500
+        temperature: 0.2,
+        max_tokens: 4000
       }),
     });
 
@@ -172,10 +178,9 @@ Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
       
       // Validate required fields
       if (!questionData.statement || !Array.isArray(questionData.options) || 
-          questionData.options.length !== 5 || 
+          questionData.options.length < 2 || 
           questionData.correct_index === undefined || 
-          questionData.correct_index < 0 || 
-          questionData.correct_index > 4) {
+          questionData.correct_index < 0) {
         throw new Error("Formato de questão inválido ou incompleto");
       }
 

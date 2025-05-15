@@ -20,17 +20,22 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
         description: "Por favor, forneça texto ou uma imagem para gerar a questão.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     setIsLoading(true);
     
     try {
       // Update processing step
-      setProcessingStep("Processando entrada...");
+      setProcessingStep("Iniciando processamento...");
+      
+      if (contentType === "image") {
+        setProcessingStep("Extraindo texto da imagem (isso pode levar alguns segundos)...");
+      } else {
+        setProcessingStep("Analisando texto fornecido...");
+      }
       
       // Send to edge function
-      setProcessingStep(contentType === "image" ? "Extraindo texto da imagem..." : "Analisando texto...");
       const { data: generatedQuestion, error } = await supabase.functions.invoke("generate-question", {
         body: {
           content,
@@ -45,7 +50,7 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
       }
 
       // Update processing step
-      setProcessingStep("Salvando questão...");
+      setProcessingStep("Salvando questão no banco de dados...");
       
       // Save the question to the database
       const { error: saveError } = await supabase
@@ -64,7 +69,7 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
 
       toast({
         title: "Questão criada com sucesso",
-        description: "A questão gerada pela IA foi adicionada ao quiz.",
+        description: "A questão foi extraída e adicionada ao quiz.",
       });
 
       onSuccess();

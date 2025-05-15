@@ -68,7 +68,9 @@ const AIQuestionModal: React.FC<AIQuestionModalProps> = ({
         
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">
-            Inserir Texto ou Imagem
+            {contentType === "image" 
+              ? "Envie uma imagem contendo uma questão completa" 
+              : "Digite ou cole o texto da questão aqui"}
           </label>
           
           {!imagePreview && (
