@@ -1,0 +1,32 @@
+
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+interface QuizHeaderProps {
+  title: string | undefined;
+}
+
+const QuizHeader: React.FC<QuizHeaderProps> = ({ title }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="px-4 py-4 border-b bg-white">
+      <div className="container mx-auto max-w-[1200px] flex items-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="text-gray-600 hover:text-gray-900"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Voltar
+        </Button>
+        <h1 className="text-xl font-semibold ml-4">{title || "Quiz"}</h1>
+      </div>
+    </div>
+  );
+};
+
+export default QuizHeader;
