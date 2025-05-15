@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import NavBar from "@/components/NavBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import QuizNavigationButtons from "@/components/QuizNavigationButtons";
-import CreateWithAIButton from "@/components/CreateWithAIButton";
+import CreateWithAIButton from "@/components/CreateWithAI/CreateWithAIButton";
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
