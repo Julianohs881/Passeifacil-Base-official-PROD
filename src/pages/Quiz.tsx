@@ -36,7 +36,8 @@ const Quiz = () => {
     handleAddQuestion,
     handleUpdateQuestion,
     handleDeleteQuestion,
-    handleAnswer
+    handleAnswer,
+    setCurrentQuestionIndex
   } = useQuiz(id);
 
   useEffect(() => {
