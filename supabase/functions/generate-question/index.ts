@@ -25,9 +25,11 @@ serve(async (req) => {
     // Process based on content type
     if (contentType === "image") {
       // For images, use OCR to extract text
+      console.log("Processando imagem com OCR...");
       extractedText = await performOCR(content);
     } else {
       // For direct text input
+      console.log("Processando texto direto...");
       extractedText = content;
     }
 
@@ -35,8 +37,12 @@ serve(async (req) => {
       throw new Error("Não foi possível extrair texto do conteúdo fornecido");
     }
 
+    console.log("Texto extraído com sucesso, gerando questão...");
+
     // Generate question using OpenAI
     const generatedQuestion = await generateQuestionWithOpenAI(extractedText);
+    
+    console.log("Questão gerada com sucesso");
 
     return new Response(JSON.stringify(generatedQuestion), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -60,6 +66,8 @@ async function performOCR(base64Image: string) {
       ? base64Image.split("base64,")[1] 
       : base64Image;
 
+    console.log("Enviando imagem para processamento OCR...");
+    
     // Using OpenAI's vision capability for OCR
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -85,15 +93,18 @@ async function performOCR(base64Image: string) {
             ]
           }
         ],
-        max_tokens: 1000
+        max_tokens: 1500
       }),
     });
 
     if (!openAIResponse.ok) {
-      throw new Error(`OCR API error: ${await openAIResponse.text()}`);
+      const errorText = await openAIResponse.text();
+      console.error("OpenAI OCR error response:", errorText);
+      throw new Error(`OCR API error: ${errorText}`);
     }
 
     const ocrResult = await openAIResponse.json();
+    console.log("OCR concluído com sucesso");
     return ocrResult.choices[0].message.content;
   } catch (error) {
     console.error("OCR error:", error);
@@ -103,6 +114,8 @@ async function performOCR(base64Image: string) {
 
 async function generateQuestionWithOpenAI(text: string) {
   try {
+    console.log("Enviando texto para geração de questão...");
+    
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -138,12 +151,14 @@ Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
           }
         ],
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 1500
       }),
     });
 
     if (!openAIResponse.ok) {
-      throw new Error(`OpenAI API error: ${await openAIResponse.text()}`);
+      const errorText = await openAIResponse.text();
+      console.error("OpenAI question generation error response:", errorText);
+      throw new Error(`OpenAI API error: ${errorText}`);
     }
 
     const result = await openAIResponse.json();
@@ -154,6 +169,15 @@ Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       const jsonString = jsonMatch ? jsonMatch[0] : responseText;
       const questionData = JSON.parse(jsonString);
+      
+      // Validate required fields
+      if (!questionData.statement || !Array.isArray(questionData.options) || 
+          questionData.options.length !== 5 || 
+          questionData.correct_index === undefined || 
+          questionData.correct_index < 0 || 
+          questionData.correct_index > 4) {
+        throw new Error("Formato de questão inválido ou incompleto");
+      }
 
       // Add metadata
       return {
