@@ -1,9 +1,26 @@
 
 import React, { useState } from "react";
-import { Question } from "@/types";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Question } from "../types";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
+import {
+  Edit,
+  Trash2,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface QuestionCardProps {
   question: Question;
@@ -11,12 +28,12 @@ interface QuestionCardProps {
   handleAnswer: (optionIndex: number) => void;
   onOpenAddModal: () => void;
   onOpenEditModal: (question: Question) => void;
-  onDeleteQuestion: (questionId: string) => void;
+  onDeleteQuestion: (id: string) => void;
   currentIndex: number;
   totalQuestions: number;
 }
 
-const QuestionCard = ({
+const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
   userAnswers,
   handleAnswer,
@@ -25,95 +42,145 @@ const QuestionCard = ({
   onDeleteQuestion,
   currentIndex,
   totalQuestions,
-}: QuestionCardProps) => {
-  const { toast } = useToast();
-  const showResult = userAnswers[question.id] !== undefined;
+}) => {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const userAnswer = userAnswers[question.id];
+  const isAnswered = userAnswer !== undefined;
+  const isCorrect = userAnswer === question.correct_index;
 
-  const confirmDelete = () => {
-    if (window.confirm("Tem certeza que deseja excluir esta questão?")) {
-      onDeleteQuestion(question.id);
-    }
+  // Function to render the statement with proper line breaks
+  const renderFormattedText = (text: string) => {
+    return text.split('\n').map((line, index) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < text.split('\n').length - 1 && <br />}
+      </React.Fragment>
+    ));
   };
 
   return (
-    <div className="bg-white rounded-lg border shadow-sm p-6 relative">
-      <div className="absolute top-4 right-4 flex items-center space-x-3">
-        <button
-          onClick={onOpenAddModal}
-          className="text-gray-500 hover:text-[#0D6EFD] transition-colors"
-          title="Adicionar questão"
-        >
-          <Plus size={18} />
-        </button>
-        <button
-          onClick={() => onOpenEditModal(question)}
-          className="text-gray-500 hover:text-[#0D6EFD] transition-colors"
-          title="Editar questão"
-        >
-          <Pencil size={18} />
-        </button>
-        <button
-          onClick={confirmDelete}
-          className="text-gray-500 hover:text-red-500 transition-colors"
-          title="Excluir questão"
-        >
-          <Trash2 size={18} />
-        </button>
-      </div>
+    <div className="flex flex-col h-full">
+      <Card className="p-6 flex-1 overflow-auto">
+        <div className="flex justify-between items-start mb-4">
+          <Badge variant="outline" className="text-sm font-normal">
+            Questão {currentIndex + 1}/{totalQuestions}
+          </Badge>
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenEditModal(question)}
+              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+            >
+              <Edit className="h-4 w-4 mr-1" />
+              Editar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Excluir
+            </Button>
+          </div>
+        </div>
 
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold">QUESTÃO {currentIndex + 1}</h2>
-        <div className="border-b border-[#E9ECEF] mt-2 mb-4"></div>
-      </div>
+        <div className="mb-6 whitespace-pre-line">
+          {renderFormattedText(question.statement)}
+        </div>
 
-      <div className="w-full max-w-[960px] mx-auto">
-        <p className="text-base leading-7 mb-6">{question.statement}</p>
-
-        <h3 className="font-medium text-sm text-[#6C757D] uppercase mb-3">Alternativas</h3>
-
-        <div className="space-y-3">
+        <div className="space-y-3 mt-6">
           {question.options.map((option, index) => {
-            const isSelected = userAnswers[question.id] === index;
-            const isCorrect = index === question.correct_index;
-            
-            let buttonClass = "justify-start w-full text-left p-3 px-4 border border-[#E9ECEF] font-normal bg-[#F8F9FA] rounded-md";
-            
-            if (showResult) {
-              if (isCorrect) {
-                buttonClass = "justify-start w-full text-left p-3 px-4 font-normal bg-[#D1F7E9] border border-[#1FAD7B] text-[#155D40] rounded-md";
-              } else if (isSelected) {
-                buttonClass = "justify-start w-full text-left p-3 px-4 font-normal bg-[#FDEDEB] border border-[#E3503E] text-[#B02A1D] rounded-md";
-              }
+            const optionId = `option-${question.id}-${index}`;
+            const isSelected = userAnswer === index;
+            const isCorrectOption = question.correct_index === index;
+
+            let optionClass =
+              "p-4 border rounded-lg cursor-pointer transition-all";
+
+            if (!isAnswered) {
+              optionClass += " hover:bg-gray-50";
+            } else if (isSelected) {
+              optionClass += isCorrectOption
+                ? " bg-green-50 border-green-300"
+                : " bg-red-50 border-red-300";
+            } else if (isCorrectOption) {
+              optionClass += " bg-green-50 border-green-300";
             }
-            
+
             return (
-              <Button
-                key={index}
-                variant="outline"
-                className={`h-auto flex items-center ${buttonClass}`}
-                onClick={() => handleAnswer(index)}
-                disabled={showResult}
+              <div
+                key={optionId}
+                className={optionClass}
+                onClick={() => !isAnswered && handleAnswer(index)}
               >
-                <span className="mr-3 font-medium">
-                  {String.fromCharCode(65 + index)}
-                </span>
-                {option}
-              </Button>
+                <div className="flex items-start">
+                  <div className="mr-3 mt-0.5">
+                    <span
+                      className={`flex items-center justify-center h-6 w-6 rounded-full text-sm font-medium ${
+                        isAnswered && isCorrectOption
+                          ? "bg-green-100 text-green-800"
+                          : isAnswered && isSelected
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    {renderFormattedText(option)}
+                  </div>
+                  {isAnswered && isSelected && isCorrectOption && (
+                    <CheckCircle className="h-5 w-5 text-green-600 ml-2 mt-0.5 flex-shrink-0" />
+                  )}
+                  {isAnswered && isSelected && !isCorrectOption && (
+                    <XCircle className="h-5 w-5 text-red-600 ml-2 mt-0.5 flex-shrink-0" />
+                  )}
+                  {isAnswered && !isSelected && isCorrectOption && (
+                    <CheckCircle className="h-5 w-5 text-green-600 ml-2 mt-0.5 flex-shrink-0" />
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
 
-        {showResult && question.explanation && (
-          <div className="mt-6 p-4 bg-[#f0f9ff] border border-[#cfe2ff] rounded-lg">
-            <h3 className="font-medium mb-2">Explicação</h3>
-            <p className="text-gray-700">{question.explanation}</p>
+        {isAnswered && question.explanation && (
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-md">
+            <p className="font-medium text-blue-800 mb-1">Explicação:</p>
+            <div className="text-blue-700 whitespace-pre-line">
+              {renderFormattedText(question.explanation)}
+            </div>
           </div>
         )}
+      </Card>
 
-        <div className="quiz-progress text-sm text-[#6C757D] pt-4 mt-6">
-          Questão {currentIndex + 1} de {totalQuestions}
-        </div>
-      </div>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A questão será permanentemente
+              removida do quiz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDeleteQuestion(question.id)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
