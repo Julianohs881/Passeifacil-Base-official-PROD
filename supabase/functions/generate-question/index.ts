@@ -133,18 +133,20 @@ Sua tarefa é:
 
 1. Analisar todo o texto, sem omitir nenhuma parte importante.
 2. Extrair e organizar o texto integralmente para que nenhuma informação da questão se perca.
-3. A partir do texto completo, gerar a questão de múltipla escolha completa com enunciado, alternativas, resposta correta e fonte, no formato JSON.
-4. Se o texto estiver fragmentado ou difícil de entender, indique isso na resposta.
-5. Sempre respeite e preserve o máximo do conteúdo original extraído da imagem.
+3. Reorganizar o texto do enunciado para que fique bem formatado, usando quebras de linha apropriadas (\\n) e mantendo a estrutura lógica.
+4. Preservar os números e marcadores de lista (como "I.", "II.", "III."), com cada item em linha separada.
+5. Manter as referências e outras informações importantes também formatadas em parágrafos separados usando quebras de linha.
+6. Não alterar o conteúdo, apenas melhorar a organização visual para facilitar a leitura.
+7. A partir do texto completo formatado, gerar a questão de múltipla escolha completa com enunciado, alternativas, resposta correta e fonte, no formato JSON.
 
 Forneça o resultado como um objeto JSON com os seguintes campos:
-- statement: texto completo do enunciado
-- options: array com as 5 alternativas sem os identificadores (A, B, C, D, E)
+- statement: texto completo do enunciado formatado com quebras de linha apropriadas
+- options: array com as alternativas sem os identificadores (A, B, C, D, E)
 - correct_index: índice da alternativa correta (0 para A, 1 para B, etc.)
 - explanation: explicação sobre por que a resposta correta é a correta (se disponível no texto)
 - source: fonte da informação (se mencionada no texto)
 - originalFormat: um objeto adicional com o formato original da questão:
-  - enunciado: texto completo do enunciado
+  - enunciado: texto completo do enunciado formatado com quebras de linha apropriadas
   - alternativas: objeto com chaves A, B, C, D, E e os textos das alternativas
   - correta: a letra da alternativa correta (A, B, C, D ou E)
   - fonte: fonte da questão (se disponível)

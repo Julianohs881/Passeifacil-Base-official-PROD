@@ -50,6 +50,11 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
       }
 
       // Update processing step
+      setProcessingStep("Formatando texto e estruturando a questão...");
+      
+      // Short delay to show formatting step
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       setProcessingStep("Salvando questão no banco de dados...");
       
       // Save the question to the database
@@ -69,7 +74,7 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
 
       toast({
         title: "Questão criada com sucesso",
-        description: "A questão foi extraída e adicionada ao quiz.",
+        description: "A questão foi extraída, formatada e adicionada ao quiz.",
       });
 
       onSuccess();

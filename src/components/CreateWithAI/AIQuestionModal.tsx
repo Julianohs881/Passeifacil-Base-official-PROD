@@ -77,11 +77,14 @@ const AIQuestionModal: React.FC<AIQuestionModalProps> = ({
             <div className="mb-4">
               <textarea
                 className="w-full border rounded-md p-3 h-36 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Digite ou cole o texto da questão aqui..."
+                placeholder="Digite ou cole o texto da questão aqui, incluindo enunciado e alternativas..."
                 value={contentType === "text" ? content : ""}
                 onChange={handleTextChange}
                 disabled={isLoading}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                A IA irá preservar a estrutura do texto, formatando listas, parágrafos e separando corretamente o enunciado das alternativas.
+              </p>
             </div>
           )}
           
@@ -90,6 +93,11 @@ const AIQuestionModal: React.FC<AIQuestionModalProps> = ({
             onImageChange={handleImageChange}
             disabled={isLoading}
           />
+          {imagePreview && (
+            <p className="text-xs text-gray-500 mt-1">
+              A IA extrairá o texto da imagem, preservando a estrutura de listas, parágrafos e formatação do enunciado.
+            </p>
+          )}
         </div>
         
         {processingStep && (
