@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import NavBar from "@/components/NavBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import QuizNavigationButtons from "@/components/QuizNavigationButtons";
+import CreateWithAIButton from "@/components/CreateWithAIButton";
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
@@ -375,12 +376,18 @@ const Quiz = () => {
                   <p className="text-gray-500 mb-6">
                     Adicione questões para começar.
                   </p>
-                  <Button 
-                    onClick={handleOpenAddModal}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md"
-                  >
-                    Adicionar Questão
-                  </Button>
+                  <div className="flex justify-center gap-3">
+                    <Button 
+                      onClick={handleOpenAddModal}
+                      className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md"
+                    >
+                      Adicionar Questão
+                    </Button>
+                    <CreateWithAIButton 
+                      quizId={id || ""}
+                      onSuccess={fetchQuestions}
+                    />
+                  </div>
                 </div>
               ) : currentQuestion ? (
                 <QuestionCard
@@ -399,12 +406,27 @@ const Quiz = () => {
           
           {/* Navigation buttons */}
           {questions.length > 0 && (
-            <QuizNavigationButtons
-              currentIndex={currentQuestionIndex}
-              totalQuestions={questions.length}
-              onPrevious={goToPreviousQuestion}
-              onNext={goToNextQuestion}
-            />
+            <div className="flex justify-between items-center px-6 py-4 bg-white border-t">
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={handleOpenAddModal}
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Adicionar Questão
+                </Button>
+                <CreateWithAIButton 
+                  quizId={id || ""}
+                  onSuccess={fetchQuestions}
+                />
+              </div>
+              <QuizNavigationButtons
+                currentIndex={currentQuestionIndex}
+                totalQuestions={questions.length}
+                onPrevious={goToPreviousQuestion}
+                onNext={goToNextQuestion}
+              />
+            </div>
           )}
           
           <AddEditQuestionModal
