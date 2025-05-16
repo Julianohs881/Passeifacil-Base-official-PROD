@@ -26,7 +26,7 @@ const Explore = () => {
       // Buscar apenas quizzes públicos
       const { data, error } = await supabase
         .from("quizzes")
-        .select("*, profiles:user_id(username)")
+        .select("*")
         .eq("visibility", "public")
         .order("created_at", { ascending: false });
 
@@ -36,8 +36,8 @@ const Explore = () => {
       const transformedData = (data || []).map(item => ({
         ...item,
         color: parseColorOption(item.color),
-        // Adicionamos o nome do usuário, caso esteja disponível
-        createdBy: item.profiles?.username || "Usuário"
+        // Sem tentar acessar o perfil do usuário por enquanto
+        createdBy: "Usuário"
       })) as (Quiz & { createdBy: string })[];
       
       setQuizzes(transformedData);
