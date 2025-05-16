@@ -1,4 +1,3 @@
-
 import { User, Session } from "@supabase/supabase-js";
 
 export type AuthContextType = {
@@ -89,3 +88,5 @@ export interface UserIsCreatorProps {
 export const isUserCreator = ({ userId, creatorId }: UserIsCreatorProps): boolean => {
   return userId === creatorId;
 };
+
+export type QuestionStatus = 'unanswered' | 'correct' | 'incorrect';

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { supabase } from '@/utils/supabase';
-import { Quiz, Question } from '@/types';
+import { Quiz, Question, QuestionStatus } from '@/types';
 
 export const useQuiz = (quizId: string | undefined) => {
   const { toast } = useToast();
@@ -14,7 +14,7 @@ export const useQuiz = (quizId: string | undefined) => {
   const [loading, setLoading] = useState(true);
 
   // Estado para rastrear o status de cada questão (respondida/não respondida)
-  const [questionsStatus, setQuestionsStatus] = useState<Record<string, boolean>>({});
+  const [questionsStatus, setQuestionsStatus] = useState<Record<string, QuestionStatus>>({});
 
   // Buscar informações do quiz
   const fetchQuiz = async () => {
@@ -77,9 +77,9 @@ export const useQuiz = (quizId: string | undefined) => {
       setQuestions(enhancedQuestions as Question[]);
       
       // Inicializar o estado de status das questões
-      const initialStatus: Record<string, boolean> = {};
+      const initialStatus: Record<string, QuestionStatus> = {};
       enhancedQuestions.forEach(q => {
-        initialStatus[q.id] = false;
+        initialStatus[q.id] = 'unanswered';
       });
       setQuestionsStatus(initialStatus);
       
@@ -126,10 +126,11 @@ export const useQuiz = (quizId: string | undefined) => {
       [questionId]: optionIndex
     }));
     
-    // Atualizar status da questão como respondida
+    // Atualizar status da questão como respondida (correta ou incorreta)
+    const isCorrect = optionIndex === questions[currentQuestionIndex].correct_index;
     setQuestionsStatus(prev => ({
       ...prev,
-      [questionId]: true
+      [questionId]: isCorrect ? 'correct' : 'incorrect'
     }));
   };
 
@@ -154,7 +155,7 @@ export const useQuiz = (quizId: string | undefined) => {
       // Inicializar o status da nova questão
       setQuestionsStatus(prev => ({
         ...prev,
-        [newQuestion.id]: false
+        [newQuestion.id]: 'unanswered'
       }));
 
       toast({
