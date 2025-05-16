@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Lock } from "lucide-react";
 import { Button } from "./ui/button";
@@ -8,6 +7,7 @@ interface PremiumFeatureGateProps {
   feature: 'ai' | 'share' | 'import' | 'explore';
   children: React.ReactNode;
   className?: string;
+  hideCompletely?: boolean;
 }
 
 const featureNames = {
@@ -17,16 +17,28 @@ const featureNames = {
   explore: "Explorar"
 };
 
-const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({ feature, children, className }) => {
+const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({ 
+  feature, 
+  children, 
+  className,
+  hideCompletely = true // Default to completely hiding the feature for free users
+}) => {
   const { isPro, hasReachedAILimit } = useAuth();
   
   // Check if user is PRO and if it's the AI feature, check if they've reached the limit
   const hasAccess = isPro() && (feature !== 'ai' || !hasReachedAILimit());
   
+  // If user has access, show the feature
   if (hasAccess) {
     return <>{children}</>;
   }
+  
+  // If hideCompletely is true, don't render anything for free users
+  if (hideCompletely) {
+    return null;
+  }
 
+  // Otherwise, show the disabled version with upgrade message (for cases where we explicitly want to show it)
   const message = feature === 'ai' && isPro()
     ? "Você atingiu o limite de 50 questões criadas com IA."
     : `Recurso exclusivo para assinantes PRO.`;

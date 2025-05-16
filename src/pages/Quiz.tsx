@@ -12,17 +12,20 @@ import QuizHeader from "@/components/Quiz/QuizHeader";
 import QuizFooter from "@/components/Quiz/QuizFooter";
 import QuizEmptyState from "@/components/Quiz/QuizEmptyState";
 import { ImportQuestionDialog } from "@/components/Share/ImportQuestionDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
 
   // Modal state for question management
   const [isAddQuestionModalOpen, setIsAddQuestionModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(undefined);
   const [isImportQuestionDialogOpen, setIsImportQuestionDialogOpen] = useState(false);
-
+  const [isPremiumWarningOpen, setIsPremiumWarningOpen] = useState(false);
+  
   // Use our custom hook to manage quiz state
   const {
     quiz,
@@ -60,7 +63,11 @@ const Quiz = () => {
   };
 
   const handleOpenImportQuestionDialog = () => {
-    setIsImportQuestionDialogOpen(true);
+    if (isPro()) {
+      setIsImportQuestionDialogOpen(true);
+    } else {
+      setIsPremiumWarningOpen(true);
+    }
   };
 
   const handleSaveQuestion = async (question: Omit<Question, "id" | "created_at">) => {
@@ -74,6 +81,7 @@ const Quiz = () => {
   const currentQuestion = questions[currentQuestionIndex];
   const isPublicQuiz = quiz?.visibility === "public";
   const isCreator = user && quiz ? user.id === quiz.user_id : false;
+  const isPROUser = isPro();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -163,13 +171,37 @@ const Quiz = () => {
                 question={editingQuestion}
               />
               
-              {/* Import Question Dialog */}
-              <ImportQuestionDialog
-                isOpen={isImportQuestionDialogOpen}
-                onClose={() => setIsImportQuestionDialogOpen(false)}
-                quizId={id || ""}
-                onSuccess={fetchQuestions}
-              />
+              {/* Import Question Dialog - only show for PRO users */}
+              {isPROUser && (
+                <ImportQuestionDialog
+                  isOpen={isImportQuestionDialogOpen}
+                  onClose={() => setIsImportQuestionDialogOpen(false)}
+                  quizId={id || ""}
+                  onSuccess={fetchQuestions}
+                />
+              )}
+              
+              {/* Premium Feature Warning Dialog */}
+              <Dialog open={isPremiumWarningOpen} onOpenChange={setIsPremiumWarningOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Recurso Pro</DialogTitle>
+                    <DialogDescription>
+                      Função exclusiva para assinantes PRO. Faça upgrade para liberar esta ferramenta!
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex justify-center mt-4">
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600"
+                      onClick={() => setIsPremiumWarningOpen(false)}
+                    >
+                      Fazer Upgrade
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </>
           )}
         </div>

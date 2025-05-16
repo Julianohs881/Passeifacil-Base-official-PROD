@@ -54,10 +54,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const userAnswer = userAnswers[question.id];
   const isAnswered = userAnswer !== undefined;
   const isCorrect = userAnswer === question.correct_index;
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
   
   // Verificar se o usuário atual é o criador do quiz
   const isCreator = user?.id === question.user_id;
+  const isPROUser = isPro();
 
   // Function to render the statement with proper line breaks
   const renderFormattedText = (text: string) => {
@@ -78,16 +79,18 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           </Badge>
           
           <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start">
-            {/* Share button - available to everyone */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsShareDialogOpen(true)}
-              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-            >
-              <Share2 className="h-4 w-4 mr-1" />
-              Compartilhar
-            </Button>
+            {/* Share button - only show for PRO users */}
+            {isPROUser && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsShareDialogOpen(true)}
+                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              >
+                <Share2 className="h-4 w-4 mr-1" />
+                Compartilhar
+              </Button>
+            )}
             
             {/* Creator-only buttons */}
             {isCreator && (
@@ -185,8 +188,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           </div>
         )}
 
-        {/* Seção de comentários - apenas para quizzes públicos */}
-        {isPublicQuiz && (
+        {/* Seção de comentários - apenas para quizzes públicos e usuários PRO */}
+        {isPublicQuiz && isPROUser && (
           <CommentSection 
             questionId={question.id} 
             userAnswer={userAnswer} 
@@ -219,16 +222,18 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Share Dialog */}
-      <ShareCodeDialog
-        isOpen={isShareDialogOpen}
-        onClose={() => setIsShareDialogOpen(false)}
-        title={question.statement.length > 40 
-          ? question.statement.substring(0, 40) + "..." 
-          : question.statement}
-        code={question.share_code}
-        type="question"
-      />
+      {/* Share Dialog - only if PRO user */}
+      {isPROUser && (
+        <ShareCodeDialog
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
+          title={question.statement.length > 40 
+            ? question.statement.substring(0, 40) + "..." 
+            : question.statement}
+          code={question.share_code}
+          type="question"
+        />
+      )}
     </div>
   );
 };

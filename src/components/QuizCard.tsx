@@ -7,7 +7,6 @@ import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { ShareCodeDialog } from "./Share/ShareCodeDialog";
-import PremiumFeatureGate from "./PremiumFeatureGate";
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -73,6 +72,8 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
     setIsShareDialogOpen(true);
   };
 
+  const isPROUser = isPro();
+
   return (
     <>
       <Link
@@ -99,8 +100,8 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
 
           {/* Action buttons - Mostrar apenas se o usuário for o criador */}
           <div className="absolute top-3 right-3 flex space-x-1">
-            {/* Share button - available to everyone, but needs PRO */}
-            <PremiumFeatureGate feature="share">
+            {/* Share button - only show for PRO users */}
+            {isPROUser && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -110,7 +111,7 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
               >
                 <Share2 className="h-3 w-3 text-gray-700" />
               </Button>
-            </PremiumFeatureGate>
+            )}
             
             {/* Creator-only buttons */}
             {isCreator && (
@@ -131,7 +132,8 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
                 >
                   <Palette className="h-3 w-3 text-gray-700" />
                 </Button>
-                {onToggleVisibility && isPro() && (
+                {/* Only show visibility toggle for PRO users */}
+                {onToggleVisibility && isPROUser && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -168,14 +170,16 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
         </div>
       </Link>
 
-      {/* Share Dialog */}
-      <ShareCodeDialog
-        isOpen={isShareDialogOpen}
-        onClose={() => setIsShareDialogOpen(false)}
-        title={quiz.title}
-        code={quiz.share_code}
-        type="quiz"
-      />
+      {/* Share Dialog - only for PRO users */}
+      {isPROUser && (
+        <ShareCodeDialog
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
+          title={quiz.title}
+          code={quiz.share_code}
+          type="quiz"
+        />
+      )}
     </>
   );
 };

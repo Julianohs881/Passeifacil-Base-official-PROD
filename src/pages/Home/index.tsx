@@ -13,6 +13,8 @@ import { ImportCodeDialog } from "@/components/Share/ImportCodeDialog";
 import { HomePageHeader } from "./HomePageHeader";
 import { QuizGrid } from "./QuizGrid";
 import { useHomePageQuizzes } from "./useHomePageQuizzes";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const Home = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -21,9 +23,10 @@ const Home = () => {
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isPremiumWarningOpen, setIsPremiumWarningOpen] = useState(false);
   const colorPickerAnchorRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
   const { quizzes, fetchQuizzes, handleToggleVisibility } = useHomePageQuizzes();
 
   const handleQuizCreated = () => {
@@ -58,6 +61,14 @@ const Home = () => {
     }
   };
 
+  const handleOpenImportDialog = () => {
+    if (isPro()) {
+      setIsImportDialogOpen(true);
+    } else {
+      setIsPremiumWarningOpen(true);
+    }
+  };
+
   const handleOpenColorPicker = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
     setIsColorPickerOpen(true);
@@ -69,7 +80,7 @@ const Home = () => {
       <main className="container mx-auto py-8 px-4">
         <HomePageHeader 
           onOpenCreateQuiz={() => setIsDialogOpen(true)}
-          onOpenImportDialog={() => setIsImportDialogOpen(true)}
+          onOpenImportDialog={handleOpenImportDialog}
         />
 
         <QuizGrid 
@@ -153,12 +164,36 @@ const Home = () => {
           }}
         />
 
-        {/* Import Code Dialog */}
-        <ImportCodeDialog
-          isOpen={isImportDialogOpen}
-          onClose={() => setIsImportDialogOpen(false)}
-          onSuccess={fetchQuizzes}
-        />
+        {/* Import Code Dialog - only show for PRO users */}
+        {isPro() && (
+          <ImportCodeDialog
+            isOpen={isImportDialogOpen}
+            onClose={() => setIsImportDialogOpen(false)}
+            onSuccess={fetchQuizzes}
+          />
+        )}
+        
+        {/* Premium Feature Warning Dialog */}
+        <Dialog open={isPremiumWarningOpen} onOpenChange={setIsPremiumWarningOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Recurso Pro</DialogTitle>
+              <DialogDescription>
+                Função exclusiva para assinantes PRO. Faça upgrade para liberar esta ferramenta!
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-center mt-4">
+              <Button 
+                variant="default" 
+                size="sm"
+                className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600"
+                onClick={() => setIsPremiumWarningOpen(false)}
+              >
+                Fazer Upgrade
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

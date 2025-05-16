@@ -1,11 +1,11 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useAIQuestion } from "./useAIQuestion";
 import AIQuestionModal from "./AIQuestionModal";
-import PremiumFeatureGate from "../PremiumFeatureGate";
 import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 
 interface CreateWithAIButtonProps {
   quizId: string;
@@ -35,17 +35,15 @@ const CreateWithAIButton: React.FC<CreateWithAIButtonProps> = ({ quizId, onSucce
 
   return (
     <>
-      <PremiumFeatureGate feature="ai">
-        <Button
-          variant="ghost" 
-          size="sm"
-          className="flex items-center gap-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          onClick={openModal}
-        >
-          <Sparkles className="h-4 w-4" />
-          <span>Criar com IA</span>
-        </Button>
-      </PremiumFeatureGate>
+      <Button
+        variant="ghost" 
+        size="sm"
+        className="flex items-center gap-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+        onClick={openModal}
+      >
+        <Sparkles className="h-4 w-4" />
+        <span>Criar com IA</span>
+      </Button>
       
       <AIQuestionModal
         isOpen={isModalOpen}

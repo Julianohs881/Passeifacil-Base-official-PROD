@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PremiumFeatureGate from "@/components/PremiumFeatureGate";
+import { useAuth } from "@/context/AuthContext";
 
 interface HomePageHeaderProps {
   onOpenCreateQuiz: () => void;
@@ -11,6 +12,7 @@ interface HomePageHeaderProps {
 
 export const HomePageHeader = ({ onOpenCreateQuiz, onOpenImportDialog }: HomePageHeaderProps) => {
   const navigate = useNavigate();
+  const { isPro } = useAuth();
   
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -24,7 +26,8 @@ export const HomePageHeader = ({ onOpenCreateQuiz, onOpenImportDialog }: HomePag
           Novo Quiz
         </Button>
         
-        <PremiumFeatureGate feature="explore">
+        {/* Only show Explore button for PRO users */}
+        {isPro() && (
           <Button 
             onClick={() => navigate("/explore")}
             variant="outline"
@@ -32,9 +35,10 @@ export const HomePageHeader = ({ onOpenCreateQuiz, onOpenImportDialog }: HomePag
           >
             Explorar
           </Button>
-        </PremiumFeatureGate>
+        )}
         
-        <PremiumFeatureGate feature="import">
+        {/* Only show Import button for PRO users */}
+        {isPro() && (
           <Button
             onClick={onOpenImportDialog}
             variant="outline"
@@ -43,7 +47,7 @@ export const HomePageHeader = ({ onOpenCreateQuiz, onOpenImportDialog }: HomePag
             <Download className="h-4 w-4 mr-2" />
             Importar por Código
           </Button>
-        </PremiumFeatureGate>
+        )}
       </div>
     </div>
   );
