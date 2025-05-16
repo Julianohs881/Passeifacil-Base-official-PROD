@@ -5,6 +5,7 @@ import { Edit, Trash2, Palette, Eye, EyeOff } from "lucide-react";
 import { Quiz, VisibilityOption } from "../types";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -17,6 +18,10 @@ interface QuizCardProps {
 const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }: QuizCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Verifica se o usuário atual é o criador do quiz
+  const isCreator = user && user.id === quiz.user_id;
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -82,49 +87,51 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="absolute top-3 right-3 flex space-x-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
-            onClick={handleEdit}
-          >
-            <Edit className="h-3 w-3 text-gray-700" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
-            onClick={handleColorChange}
-          >
-            <Palette className="h-3 w-3 text-gray-700" />
-          </Button>
-          {onToggleVisibility && (
+        {/* Action buttons - Mostrar apenas se o usuário for o criador */}
+        {isCreator && (
+          <div className="absolute top-3 right-3 flex space-x-1">
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
-              onClick={handleToggleVisibility}
-              title={quiz.visibility === "public" ? "Tornar privado" : "Tornar público"}
+              onClick={handleEdit}
             >
-              {quiz.visibility === "public" ? (
-                <EyeOff className="h-3 w-3 text-gray-700" />
-              ) : (
-                <Eye className="h-3 w-3 text-gray-700" />
-              )}
+              <Edit className="h-3 w-3 text-gray-700" />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 hover:bg-red-200"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            <Trash2 className="h-3 w-3 text-gray-700" />
-          </Button>
-        </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
+              onClick={handleColorChange}
+            >
+              <Palette className="h-3 w-3 text-gray-700" />
+            </Button>
+            {onToggleVisibility && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
+                onClick={handleToggleVisibility}
+                title={quiz.visibility === "public" ? "Tornar privado" : "Tornar público"}
+              >
+                {quiz.visibility === "public" ? (
+                  <EyeOff className="h-3 w-3 text-gray-700" />
+                ) : (
+                  <Eye className="h-3 w-3 text-gray-700" />
+                )}
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 hover:bg-red-200"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-3 w-3 text-gray-700" />
+            </Button>
+          </div>
+        )}
 
         {/* Título do quiz centralizado verticalmente e horizontalmente */}
         <div className="flex-grow flex items-center justify-center">

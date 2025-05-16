@@ -77,3 +77,14 @@ export interface Comment {
   created_at: string;
   user_email?: string; // Adicionamos o e-mail do usuário como opcional
 }
+
+// Nova interface para verificar se o usuário é o criador de um item
+export interface UserIsCreatorProps {
+  userId: string;
+  creatorId: string;
+}
+
+// Função auxiliar para verificar se o usuário é o criador
+export const isUserCreator = ({ userId, creatorId }: UserIsCreatorProps): boolean => {
+  return userId === creatorId;
+};

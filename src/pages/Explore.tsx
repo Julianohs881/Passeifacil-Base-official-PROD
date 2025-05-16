@@ -8,10 +8,12 @@ import NavBar from "@/components/NavBar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Eye } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const Explore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +89,13 @@ const Explore = () => {
                       Público
                     </span>
                   </div>
+                  
+                  {/* Visualizar se o usuário atual é o criador para exibir controles */}
+                  {user && user.id === quiz.user_id && (
+                    <div className="absolute top-3 right-3 bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full">
+                      Seu quiz
+                    </div>
+                  )}
                   
                   {/* Título do quiz centralizado */}
                   <div className="flex-grow flex items-center justify-center">
