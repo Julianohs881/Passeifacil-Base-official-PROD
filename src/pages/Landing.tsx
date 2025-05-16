@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Music, Users, MessageCircle, Check, Star, Hashtag } from "lucide-react";
+import { Music, Users, MessageCircle, Check, Star, Hash } from "lucide-react";
 
 const Landing = () => {
   const { user } = useAuth();
@@ -99,7 +99,7 @@ const Landing = () => {
                 <Star className="text-yellow-400" size={24} />
               </div>
               <div className="absolute top-10 right-32 animate-float">
-                <Hashtag className="text-pink-500" size={20} />
+                <Hash className="text-pink-500" size={20} />
               </div>
               <div className="absolute top-20 left-20 animate-float-slow">
                 <Music className="text-green-500" size={22} />
