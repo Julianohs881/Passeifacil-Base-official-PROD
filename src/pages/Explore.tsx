@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import NavBar from "@/components/NavBar";
 
 // Extracted components
-import ExploreFilters, { formSchema } from "@/components/Explore/ExploreFilters";
+import ExploreFilters, { formSchema, FilterValues } from "@/components/Explore/ExploreFilters";
 import QuizzesGrid from "@/components/Explore/QuizzesGrid";
 import { useExploreQuizzes } from "@/components/Explore/useExploreQuizzes";
 
@@ -26,7 +26,7 @@ const Explore = () => {
     quizzes
   } = useExploreQuizzes();
   
-  const form = useForm({
+  const form = useForm<FilterValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       search: "",
@@ -45,7 +45,7 @@ const Explore = () => {
     setFilteredQuizzes(quizzes);
   };
   
-  const onSubmit = (values: any) => {
+  const onSubmit = (values: FilterValues) => {
     applyFilters(values);
   };
 
