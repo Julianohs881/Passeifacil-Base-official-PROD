@@ -3,8 +3,28 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+@layer base {
+  body {
+    font-family: 'Roboto', sans-serif;
+  }
+}
+
 @layer components {
   .quiz-card {
     @apply w-full h-44 rounded-xl shadow-md flex flex-col justify-between transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 transition-all shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-blue-900 px-6 py-3 hover:bg-blue-50 transition-all;
+  }
+
+  .btn-cta {
+    @apply bg-emerald-500 text-white px-8 py-4 rounded-md hover:bg-emerald-600 transition-all shadow-md text-xl font-medium;
   }
 }
