@@ -15,13 +15,13 @@ const NavBar = () => {
 
   return (
     <header className="bg-white shadow-sm">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="container mx-auto px-6 md:px-8 py-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <div className="relative">
-            <GraduationCap className="w-8 h-8 text-blue-900" />
-            <Check className="w-4 h-4 text-emerald-500 absolute bottom-0 right-0" />
+            <GraduationCap className="w-10 h-10 text-blue-900" />
+            <Check className="w-5 h-5 text-emerald-500 absolute bottom-0 right-0" />
           </div>
-          <span className="ml-2 text-lg font-bold text-blue-900">Passei Fácil</span>
+          <span className="ml-3 text-xl font-bold text-blue-900">Passei Fácil</span>
         </Link>
         
         <div className="flex items-center space-x-4">
@@ -34,7 +34,7 @@ const NavBar = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="text-sm"
+                className="text-blue-900 hover:bg-blue-50"
               >
                 Sair
               </Button>
@@ -42,12 +42,12 @@ const NavBar = () => {
           ) : (
             <>
               <Link to="/login">
-                <Button variant="outline" size="sm" className="border-blue-100 text-blue-900">
+                <Button variant="outline" size="sm" className="border-blue-500 text-blue-900 rounded-full">
                   Login
                 </Button>
               </Link>
               <Link to="/register">
-                <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
+                <Button size="sm" className="bg-blue-500 hover:bg-blue-600 rounded-full">
                   Criar conta
                 </Button>
               </Link>
