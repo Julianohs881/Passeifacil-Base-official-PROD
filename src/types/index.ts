@@ -33,6 +33,7 @@ export interface Quiz {
   faculty?: string;
   course_year?: string;
   course?: string;
+  share_code?: string | null;
 }
 
 export const QUIZ_COLORS: ColorOption[] = [
@@ -64,6 +65,7 @@ export interface Question {
   correct_index: number;
   explanation?: string;
   created_at?: string;
+  share_code?: string | null;
 }
 
 export interface QuizResult {
@@ -94,3 +96,4 @@ export const isUserCreator = ({ userId, creatorId }: UserIsCreatorProps): boolea
 };
 
 export type QuestionStatus = 'unanswered' | 'correct' | 'incorrect';
+

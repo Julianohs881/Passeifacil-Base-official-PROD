@@ -1,44 +1,39 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/utils/supabase";
-import { Quiz, ColorOption, parseColorOption, VisibilityOption } from "../types";
+import { supabase } from "@/integrations/supabase/client";
+import { Quiz } from "../types";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, Download } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import QuizCard from "@/components/QuizCard";
-import CreateQuizCard from "@/components/CreateQuizCard";
 import AddQuizModal from "@/components/AddQuizModal";
 import RenameQuizModal from "@/components/RenameQuizModal";
-import ChangeColorPopover from "@/components/ChangeColorPopover";
 import DeleteQuizDialog from "@/components/DeleteQuizDialog";
+import ChangeColorPopover from "@/components/ChangeColorPopover";
+import CreateQuizCard from "@/components/CreateQuizCard";
+import { ImportCodeDialog } from "@/components/Share/ImportCodeDialog";
 
 const Home = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Modal states
-  const [isAddQuizModalOpen, setIsAddQuizModalOpen] = useState(false);
-  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
-  const [isColorPopoverOpen, setIsColorPopoverOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const colorPickerAnchorRef = useRef<HTMLButtonElement>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      fetchQuizzes();
-    }
+    fetchQuizzes();
   }, [user]);
 
   const fetchQuizzes = async () => {
     if (!user) return;
-    
+
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from("quizzes")
         .select("*")
@@ -46,140 +41,59 @@ const Home = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
-      // Transform the data to ensure color is a valid ColorOption
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        color: parseColorOption(item.color),
-        visibility: item.visibility || "private" as VisibilityOption,
-        faculty: item.faculty || undefined,
-        course_year: item.course_year || undefined,
-        course: item.course || undefined
-      })) as Quiz[];
-      
-      setQuizzes(transformedData);
+
+      setQuizzes(data as Quiz[]);
     } catch (error) {
       console.error("Error fetching quizzes:", error);
-      toast({
-        title: "Erro ao carregar quizzes",
-        description: "Não foi possível carregar seus quizzes.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleCreateQuiz = async (quizData: Omit<Quiz, "id" | "user_id" | "created_at">) => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("quizzes")
-        .insert([
-          {
-            user_id: user.id,
-            title: quizData.title,
-            color: quizData.color,
-            visibility: quizData.visibility,
-            faculty: quizData.faculty,
-            course_year: quizData.course_year,
-            course: quizData.course
-          },
-        ])
-        .select();
-
-      if (error) throw error;
-      
-      if (data) {
-        // Transform the data to ensure color is a valid ColorOption
-        const transformedData = data.map(item => ({
-          ...item,
-          color: parseColorOption(item.color),
-          visibility: item.visibility as VisibilityOption,
-          faculty: item.faculty || undefined,
-          course_year: item.course_year || undefined,
-          course: item.course || undefined
-        })) as Quiz[];
-        
-        setQuizzes([...transformedData, ...quizzes]);
-        toast({
-          title: "Quiz criado com sucesso!",
-          description: "Seu novo quiz foi criado.",
-        });
-      }
-    } catch (error) {
-      console.error("Error creating quiz:", error);
-      toast({
-        title: "Erro ao criar quiz",
-        description: "Não foi possível criar o quiz.",
-        variant: "destructive",
-      });
-      throw error;
-    }
+  const handleQuizCreated = () => {
+    fetchQuizzes();
   };
 
-  const handleUpdateQuizTitle = async (quiz: Quiz, newTitle: string) => {
+  const handleEditQuiz = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleQuizUpdated = () => {
+    fetchQuizzes();
+  };
+
+  const handleDeleteQuiz = (id: string) => {
+    setSelectedQuiz({ id } as Quiz);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteQuiz = async () => {
+    if (!selectedQuiz?.id) return;
+
     try {
       const { error } = await supabase
         .from("quizzes")
-        .update({ title: newTitle })
-        .eq("id", quiz.id);
+        .delete()
+        .eq("id", selectedQuiz.id);
 
       if (error) throw error;
-      
-      setQuizzes(
-        quizzes.map((q) =>
-          q.id === quiz.id ? { ...q, title: newTitle } : q
-        )
-      );
-      
-      toast({
-        title: "Quiz renomeado com sucesso!",
-        description: "O nome do quiz foi atualizado.",
-      });
+
+      setQuizzes(quizzes.filter((quiz) => quiz.id !== selectedQuiz.id));
+      setIsDeleteDialogOpen(false);
     } catch (error) {
-      console.error("Error updating quiz title:", error);
-      toast({
-        title: "Erro ao renomear quiz",
-        description: "Não foi possível renomear o quiz.",
-        variant: "destructive",
-      });
-      throw error;
+      console.error("Error deleting quiz:", error);
     }
   };
 
-  const handleUpdateQuizColor = async (quiz: Quiz, newColor: ColorOption) => {
-    try {
-      const { error } = await supabase
-        .from("quizzes")
-        .update({ color: newColor })
-        .eq("id", quiz.id);
-
-      if (error) throw error;
-      
-      setQuizzes(
-        quizzes.map((q) =>
-          q.id === quiz.id ? { ...q, color: newColor } : q
-        )
-      );
-      
-      toast({
-        title: "Cor atualizada com sucesso!",
-        description: "A cor do quiz foi atualizada.",
-      });
-    } catch (error) {
-      console.error("Error updating quiz color:", error);
-      toast({
-        title: "Erro ao atualizar cor",
-        description: "Não foi possível atualizar a cor do quiz.",
-        variant: "destructive",
-      });
-      throw error;
-    }
+  const handleOpenColorPicker = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setIsColorPickerOpen(true);
   };
 
-  const handleToggleVisibility = async (quiz: Quiz, newVisibility: VisibilityOption) => {
+  const handleColorChanged = () => {
+    fetchQuizzes();
+  };
+
+  const handleToggleVisibility = async (quiz: Quiz, newVisibility: string) => {
     try {
       const { error } = await supabase
         .from("quizzes")
@@ -187,128 +101,102 @@ const Home = () => {
         .eq("id", quiz.id);
 
       if (error) throw error;
-      
+
+      // Update the local state to reflect the new visibility
       setQuizzes(
-        quizzes.map((q) =>
-          q.id === quiz.id ? { ...q, visibility: newVisibility } : q
-        )
+        quizzes.map((q) => (q.id === quiz.id ? { ...q, visibility: newVisibility } : q))
       );
-      
-      toast({
-        title: "Visibilidade alterada!",
-        description: `O quiz agora é ${newVisibility === "public" ? "público" : "privado"}.`,
-      });
     } catch (error) {
-      console.error("Error updating quiz visibility:", error);
-      toast({
-        title: "Erro ao atualizar visibilidade",
-        description: "Não foi possível atualizar a visibilidade do quiz.",
-        variant: "destructive",
-      });
+      console.error("Error toggling visibility:", error);
     }
-  };
-
-  const handleDeleteQuiz = async (quiz: Quiz) => {
-    try {
-      const { error } = await supabase
-        .from("quizzes")
-        .delete()
-        .eq("id", quiz.id);
-
-      if (error) throw error;
-      
-      setQuizzes(quizzes.filter((q) => q.id !== quiz.id));
-      
-      toast({
-        title: "Quiz excluído com sucesso!",
-        description: "O quiz foi removido.",
-      });
-    } catch (error) {
-      console.error("Error deleting quiz:", error);
-      toast({
-        title: "Erro ao excluir quiz",
-        description: "Não foi possível excluir o quiz.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  // Helper function to handle the QuizCard's onDelete prop
-  const handleQuizDelete = (id: string) => {
-    const quizToDelete = quizzes.find(q => q.id === id);
-    if (quizToDelete) {
-      setSelectedQuiz(quizToDelete);
-      setIsDeleteDialogOpen(true);
-    }
-  };
-
-  // Modal handlers
-  const openRenameModal = (quiz: Quiz) => {
-    setSelectedQuiz(quiz);
-    setIsRenameModalOpen(true);
-  };
-
-  const openColorPopover = (quiz: Quiz) => {
-    setSelectedQuiz(quiz);
-    setIsColorPopoverOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
       <main className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-8">Meus Quizzes</h1>
-        
-        {loading ? (
-          <div className="flex justify-center my-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0D6EFD]"></div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h1 className="text-2xl font-bold mb-4 md:mb-0">Meus Quizzes</h1>
+          <div className="flex items-center space-x-2 w-full md:w-auto">
+            <Button 
+              onClick={() => setIsDialogOpen(true)}
+              className="flex-1 md:flex-none"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" /> 
+              Novo Quiz
+            </Button>
+            <Button 
+              onClick={() => navigate("/explore")}
+              variant="outline"
+              className="flex-1 md:flex-none border-blue-500 text-blue-900"
+            >
+              Explorar
+            </Button>
+            <Button
+              onClick={() => setIsImportDialogOpen(true)}
+              variant="outline"
+              className="flex-1 md:flex-none"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Importar por Código
+            </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-            <CreateQuizCard onClick={() => setIsAddQuizModalOpen(true)} />
-            
-            {quizzes.map((quiz) => (
-              <QuizCard
-                key={quiz.id}
-                quiz={quiz}
-                onEdit={openRenameModal}
-                onColorChange={openColorPopover}
-                onDelete={handleQuizDelete}
-                onToggleVisibility={handleToggleVisibility}
-              />
-            ))}
-          </div>
-        )}
+        </div>
+
+        {/* Grid of Quiz Cards */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mt-6">
+          <CreateQuizCard onClick={() => setIsDialogOpen(true)} />
+          {quizzes.map((quiz) => (
+            <QuizCard
+              key={quiz.id}
+              quiz={quiz}
+              onDelete={handleDeleteQuiz}
+              onEdit={handleEditQuiz}
+              onColorChange={handleOpenColorPicker}
+              onToggleVisibility={handleToggleVisibility}
+            />
+          ))}
+        </div>
+
+        {/* Add Quiz Dialog */}
+        <AddQuizModal
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          onQuizCreated={handleQuizCreated}
+        />
+
+        {/* Edit Quiz Dialog */}
+        <RenameQuizModal
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          quiz={selectedQuiz}
+          onQuizUpdated={handleQuizUpdated}
+        />
+
+        {/* Delete Quiz Dialog */}
+        <DeleteQuizDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          quizTitle={selectedQuiz?.title || ""}
+          onConfirmDelete={confirmDeleteQuiz}
+        />
+
+        {/* Color Picker Popover */}
+        <ChangeColorPopover
+          isOpen={isColorPickerOpen}
+          onClose={() => setIsColorPickerOpen(false)}
+          quiz={selectedQuiz}
+          onColorChange={handleColorChanged}
+          anchorRef={colorPickerAnchorRef}
+        />
+
+        {/* Import Code Dialog */}
+        <ImportCodeDialog
+          isOpen={isImportDialogOpen}
+          onClose={() => setIsImportDialogOpen(false)}
+          onSuccess={fetchQuizzes}
+        />
       </main>
-      
-      {/* Modals */}
-      <AddQuizModal
-        isOpen={isAddQuizModalOpen}
-        onClose={() => setIsAddQuizModalOpen(false)}
-        onSave={handleCreateQuiz}
-      />
-      
-      <RenameQuizModal
-        isOpen={isRenameModalOpen}
-        onClose={() => setIsRenameModalOpen(false)}
-        onSave={handleUpdateQuizTitle}
-        quiz={selectedQuiz}
-      />
-      
-      <ChangeColorPopover
-        isOpen={isColorPopoverOpen}
-        onClose={() => setIsColorPopoverOpen(false)}
-        onSave={handleUpdateQuizColor}
-        quiz={selectedQuiz}
-      />
-      
-      <DeleteQuizDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleDeleteQuiz}
-        quiz={selectedQuiz}
-      />
     </div>
   );
 };

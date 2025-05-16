@@ -52,6 +52,7 @@ export type Database = {
           id: string
           options: string[]
           quiz_id: string
+          share_code: string | null
           statement: string
         }
         Insert: {
@@ -61,6 +62,7 @@ export type Database = {
           id?: string
           options: string[]
           quiz_id: string
+          share_code?: string | null
           statement: string
         }
         Update: {
@@ -70,6 +72,7 @@ export type Database = {
           id?: string
           options?: string[]
           quiz_id?: string
+          share_code?: string | null
           statement?: string
         }
         Relationships: [
@@ -90,6 +93,7 @@ export type Database = {
           created_at: string
           faculty: string | null
           id: string
+          share_code: string | null
           title: string
           user_id: string
           visibility: string
@@ -101,6 +105,7 @@ export type Database = {
           created_at?: string
           faculty?: string | null
           id?: string
+          share_code?: string | null
           title: string
           user_id: string
           visibility?: string
@@ -112,6 +117,7 @@ export type Database = {
           created_at?: string
           faculty?: string | null
           id?: string
+          share_code?: string | null
           title?: string
           user_id?: string
           visibility?: string
@@ -123,7 +129,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_random_code: {
+        Args: { length: number }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

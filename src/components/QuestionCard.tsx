@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
+  Share2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import CommentSection from "./Comments/CommentSection";
 import { useAuth } from "@/context/AuthContext";
+import { ShareCodeDialog } from "./Share/ShareCodeDialog";
 
 interface QuestionCardProps {
   question: Question;
@@ -48,6 +50,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   isPublicQuiz = false,
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const userAnswer = userAnswers[question.id];
   const isAnswered = userAnswer !== undefined;
   const isCorrect = userAnswer === question.correct_index;
@@ -74,29 +77,42 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             Questão {currentIndex + 1}/{totalQuestions}
           </Badge>
           
-          {/* Mostrar botões de edição e exclusão apenas se o usuário for o criador */}
-          {isCreator && (
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onOpenEditModal(question)}
-                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Editar
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsDeleteDialogOpen(true)}
-                className="text-gray-600 hover:text-red-600 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Excluir
-              </Button>
-            </div>
-          )}
+          <div className="flex space-x-2">
+            {/* Share button - available to everyone */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsShareDialogOpen(true)}
+              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+            >
+              <Share2 className="h-4 w-4 mr-1" />
+              Compartilhar
+            </Button>
+            
+            {/* Creator-only buttons */}
+            {isCreator && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onOpenEditModal(question)}
+                  className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Editar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Excluir
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="mb-6 whitespace-pre-line">
@@ -202,6 +218,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Share Dialog */}
+      <ShareCodeDialog
+        isOpen={isShareDialogOpen}
+        onClose={() => setIsShareDialogOpen(false)}
+        title={question.statement.length > 40 
+          ? question.statement.substring(0, 40) + "..." 
+          : question.statement}
+        code={question.share_code}
+        type="question"
+      />
     </div>
   );
 };
