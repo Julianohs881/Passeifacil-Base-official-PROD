@@ -11,6 +11,7 @@ import NavBar from "@/components/NavBar";
 import QuizHeader from "@/components/Quiz/QuizHeader";
 import QuizFooter from "@/components/Quiz/QuizFooter";
 import QuizEmptyState from "@/components/Quiz/QuizEmptyState";
+import { ImportQuestionDialog } from "@/components/Share/ImportQuestionDialog";
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,7 @@ const Quiz = () => {
   // Modal state for question management
   const [isAddQuestionModalOpen, setIsAddQuestionModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(undefined);
+  const [isImportQuestionDialogOpen, setIsImportQuestionDialogOpen] = useState(false);
 
   // Use our custom hook to manage quiz state
   const {
@@ -55,6 +57,10 @@ const Quiz = () => {
   const handleOpenEditModal = (question: Question) => {
     setEditingQuestion(question);
     setIsAddQuestionModalOpen(true);
+  };
+
+  const handleOpenImportQuestionDialog = () => {
+    setIsImportQuestionDialogOpen(true);
   };
 
   const handleSaveQuestion = async (question: Omit<Question, "id" | "created_at">) => {
@@ -139,21 +145,32 @@ const Quiz = () => {
               onNext={goToNextQuestion}
               onAddQuestion={isCreator ? handleOpenAddModal : undefined}
               onQuestionCreated={fetchQuestions}
+              onImportQuestion={isCreator ? handleOpenImportQuestionDialog : undefined}
             />
           )}
           
           {/* Modal de adicionar/editar questão - disponível apenas para o criador */}
           {isCreator && (
-            <AddEditQuestionModal
-              isOpen={isAddQuestionModalOpen}
-              onClose={() => {
-                setIsAddQuestionModalOpen(false);
-                setEditingQuestion(undefined);
-              }}
-              onSave={handleSaveQuestion}
-              quizId={id || ""}
-              question={editingQuestion}
-            />
+            <>
+              <AddEditQuestionModal
+                isOpen={isAddQuestionModalOpen}
+                onClose={() => {
+                  setIsAddQuestionModalOpen(false);
+                  setEditingQuestion(undefined);
+                }}
+                onSave={handleSaveQuestion}
+                quizId={id || ""}
+                question={editingQuestion}
+              />
+              
+              {/* Import Question Dialog */}
+              <ImportQuestionDialog
+                isOpen={isImportQuestionDialogOpen}
+                onClose={() => setIsImportQuestionDialogOpen(false)}
+                quizId={id || ""}
+                onSuccess={fetchQuestions}
+              />
+            </>
           )}
         </div>
       )}

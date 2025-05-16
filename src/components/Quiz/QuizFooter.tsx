@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import CreateWithAIButton from "@/components/CreateWithAI/CreateWithAIButton";
 import QuizNavigationButtons from "@/components/QuizNavigationButtons";
+import { FileCode2 } from "lucide-react";
 
 interface QuizFooterProps {
   quizId: string;
@@ -12,6 +13,7 @@ interface QuizFooterProps {
   onNext: () => void;
   onAddQuestion: () => void;
   onQuestionCreated: () => void;
+  onImportQuestion?: () => void; // New prop for importing questions
 }
 
 const QuizFooter: React.FC<QuizFooterProps> = ({
@@ -22,6 +24,7 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
   onNext,
   onAddQuestion,
   onQuestionCreated,
+  onImportQuestion,
 }) => {
   return (
     <div className="flex justify-between items-center px-6 py-4 bg-white border-t">
@@ -33,6 +36,20 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
         >
           Adicionar Questão
         </Button>
+        
+        {/* New Import Question Button */}
+        {onImportQuestion && (
+          <Button
+            onClick={onImportQuestion}
+            size="sm"
+            variant="outline"
+            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+          >
+            <FileCode2 className="mr-2 h-4 w-4" />
+            Importar Questão por Código
+          </Button>
+        )}
+        
         <CreateWithAIButton 
           quizId={quizId}
           onSuccess={onQuestionCreated}
