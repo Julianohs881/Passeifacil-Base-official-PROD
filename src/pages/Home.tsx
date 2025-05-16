@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Download } from "lucide-react";
 import NavBar from "@/components/NavBar";
 import QuizCard from "@/components/QuizCard";
-import AddQuizModal from "@/components/AddQuizModal";
+import AddQuizModal from "@/components/QuizForms/AddQuizModal";
 import RenameQuizModal from "@/components/RenameQuizModal";
 import DeleteQuizDialog from "@/components/DeleteQuizDialog";
 import ChangeColorPopover from "@/components/ChangeColorPopover";
