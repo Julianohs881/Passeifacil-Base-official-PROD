@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Edit, Trash2, Palette } from "lucide-react";
-import { Quiz } from "../types";
+import { Edit, Trash2, Palette, Eye, EyeOff } from "lucide-react";
+import { Quiz, VisibilityOption } from "../types";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,9 +11,10 @@ interface QuizCardProps {
   onDelete: (id: string) => void;
   onEdit: (quiz: Quiz) => void;
   onColorChange: (quiz: Quiz) => void;
+  onToggleVisibility?: (quiz: Quiz, newVisibility: VisibilityOption) => void;
 }
 
-const QuizCard = ({ quiz, onDelete, onEdit, onColorChange }: QuizCardProps) => {
+const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }: QuizCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
@@ -49,6 +50,15 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange }: QuizCardProps) => {
     onColorChange(quiz);
   };
 
+  const handleToggleVisibility = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onToggleVisibility) {
+      const newVisibility: VisibilityOption = quiz.visibility === "public" ? "private" : "public";
+      onToggleVisibility(quiz, newVisibility);
+    }
+  };
+
   return (
     <Link
       to={`/quiz/${quiz.id}`}
@@ -57,7 +67,22 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange }: QuizCardProps) => {
       <div
         className={`quiz-card ${quiz.color} p-5 flex flex-col justify-between`}
       >
-        {/* Action buttons - consistentemente posicionados no canto superior direito */}
+        {/* Indicador de visibilidade */}
+        <div className="absolute top-3 left-3">
+          {quiz.visibility === "public" ? (
+            <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
+              <Eye className="h-3 w-3 mr-1" />
+              Público
+            </span>
+          ) : (
+            <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
+              <EyeOff className="h-3 w-3 mr-1" />
+              Privado
+            </span>
+          )}
+        </div>
+
+        {/* Action buttons */}
         <div className="absolute top-3 right-3 flex space-x-1">
           <Button
             variant="ghost"
@@ -75,6 +100,21 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange }: QuizCardProps) => {
           >
             <Palette className="h-3 w-3 text-gray-700" />
           </Button>
+          {onToggleVisibility && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
+              onClick={handleToggleVisibility}
+              title={quiz.visibility === "public" ? "Tornar privado" : "Tornar público"}
+            >
+              {quiz.visibility === "public" ? (
+                <EyeOff className="h-3 w-3 text-gray-700" />
+              ) : (
+                <Eye className="h-3 w-3 text-gray-700" />
+              )}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/utils/supabase";
-import { Quiz, ColorOption, parseColorOption } from "../types";
+import { Quiz, ColorOption, parseColorOption, VisibilityOption } from "../types";
 import NavBar from "@/components/NavBar";
 import QuizCard from "@/components/QuizCard";
 import CreateQuizCard from "@/components/CreateQuizCard";
@@ -50,7 +50,8 @@ const Home = () => {
       // Transform the data to ensure color is a valid ColorOption
       const transformedData = (data || []).map(item => ({
         ...item,
-        color: parseColorOption(item.color)
+        color: parseColorOption(item.color),
+        visibility: item.visibility || "private" as VisibilityOption
       })) as Quiz[];
       
       setQuizzes(transformedData);
@@ -77,6 +78,7 @@ const Home = () => {
             user_id: user.id,
             title: quizData.title,
             color: quizData.color,
+            visibility: quizData.visibility,
           },
         ])
         .select();
@@ -87,7 +89,8 @@ const Home = () => {
         // Transform the data to ensure color is a valid ColorOption
         const transformedData = data.map(item => ({
           ...item,
-          color: parseColorOption(item.color)
+          color: parseColorOption(item.color),
+          visibility: item.visibility as VisibilityOption
         })) as Quiz[];
         
         setQuizzes([...transformedData, ...quizzes]);
@@ -167,6 +170,35 @@ const Home = () => {
     }
   };
 
+  const handleToggleVisibility = async (quiz: Quiz, newVisibility: VisibilityOption) => {
+    try {
+      const { error } = await supabase
+        .from("quizzes")
+        .update({ visibility: newVisibility })
+        .eq("id", quiz.id);
+
+      if (error) throw error;
+      
+      setQuizzes(
+        quizzes.map((q) =>
+          q.id === quiz.id ? { ...q, visibility: newVisibility } : q
+        )
+      );
+      
+      toast({
+        title: "Visibilidade alterada!",
+        description: `O quiz agora é ${newVisibility === "public" ? "público" : "privado"}.`,
+      });
+    } catch (error) {
+      console.error("Error updating quiz visibility:", error);
+      toast({
+        title: "Erro ao atualizar visibilidade",
+        description: "Não foi possível atualizar a visibilidade do quiz.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteQuiz = async (quiz: Quiz) => {
     try {
       const { error } = await supabase
@@ -234,6 +266,7 @@ const Home = () => {
                 onEdit={openRenameModal}
                 onColorChange={openColorPopover}
                 onDelete={handleQuizDelete}
+                onToggleVisibility={handleToggleVisibility}
               />
             ))}
           </div>

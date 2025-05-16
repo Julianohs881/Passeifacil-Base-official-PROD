@@ -12,8 +12,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { ColorOption, QUIZ_COLORS, Quiz } from "../types";
+import { ColorOption, QUIZ_COLORS, Quiz, VisibilityOption } from "../types";
 import { useToast } from "@/hooks/use-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 interface AddQuizModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [color, setColor] = useState<ColorOption>("bg-violet-500");
+  const [visibility, setVisibility] = useState<VisibilityOption>("private");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -38,6 +40,7 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
     if (isOpen) {
       setTitle(quiz?.title || "");
       setColor((quiz?.color || "bg-violet-500") as ColorOption);
+      setVisibility((quiz?.visibility || "private") as VisibilityOption);
     }
   }, [isOpen, quiz]);
 
@@ -56,7 +59,7 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
     setIsSubmitting(true);
     
     try {
-      await onSave({ title, color });
+      await onSave({ title, color, visibility });
       onClose();
     } catch (error) {
       console.error("Error saving quiz:", error);
@@ -113,7 +116,7 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
                     />
                     <Label
                       htmlFor={colorOption}
-                      className={`h-8 w-8 rounded-full cursor-pointer ring-offset-background transition-all hover:scale-110 bg-${colorOption} ${
+                      className={`h-8 w-8 rounded-full cursor-pointer ring-offset-background transition-all hover:scale-110 ${colorOption} ${
                         color === colorOption
                           ? "ring-2 ring-offset-2 ring-slate-950"
                           : ""
@@ -122,6 +125,41 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
                   </div>
                 ))}
               </RadioGroup>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Visibilidade</Label>
+              <div className="col-span-3 flex space-x-4">
+                <div 
+                  className={`flex items-center p-3 border rounded-lg cursor-pointer ${
+                    visibility === 'private' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setVisibility('private')}
+                >
+                  <EyeOff className="h-5 w-5 mr-2 text-gray-600" />
+                  <div>
+                    <p className="font-medium">Privado</p>
+                    <p className="text-xs text-gray-500">Somente você pode ver</p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`flex items-center p-3 border rounded-lg cursor-pointer ${
+                    visibility === 'public' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setVisibility('public')}
+                >
+                  <Eye className="h-5 w-5 mr-2 text-gray-600" />
+                  <div>
+                    <p className="font-medium">Público</p>
+                    <p className="text-xs text-gray-500">Visível para todos</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           

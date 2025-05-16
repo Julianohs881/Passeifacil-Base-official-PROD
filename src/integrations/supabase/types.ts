@@ -54,6 +54,7 @@ export type Database = {
           id: string
           title: string
           user_id: string
+          visibility: string
         }
         Insert: {
           color?: string | null
@@ -61,6 +62,7 @@ export type Database = {
           id?: string
           title: string
           user_id: string
+          visibility?: string
         }
         Update: {
           color?: string | null
@@ -68,6 +70,7 @@ export type Database = {
           id?: string
           title?: string
           user_id?: string
+          visibility?: string
         }
         Relationships: []
       }

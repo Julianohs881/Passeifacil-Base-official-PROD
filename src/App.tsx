@@ -1,91 +1,87 @@
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "./components/ui/toaster";
-import { Toaster as Sonner } from "./components/ui/sonner";
-import { TooltipProvider } from "./components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
-
-// Pages
+import { Toaster } from "@/components/ui/toaster";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
-import Quiz from "./pages/Quiz";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Quiz from "./pages/Quiz";
+import Explore from "./pages/Explore";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
-
-// AuthAwareRoute component to conditionally redirect based on auth status
-const AuthAwareRoute = ({ element }: { element: React.ReactElement }) => {
+// Redirect to home if authenticated, otherwise show login
+const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
-    </div>
-  );
+  if (loading) return <div>Loading...</div>;
   
-  if (user) {
-    return <Navigate to="/quizzes" replace />;
-  }
+  if (user) return <Navigate to="/quizzes" />;
   
-  return element;
+  return <>{children}</>;
 };
 
-const App = () => {
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes with conditional redirection */}
-              <Route path="/" element={
-                <AuthProvider>
-                  <AuthAwareRoute element={<Landing />} />
-                </AuthProvider>
-              } />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              {/* Protected routes */}
-              <Route
-                path="/quizzes"
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/:id"
-                element={
-                  <ProtectedRoute>
-                    <Quiz />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <Toaster />
-          <Sonner />
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Landing />} />
+          <Route 
+            path="/login" 
+            element={
+              <AuthRedirect>
+                <Login />
+              </AuthRedirect>
+            }
+          />
+          <Route 
+            path="/register" 
+            element={
+              <AuthRedirect>
+                <Register />
+              </AuthRedirect>
+            }
+          />
+
+          {/* Protected routes */}
+          <Route 
+            path="/quizzes" 
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/quiz/:id" 
+            element={
+              <ProtectedRoute>
+                <Quiz />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Explore page - acessível para todos os usuários autenticados */}
+          <Route 
+            path="/explore" 
+            element={
+              <ProtectedRoute>
+                <Explore />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        
+        <Toaster />
+      </Router>
+    </AuthProvider>
   );
-};
+}
 
 export default App;

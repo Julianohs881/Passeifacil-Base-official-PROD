@@ -2,7 +2,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { GraduationCap, Check } from "lucide-react";
+import { GraduationCap, Check, Eye } from "lucide-react";
 
 const NavBar = () => {
   const { user, signOut } = useAuth();
@@ -27,6 +27,10 @@ const NavBar = () => {
         <div className="flex items-center space-x-4">
           {user ? (
             <>
+              <Link to="/explore" className="flex items-center text-sm text-gray-600 hover:text-blue-900">
+                <Eye className="h-4 w-4 mr-1" />
+                <span className="hidden md:inline-block">Explorar</span>
+              </Link>
               <span className="text-sm text-gray-600 hidden md:inline-block">
                 {user.email}
               </span>
