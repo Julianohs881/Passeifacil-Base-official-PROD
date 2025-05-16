@@ -67,6 +67,7 @@ const Quiz = () => {
 
   const currentQuestion = questions[currentQuestionIndex];
   const isPublicQuiz = quiz?.visibility === "public";
+  const isCreator = user && quiz ? user.id === quiz.user_id : false;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -96,11 +97,22 @@ const Quiz = () => {
             {/* Question content */}
             <div className="flex-1 overflow-auto p-6 md:p-6 sm:p-4">
               {questions.length === 0 ? (
-                <QuizEmptyState
-                  quizId={id || ""}
-                  onAddQuestion={handleOpenAddModal}
-                  onQuestionCreated={fetchQuestions}
-                />
+                isCreator ? (
+                  <QuizEmptyState
+                    quizId={id || ""}
+                    onAddQuestion={handleOpenAddModal}
+                    onQuestionCreated={fetchQuestions}
+                  />
+                ) : (
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-medium text-gray-700">
+                      Este quiz ainda não possui questões
+                    </h3>
+                    <p className="mt-2 text-gray-500">
+                      Volte mais tarde quando o criador adicionar questões
+                    </p>
+                  </div>
+                )
               ) : currentQuestion ? (
                 <QuestionCard
                   question={currentQuestion}
@@ -117,7 +129,7 @@ const Quiz = () => {
             </div>
           </div>
           
-          {/* Navigation buttons */}
+          {/* Navigation buttons - Mostramos botão de adicionar questão apenas para o criador */}
           {questions.length > 0 && (
             <QuizFooter
               quizId={id || ""}
@@ -125,21 +137,24 @@ const Quiz = () => {
               totalQuestions={questions.length}
               onPrevious={goToPreviousQuestion}
               onNext={goToNextQuestion}
-              onAddQuestion={handleOpenAddModal}
+              onAddQuestion={isCreator ? handleOpenAddModal : undefined}
               onQuestionCreated={fetchQuestions}
             />
           )}
           
-          <AddEditQuestionModal
-            isOpen={isAddQuestionModalOpen}
-            onClose={() => {
-              setIsAddQuestionModalOpen(false);
-              setEditingQuestion(undefined);
-            }}
-            onSave={handleSaveQuestion}
-            quizId={id || ""}
-            question={editingQuestion}
-          />
+          {/* Modal de adicionar/editar questão - disponível apenas para o criador */}
+          {isCreator && (
+            <AddEditQuestionModal
+              isOpen={isAddQuestionModalOpen}
+              onClose={() => {
+                setIsAddQuestionModalOpen(false);
+                setEditingQuestion(undefined);
+              }}
+              onSave={handleSaveQuestion}
+              quizId={id || ""}
+              question={editingQuestion}
+            />
+          )}
         </div>
       )}
     </div>

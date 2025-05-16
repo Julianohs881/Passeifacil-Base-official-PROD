@@ -55,6 +55,7 @@ export const parseColorOption = (color: string | null | undefined): ColorOption 
 export interface Question {
   id: string;
   quiz_id: string;
+  user_id?: string; // Adicionamos o user_id para poder verificar se o usuário é o criador
   statement: string;
   options: string[];
   correct_index: number;

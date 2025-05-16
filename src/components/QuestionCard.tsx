@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Question } from "../types";
+import { Question, isUserCreator } from "../types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import CommentSection from "./Comments/CommentSection";
+import { useAuth } from "@/context/AuthContext";
 
 interface QuestionCardProps {
   question: Question;
@@ -50,6 +51,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const userAnswer = userAnswers[question.id];
   const isAnswered = userAnswer !== undefined;
   const isCorrect = userAnswer === question.correct_index;
+  const { user } = useAuth();
+  
+  // Verificar se o usuário atual é o criador do quiz
+  const isCreator = user?.id === question.user_id;
 
   // Function to render the statement with proper line breaks
   const renderFormattedText = (text: string) => {
@@ -68,26 +73,30 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <Badge variant="outline" className="text-sm font-normal">
             Questão {currentIndex + 1}/{totalQuestions}
           </Badge>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenEditModal(question)}
-              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              Editar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="text-gray-600 hover:text-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Excluir
-            </Button>
-          </div>
+          
+          {/* Mostrar botões de edição e exclusão apenas se o usuário for o criador */}
+          {isCreator && (
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onOpenEditModal(question)}
+                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Editar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Excluir
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="mb-6 whitespace-pre-line">
