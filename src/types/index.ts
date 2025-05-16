@@ -67,3 +67,13 @@ export interface QuizResult {
   correctAnswers: number;
   percentage: number;
 }
+
+export interface Comment {
+  id: string;
+  user_id: string;
+  question_id: string;
+  content: string;
+  user_answer?: number;
+  created_at: string;
+  user_email?: string; // Adicionamos o e-mail do usuário para exibição
+}

@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import CommentSection from "./Comments/CommentSection";
 
 interface QuestionCardProps {
   question: Question;
@@ -31,6 +32,7 @@ interface QuestionCardProps {
   onDeleteQuestion: (id: string) => void;
   currentIndex: number;
   totalQuestions: number;
+  isPublicQuiz?: boolean;
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -42,6 +44,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onDeleteQuestion,
   currentIndex,
   totalQuestions,
+  isPublicQuiz = false,
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const userAnswer = userAnswers[question.id];
@@ -155,6 +158,15 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               {renderFormattedText(question.explanation)}
             </div>
           </div>
+        )}
+
+        {/* Seção de comentários - apenas para quizzes públicos */}
+        {isPublicQuiz && (
+          <CommentSection 
+            questionId={question.id} 
+            userAnswer={userAnswer} 
+            isPublicQuiz={isPublicQuiz}
+          />
         )}
       </Card>
 

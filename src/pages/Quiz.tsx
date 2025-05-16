@@ -66,6 +66,7 @@ const Quiz = () => {
   };
 
   const currentQuestion = questions[currentQuestionIndex];
+  const isPublicQuiz = quiz?.visibility === "public";
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -110,6 +111,7 @@ const Quiz = () => {
                   onDeleteQuestion={handleDeleteQuestion}
                   currentIndex={currentQuestionIndex}
                   totalQuestions={questions.length}
+                  isPublicQuiz={isPublicQuiz}
                 />
               ) : null}
             </div>
