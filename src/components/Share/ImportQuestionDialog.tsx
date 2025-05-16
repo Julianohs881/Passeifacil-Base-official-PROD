@@ -26,10 +26,10 @@ export function ImportQuestionDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-w-[90%] w-full">
+      <DialogContent className="sm:max-w-md max-w-[90%] w-full bg-white border-0 rounded-xl shadow-lg">
         <DialogHeader>
-          <DialogTitle>Importar questão por código</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-gray-800">Importar questão por código</DialogTitle>
+          <DialogDescription className="text-gray-600">
             Insira um código de compartilhamento de questão (formato P1234567) para adicioná-la ao quiz atual.
           </DialogDescription>
         </DialogHeader>
