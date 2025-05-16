@@ -12,6 +12,13 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { ColorOption, QUIZ_COLORS, Quiz, VisibilityOption } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
@@ -32,6 +39,9 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
   const [title, setTitle] = useState("");
   const [color, setColor] = useState<ColorOption>("bg-violet-500");
   const [visibility, setVisibility] = useState<VisibilityOption>("private");
+  const [faculty, setFaculty] = useState("");
+  const [courseYear, setCourseYear] = useState("");
+  const [course, setCourse] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -41,6 +51,9 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
       setTitle(quiz?.title || "");
       setColor((quiz?.color || "bg-violet-500") as ColorOption);
       setVisibility((quiz?.visibility || "private") as VisibilityOption);
+      setFaculty(quiz?.faculty || "");
+      setCourseYear(quiz?.course_year || "");
+      setCourse(quiz?.course || "");
     }
   }, [isOpen, quiz]);
 
@@ -59,7 +72,14 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
     setIsSubmitting(true);
     
     try {
-      await onSave({ title, color, visibility });
+      await onSave({ 
+        title, 
+        color, 
+        visibility,
+        faculty: faculty.trim() || undefined,
+        course_year: courseYear.trim() || undefined,
+        course: course.trim() || undefined
+      });
       onClose();
     } catch (error) {
       console.error("Error saving quiz:", error);
@@ -73,9 +93,11 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
     }
   };
 
+  const courseYearOptions = ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano", "6º ano", "Pós-graduação"];
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>{quiz ? "Editar Quiz" : "Novo Quiz"}</DialogTitle>
           <DialogDescription>
@@ -97,6 +119,51 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
                 onChange={(e) => setTitle(e.target.value)}
                 className="col-span-3"
                 placeholder="Ex: Matemática Avançada"
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="faculty" className="text-right">
+                Faculdade
+              </Label>
+              <Input
+                id="faculty"
+                value={faculty}
+                onChange={(e) => setFaculty(e.target.value)}
+                className="col-span-3"
+                placeholder="Ex: Engenharia"
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="courseYear" className="text-right">
+                Ano do Curso
+              </Label>
+              <Select value={courseYear} onValueChange={setCourseYear}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecione o ano do curso" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Não especificado</SelectItem>
+                  {courseYearOptions.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="course" className="text-right">
+                Curso/Matéria
+              </Label>
+              <Input
+                id="course"
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                className="col-span-3"
+                placeholder="Ex: Cálculo I"
               />
             </div>
             

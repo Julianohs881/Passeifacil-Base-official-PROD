@@ -1,3 +1,4 @@
+
 import { User, Session } from "@supabase/supabase-js";
 
 export type AuthContextType = {
@@ -29,6 +30,9 @@ export interface Quiz {
   color: ColorOption;
   created_at?: string;
   visibility: VisibilityOption;
+  faculty?: string;
+  course_year?: string;
+  course?: string;
 }
 
 export const QUIZ_COLORS: ColorOption[] = [

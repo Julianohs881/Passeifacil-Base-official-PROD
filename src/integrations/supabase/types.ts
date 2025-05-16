@@ -85,7 +85,10 @@ export type Database = {
       quizzes: {
         Row: {
           color: string | null
+          course: string | null
+          course_year: string | null
           created_at: string
+          faculty: string | null
           id: string
           title: string
           user_id: string
@@ -93,7 +96,10 @@ export type Database = {
         }
         Insert: {
           color?: string | null
+          course?: string | null
+          course_year?: string | null
           created_at?: string
+          faculty?: string | null
           id?: string
           title: string
           user_id: string
@@ -101,7 +107,10 @@ export type Database = {
         }
         Update: {
           color?: string | null
+          course?: string | null
+          course_year?: string | null
           created_at?: string
+          faculty?: string | null
           id?: string
           title?: string
           user_id?: string

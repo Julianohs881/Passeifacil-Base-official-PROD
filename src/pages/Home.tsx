@@ -51,7 +51,10 @@ const Home = () => {
       const transformedData = (data || []).map(item => ({
         ...item,
         color: parseColorOption(item.color),
-        visibility: item.visibility || "private" as VisibilityOption
+        visibility: item.visibility || "private" as VisibilityOption,
+        faculty: item.faculty || undefined,
+        course_year: item.course_year || undefined,
+        course: item.course || undefined
       })) as Quiz[];
       
       setQuizzes(transformedData);
@@ -79,6 +82,9 @@ const Home = () => {
             title: quizData.title,
             color: quizData.color,
             visibility: quizData.visibility,
+            faculty: quizData.faculty,
+            course_year: quizData.course_year,
+            course: quizData.course
           },
         ])
         .select();
@@ -90,7 +96,10 @@ const Home = () => {
         const transformedData = data.map(item => ({
           ...item,
           color: parseColorOption(item.color),
-          visibility: item.visibility as VisibilityOption
+          visibility: item.visibility as VisibilityOption,
+          faculty: item.faculty || undefined,
+          course_year: item.course_year || undefined,
+          course: item.course || undefined
         })) as Quiz[];
         
         setQuizzes([...transformedData, ...quizzes]);
