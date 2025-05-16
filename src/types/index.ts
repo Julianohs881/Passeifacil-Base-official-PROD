@@ -75,5 +75,5 @@ export interface Comment {
   content: string;
   user_answer?: number;
   created_at: string;
-  user_email?: string; // Adicionamos o e-mail do usuário para exibição
+  user_email?: string; // Adicionamos o e-mail do usuário como opcional
 }

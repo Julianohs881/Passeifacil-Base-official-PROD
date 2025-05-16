@@ -39,19 +39,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       setLoading(true);
       const { data, error } = await supabase
         .from("comments")
-        .select("*, auth.users(email)")
+        .select("*")
         .eq("question_id", questionId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Transformar os dados para incluir o e-mail do usuário
-      const transformedData = data?.map((item) => ({
-        ...item,
-        user_email: item.users?.email || "Usuário"
-      })) as Comment[];
-
-      setComments(transformedData || []);
+      setComments(data || []);
     } catch (error) {
       console.error("Erro ao carregar comentários:", error);
     } finally {

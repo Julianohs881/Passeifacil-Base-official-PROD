@@ -3,7 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Comment } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Check, X } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 interface CommentItemProps {
   comment: Comment;
@@ -16,16 +16,6 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
         locale: ptBR,
       })
     : "";
-
-  // Formatar o email para exibir apenas o início
-  const formatEmail = (email: string = "") => {
-    if (!email) return "Usuário";
-    const atIndex = email.indexOf("@");
-    if (atIndex > 8) {
-      return email.substring(0, 8) + "..." + email.substring(atIndex);
-    }
-    return email;
-  };
 
   // Renderizar o indicador da resposta do usuário
   const renderAnswerBadge = () => {
@@ -54,7 +44,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
         <div className="ml-3 flex-1">
           <div className="flex items-center gap-1">
             <span className="font-medium text-sm">
-              {formatEmail(comment.user_email)}
+              Usuário
             </span>
             {renderAnswerBadge()}
             <span className="text-gray-500 text-xs ml-auto">{formattedDate}</span>
