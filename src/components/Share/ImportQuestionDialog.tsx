@@ -26,7 +26,7 @@ export function ImportQuestionDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-w-[90%] w-full">
         <DialogHeader>
           <DialogTitle>Importar questão por código</DialogTitle>
           <DialogDescription>

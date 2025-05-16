@@ -13,7 +13,7 @@ interface QuizFooterProps {
   onNext: () => void;
   onAddQuestion: () => void;
   onQuestionCreated: () => void;
-  onImportQuestion?: () => void; // New prop for importing questions
+  onImportQuestion?: () => void;
 }
 
 const QuizFooter: React.FC<QuizFooterProps> = ({
@@ -27,8 +27,8 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
   onImportQuestion,
 }) => {
   return (
-    <div className="flex justify-between items-center px-6 py-4 bg-white border-t">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col sm:flex-row justify-between items-center px-4 sm:px-6 py-4 bg-white border-t gap-4">
+      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
         <Button
           onClick={onAddQuestion}
           size="sm"
@@ -37,7 +37,7 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
           Adicionar Questão
         </Button>
         
-        {/* New Import Question Button */}
+        {/* Import Question Button */}
         {onImportQuestion && (
           <Button
             onClick={onImportQuestion}
@@ -46,7 +46,7 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
             className="border-blue-500 text-blue-600 hover:bg-blue-50"
           >
             <FileCode2 className="mr-2 h-4 w-4" />
-            Importar Questão por Código
+            Importar Questão
           </Button>
         )}
         
@@ -55,12 +55,14 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
           onSuccess={onQuestionCreated}
         />
       </div>
-      <QuizNavigationButtons
-        currentIndex={currentQuestionIndex}
-        totalQuestions={totalQuestions}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
+      <div className="w-full sm:w-auto flex justify-center sm:justify-end mt-2 sm:mt-0">
+        <QuizNavigationButtons
+          currentIndex={currentQuestionIndex}
+          totalQuestions={totalQuestions}
+          onPrevious={onPrevious}
+          onNext={onNext}
+        />
+      </div>
     </div>
   );
 };

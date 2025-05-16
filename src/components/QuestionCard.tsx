@@ -71,13 +71,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      <Card className="p-6 flex-1 overflow-auto">
-        <div className="flex justify-between items-start mb-4">
+      <Card className="p-3 sm:p-6 flex-1 overflow-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
           <Badge variant="outline" className="text-sm font-normal">
             Questão {currentIndex + 1}/{totalQuestions}
           </Badge>
           
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start">
             {/* Share button - available to everyone */}
             <Button
               variant="outline"
@@ -119,14 +119,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {renderFormattedText(question.statement)}
         </div>
 
-        <div className="space-y-3 mt-6">
+        <div className="space-y-3 mt-6 w-full">
           {question.options.map((option, index) => {
             const optionId = `option-${question.id}-${index}`;
             const isSelected = userAnswer === index;
             const isCorrectOption = question.correct_index === index;
 
             let optionClass =
-              "p-4 border rounded-lg cursor-pointer transition-all";
+              "p-3 sm:p-4 border rounded-lg cursor-pointer transition-all w-full break-words";
 
             if (!isAnswered) {
               optionClass += " hover:bg-gray-50";
@@ -145,7 +145,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 onClick={() => !isAnswered && handleAnswer(index)}
               >
                 <div className="flex items-start">
-                  <div className="mr-3 mt-0.5">
+                  <div className="mr-3 mt-0.5 flex-shrink-0">
                     <span
                       className={`flex items-center justify-center h-6 w-6 rounded-full text-sm font-medium ${
                         isAnswered && isCorrectOption
@@ -158,17 +158,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                       {String.fromCharCode(65 + index)}
                     </span>
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 pr-6">
                     {renderFormattedText(option)}
                   </div>
                   {isAnswered && isSelected && isCorrectOption && (
-                    <CheckCircle className="h-5 w-5 text-green-600 ml-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-green-600 ml-2 mt-0.5 flex-shrink-0 absolute right-6" />
                   )}
                   {isAnswered && isSelected && !isCorrectOption && (
-                    <XCircle className="h-5 w-5 text-red-600 ml-2 mt-0.5 flex-shrink-0" />
+                    <XCircle className="h-5 w-5 text-red-600 ml-2 mt-0.5 flex-shrink-0 absolute right-6" />
                   )}
                   {isAnswered && !isSelected && isCorrectOption && (
-                    <CheckCircle className="h-5 w-5 text-green-600 ml-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-green-600 ml-2 mt-0.5 flex-shrink-0 absolute right-6" />
                   )}
                 </div>
               </div>
@@ -177,7 +177,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         </div>
 
         {isAnswered && question.explanation && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-md">
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-md w-full">
             <p className="font-medium text-blue-800 mb-1">Explicação:</p>
             <div className="text-blue-700 whitespace-pre-line">
               {renderFormattedText(question.explanation)}
