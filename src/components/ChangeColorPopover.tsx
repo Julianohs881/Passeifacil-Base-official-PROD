@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, RefObject } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ interface ChangeColorPopoverProps {
   onClose: () => void;
   onSave: (quiz: Quiz, newColor: ColorOption) => Promise<void>;
   quiz: Quiz | null;
+  anchorRef?: RefObject<HTMLButtonElement>;
 }
 
 const ChangeColorPopover = ({ isOpen, onClose, onSave, quiz }: ChangeColorPopoverProps) => {

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,54 +11,47 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { Quiz } from "../types";
 
 interface RenameQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (quiz: Quiz, newTitle: string) => Promise<void>;
   quiz: Quiz | null;
+  onSave: (quiz: Quiz) => Promise<void>;
 }
 
-const RenameQuizModal = ({ isOpen, onClose, onSave, quiz }: RenameQuizModalProps) => {
+export default function RenameQuizModal({
+  isOpen,
+  onClose,
+  quiz,
+  onSave,
+}: RenameQuizModalProps) {
   const [title, setTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
-  // Reset form when modal opens/closes or quiz changes
-  useState(() => {
+  // Reset title when modal opens with new quiz
+  useEffect(() => {
     if (isOpen && quiz) {
       setTitle(quiz.title);
     }
-  });
+  }, [isOpen, quiz]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim()) {
-      toast({
-        title: "Título necessário",
-        description: "Por favor, forneça um título para o quiz.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!quiz) return;
-    
-    setIsSubmitting(true);
+    if (!quiz || !title.trim()) return;
     
     try {
-      await onSave(quiz, title);
+      setIsSubmitting(true);
+      
+      await onSave({
+        ...quiz,
+        title: title.trim(),
+      });
+      
       onClose();
     } catch (error) {
-      console.error("Error saving quiz:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar o quiz. Tente novamente.",
-        variant: "destructive",
-      });
+      console.error("Error renaming quiz:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -66,11 +59,11 @@ const RenameQuizModal = ({ isOpen, onClose, onSave, quiz }: RenameQuizModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Renomear Quiz</DialogTitle>
           <DialogDescription>
-            Digite o novo nome do quiz abaixo.
+            Digite o novo título para o seu quiz.
           </DialogDescription>
         </DialogHeader>
         
@@ -85,7 +78,6 @@ const RenameQuizModal = ({ isOpen, onClose, onSave, quiz }: RenameQuizModalProps
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="col-span-3"
-                placeholder="Ex: Matemática Avançada"
               />
             </div>
           </div>
@@ -101,8 +93,7 @@ const RenameQuizModal = ({ isOpen, onClose, onSave, quiz }: RenameQuizModalProps
             </Button>
             <Button
               type="submit"
-              className="bg-violet-500 hover:bg-violet-600"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !title.trim()}
             >
               {isSubmitting ? "Salvando..." : "Salvar"}
             </Button>
@@ -111,6 +102,4 @@ const RenameQuizModal = ({ isOpen, onClose, onSave, quiz }: RenameQuizModalProps
       </DialogContent>
     </Dialog>
   );
-};
-
-export default RenameQuizModal;
+}

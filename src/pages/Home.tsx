@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Quiz } from "../types";
+import { Quiz, VisibilityOption } from "../types";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Download } from "lucide-react";
 import NavBar from "@/components/NavBar";
@@ -93,7 +94,7 @@ const Home = () => {
     fetchQuizzes();
   };
 
-  const handleToggleVisibility = async (quiz: Quiz, newVisibility: string) => {
+  const handleToggleVisibility = async (quiz: Quiz, newVisibility: VisibilityOption) => {
     try {
       const { error } = await supabase
         .from("quizzes")
@@ -162,7 +163,22 @@ const Home = () => {
         <AddQuizModal
           isOpen={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
-          onQuizCreated={handleQuizCreated}
+          onSave={async (quiz) => {
+            try {
+              const { error } = await supabase
+                .from("quizzes")
+                .insert({
+                  ...quiz,
+                  user_id: user?.id,
+                });
+
+              if (error) throw error;
+              
+              handleQuizCreated();
+            } catch (error) {
+              console.error("Error creating quiz:", error);
+            }
+          }}
         />
 
         {/* Edit Quiz Dialog */}
@@ -170,15 +186,28 @@ const Home = () => {
           isOpen={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
           quiz={selectedQuiz}
-          onQuizUpdated={handleQuizUpdated}
+          onSave={async (updatedQuiz) => {
+            try {
+              const { error } = await supabase
+                .from("quizzes")
+                .update({ title: updatedQuiz.title })
+                .eq("id", updatedQuiz.id);
+
+              if (error) throw error;
+              
+              handleQuizUpdated();
+            } catch (error) {
+              console.error("Error updating quiz:", error);
+            }
+          }}
         />
 
         {/* Delete Quiz Dialog */}
         <DeleteQuizDialog
           isOpen={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
-          quizTitle={selectedQuiz?.title || ""}
-          onConfirmDelete={confirmDeleteQuiz}
+          quiz={selectedQuiz}
+          onConfirm={confirmDeleteQuiz}
         />
 
         {/* Color Picker Popover */}
@@ -186,8 +215,20 @@ const Home = () => {
           isOpen={isColorPickerOpen}
           onClose={() => setIsColorPickerOpen(false)}
           quiz={selectedQuiz}
-          onColorChange={handleColorChanged}
-          anchorRef={colorPickerAnchorRef}
+          onSave={async (quiz, newColor) => {
+            try {
+              const { error } = await supabase
+                .from("quizzes")
+                .update({ color: newColor })
+                .eq("id", quiz.id);
+
+              if (error) throw error;
+              
+              handleColorChanged();
+            } catch (error) {
+              console.error("Error updating quiz color:", error);
+            }
+          }}
         />
 
         {/* Import Code Dialog */}

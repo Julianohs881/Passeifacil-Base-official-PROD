@@ -14,17 +14,11 @@ import { Quiz } from "../types";
 interface DeleteQuizDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (quiz: Quiz) => Promise<void>;
+  onConfirm: () => Promise<void>;
   quiz: Quiz | null;
 }
 
 const DeleteQuizDialog = ({ isOpen, onClose, onConfirm, quiz }: DeleteQuizDialogProps) => {
-  const handleConfirm = async () => {
-    if (!quiz) return;
-    await onConfirm(quiz);
-    onClose();
-  };
-
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent>
@@ -41,7 +35,7 @@ const DeleteQuizDialog = ({ isOpen, onClose, onConfirm, quiz }: DeleteQuizDialog
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleConfirm}
+            onClick={onConfirm}
             className="bg-red-500 hover:bg-red-600"
           >
             Excluir
