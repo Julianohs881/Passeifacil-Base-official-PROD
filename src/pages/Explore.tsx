@@ -363,7 +363,7 @@ const Explore = () => {
                       </div>
                     )}
                     {!quiz.faculty && !quiz.course && (
-                      <div className="h-6"></div> {/* Espaçador quando não há dados */}
+                      <div className="h-6"></div>
                     )}
                     
                     {/* Nome do criador */}
