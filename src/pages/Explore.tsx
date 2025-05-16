@@ -145,21 +145,21 @@ const Explore = () => {
     }
     
     // Apply faculty filter
-    if (values.faculty && values.faculty.trim() !== "") {
+    if (values.faculty && values.faculty.trim() !== "" && values.faculty !== "all-faculties") {
       result = result.filter(quiz => 
         quiz.faculty === values.faculty
       );
     }
     
     // Apply course year filter
-    if (values.courseYear && values.courseYear.trim() !== "") {
+    if (values.courseYear && values.courseYear.trim() !== "" && values.courseYear !== "all-years") {
       result = result.filter(quiz => 
         quiz.course_year === values.courseYear
       );
     }
     
     // Apply course filter
-    if (values.course && values.course.trim() !== "") {
+    if (values.course && values.course.trim() !== "" && values.course !== "all-courses") {
       result = result.filter(quiz => 
         quiz.course === values.course
       );

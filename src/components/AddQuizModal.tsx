@@ -72,12 +72,15 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Process courseYear value to handle the "none-specified" case
+      const processedCourseYear = courseYear === "none-specified" ? "" : courseYear;
+      
       await onSave({ 
         title, 
         color, 
         visibility,
         faculty: faculty.trim() || undefined,
-        course_year: courseYear.trim() || undefined,
+        course_year: processedCourseYear || undefined,
         course: course.trim() || undefined
       });
       onClose();
@@ -144,7 +147,7 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
                   <SelectValue placeholder="Selecione o ano do curso" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Não especificado</SelectItem>
+                  <SelectItem value="none-specified">Não especificado</SelectItem>
                   {courseYearOptions.map((year) => (
                     <SelectItem key={year} value={year}>
                       {year}
