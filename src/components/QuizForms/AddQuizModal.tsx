@@ -71,7 +71,8 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
         visibility,
         faculty: faculty.trim() || undefined,
         course_year: processedCourseYear || undefined,
-        course: course.trim() || undefined
+        course: course.trim() || undefined,
+        share_code: null, // Added to fix TypeScript error
       });
       onClose();
     } catch (error) {

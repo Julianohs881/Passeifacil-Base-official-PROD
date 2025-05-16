@@ -131,6 +131,7 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
         options,
         correct_index: correctIndex,
         explanation,
+        share_code: null, // Added to fix TypeScript error
       });
       onClose();
     } catch (error) {

@@ -131,6 +131,7 @@ const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
         options,
         correct_index: correctIndex,
         explanation,
+        share_code: null, // Adding this to fix the TypeScript error
       });
       onClose();
     } catch (error) {

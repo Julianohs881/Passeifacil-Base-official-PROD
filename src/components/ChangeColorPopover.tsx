@@ -29,7 +29,7 @@ const ChangeColorPopover = ({ isOpen, onClose, onSave, quiz }: ChangeColorPopove
   // Reset form when modal opens/closes or quiz changes
   useEffect(() => {
     if (isOpen && quiz) {
-      setColor(quiz.color || "bg-violet-500");
+      setColor((quiz.color || "bg-violet-500") as ColorOption);
     }
   }, [isOpen, quiz]);
 
