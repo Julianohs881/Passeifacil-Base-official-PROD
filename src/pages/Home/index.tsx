@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Quiz } from "@/types";
 import NavBar from "@/components/NavBar";
-import AddQuizModal from "@/components/AddQuizModal";
+import AddQuizModal from "@/components/QuizForms/AddQuizModal";
 import RenameQuizModal from "@/components/RenameQuizModal";
 import DeleteQuizDialog from "@/components/DeleteQuizDialog";
 import ChangeColorPopover from "@/components/ChangeColorPopover";
