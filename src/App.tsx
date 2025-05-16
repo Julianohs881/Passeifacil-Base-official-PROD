@@ -1,9 +1,8 @@
-
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import Landing from "./pages/Landing";
-import Home from "./pages/Home";
+import Home from "@/pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Quiz from "./pages/Quiz";
