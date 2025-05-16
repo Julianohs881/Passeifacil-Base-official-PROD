@@ -15,12 +15,12 @@ import { FormLabel } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
-// Form schema type
+// Form schema type - making all fields required to match usage in Explore.tsx
 export const formSchema = z.object({
-  search: z.string().optional(),
-  faculty: z.string().optional(),
-  courseYear: z.string().optional(),
-  course: z.string().optional(),
+  search: z.string(),
+  faculty: z.string(),
+  courseYear: z.string(),
+  course: z.string(),
 });
 
 export type FilterValues = z.infer<typeof formSchema>;
