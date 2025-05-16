@@ -1,6 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { GraduationCap, Check } from "lucide-react";
 
 const Landing = () => {
   const { user } = useAuth();
@@ -11,39 +12,28 @@ const Landing = () => {
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <div className="relative">
-            <div className="w-12 h-12 bg-blue-900 transform rotate-45 absolute top-0"></div>
-            <div className="w-12 h-12 flex items-center justify-center relative">
-              <svg viewBox="0 0 24 24" className="w-10 h-10 text-white" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 4l-8 4v12l8-4 8 4v-12l-8-4z" fill="#0f172a"/>
-                <path d="M12 4v12" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M4 8l8 4 8-4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
+            <GraduationCap className="w-10 h-10 text-blue-900" />
+            <Check className="w-5 h-5 text-emerald-500 absolute bottom-0 right-0" />
           </div>
-          <div className="ml-2 flex items-center">
-            <svg viewBox="0 0 24 24" className="w-6 h-6 text-emerald-500 ml-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 16.17l-4.17-4.17 1.42-1.41 2.75 2.75 5.59-5.59 1.41 1.41-7 7z" />
-            </svg>
-            <span className="text-2xl font-bold text-blue-900 ml-1">Passei Fácil</span>
-          </div>
+          <span className="ml-2 text-2xl font-bold text-blue-900">Passei Fácil</span>
         </Link>
         
         <div className="flex items-center space-x-4">
           {user ? (
             <Link to="/quizzes">
-              <button className="btn-primary">
+              <button className="px-6 py-2 border border-blue-100 rounded-md text-blue-900 hover:bg-blue-50 transition-all shadow-sm">
                 Meus Quizzes
               </button>
             </Link>
           ) : (
             <>
               <Link to="/login">
-                <button className="btn-secondary border border-blue-100 rounded-md">
+                <button className="px-6 py-2 border border-blue-100 rounded-md text-blue-900 hover:bg-blue-50 transition-all shadow-sm">
                   Login
                 </button>
               </Link>
               <Link to="/register">
-                <button className="btn-primary">
+                <button className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all shadow-sm">
                   Criar conta
                 </button>
               </Link>
@@ -53,32 +43,32 @@ const Landing = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-12 md:py-24">
+      <main className="container mx-auto px-4 py-12 md:py-16">
         <div className="flex flex-col md:flex-row items-center">
           {/* Left Column - Text */}
-          <div className="w-full md:w-1/2 mb-10 md:mb-0">
+          <div className="w-full md:w-1/2 mb-10 md:mb-0 pr-0 md:pr-8">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-blue-900 mb-6">
               Transforme texto e imagens em questões
             </h1>
             <p className="text-xl text-gray-600 mb-10">
               Faça upload de um texto ou imagem e converta-os em questões com apenas um clique.
             </p>
-            <Link to={user ? "/quizzes" : "/register"}>
-              <button className="btn-cta">
-                Comece agora
-              </button>
-            </Link>
+            <div className="flex justify-start">
+              <Link to={user ? "/quizzes" : "/register"}>
+                <button className="px-8 py-4 bg-[#22c55e] text-white rounded-lg hover:bg-emerald-600 transition-all shadow-md text-xl font-medium">
+                  Comece agora
+                </button>
+              </Link>
+            </div>
           </div>
           
           {/* Right Column - Illustration */}
-          <div className="w-full md:w-1/2 pl-0 md:pl-10">
-            <div className="relative">
-              <img 
-                src="/lovable-uploads/d6da08d8-6a5c-447e-bcff-1196f1d7a626.png" 
-                alt="Estudantes transformando textos e imagens em questões" 
-                className="w-full h-auto"
-              />
-            </div>
+          <div className="w-full md:w-1/2">
+            <img 
+              src="/lovable-uploads/53bcbba0-62ef-428c-8dd5-8067d1c55eb4.png" 
+              alt="Estudantes transformando textos e imagens em questões" 
+              className="w-full h-auto"
+            />
           </div>
         </div>
       </main>
