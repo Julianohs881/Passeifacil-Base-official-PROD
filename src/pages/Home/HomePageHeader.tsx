@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import PremiumFeatureGate from "@/components/PremiumFeatureGate";
 
 interface HomePageHeaderProps {
   onOpenCreateQuiz: () => void;
@@ -22,21 +23,27 @@ export const HomePageHeader = ({ onOpenCreateQuiz, onOpenImportDialog }: HomePag
           <PlusCircle className="h-4 w-4 mr-2" /> 
           Novo Quiz
         </Button>
-        <Button 
-          onClick={() => navigate("/explore")}
-          variant="outline"
-          className="flex-1 md:flex-none border-blue-500 text-blue-900"
-        >
-          Explorar
-        </Button>
-        <Button
-          onClick={onOpenImportDialog}
-          variant="outline"
-          className="flex-1 md:flex-none"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Importar por Código
-        </Button>
+        
+        <PremiumFeatureGate feature="explore">
+          <Button 
+            onClick={() => navigate("/explore")}
+            variant="outline"
+            className="flex-1 md:flex-none border-blue-500 text-blue-900"
+          >
+            Explorar
+          </Button>
+        </PremiumFeatureGate>
+        
+        <PremiumFeatureGate feature="import">
+          <Button
+            onClick={onOpenImportDialog}
+            variant="outline"
+            className="flex-1 md:flex-none"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Importar por Código
+          </Button>
+        </PremiumFeatureGate>
       </div>
     </div>
   );

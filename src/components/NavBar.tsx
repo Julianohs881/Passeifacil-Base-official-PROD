@@ -3,9 +3,11 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { GraduationCap, Check, Eye } from "lucide-react";
+import PlanBadge from "./PlanBadge";
+import PremiumFeatureGate from "./PremiumFeatureGate";
 
 const NavBar = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, userProfile } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -27,10 +29,17 @@ const NavBar = () => {
         <div className="flex items-center space-x-4">
           {user ? (
             <>
-              <Link to="/explore" className="flex items-center text-sm text-gray-600 hover:text-blue-900">
-                <Eye className="h-4 w-4 mr-1" />
-                <span className="hidden md:inline-block">Explorar</span>
-              </Link>
+              {userProfile && (
+                <PlanBadge plan={userProfile.plan} />
+              )}
+              
+              <PremiumFeatureGate feature="explore">
+                <Link to="/explore" className="flex items-center text-sm text-gray-600 hover:text-blue-900">
+                  <Eye className="h-4 w-4 mr-1" />
+                  <span className="hidden md:inline-block">Explorar</span>
+                </Link>
+              </PremiumFeatureGate>
+              
               <span className="text-sm text-gray-600 hidden md:inline-block">
                 {user.email}
               </span>

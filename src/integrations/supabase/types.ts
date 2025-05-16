@@ -44,6 +44,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          ai_questions_created: number | null
+          created_at: string
+          id: string
+          plan: string
+        }
+        Insert: {
+          ai_questions_created?: number | null
+          created_at?: string
+          id: string
+          plan?: string
+        }
+        Update: {
+          ai_questions_created?: number | null
+          created_at?: string
+          id?: string
+          plan?: string
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           correct_index: number

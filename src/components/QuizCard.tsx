@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { ShareCodeDialog } from "./Share/ShareCodeDialog";
+import PremiumFeatureGate from "./PremiumFeatureGate";
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -20,7 +21,7 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
   const [isDeleting, setIsDeleting] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
 
   // Verifica se o usuário atual é o criador do quiz
   const isCreator = user && user.id === quiz.user_id;
@@ -98,16 +99,18 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
 
           {/* Action buttons - Mostrar apenas se o usuário for o criador */}
           <div className="absolute top-3 right-3 flex space-x-1">
-            {/* Share button - available to everyone */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
-              onClick={handleShare}
-              title="Compartilhar"
-            >
-              <Share2 className="h-3 w-3 text-gray-700" />
-            </Button>
+            {/* Share button - available to everyone, but needs PRO */}
+            <PremiumFeatureGate feature="share">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
+                onClick={handleShare}
+                title="Compartilhar"
+              >
+                <Share2 className="h-3 w-3 text-gray-700" />
+              </Button>
+            </PremiumFeatureGate>
             
             {/* Creator-only buttons */}
             {isCreator && (
@@ -128,7 +131,7 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
                 >
                   <Palette className="h-3 w-3 text-gray-700" />
                 </Button>
-                {onToggleVisibility && (
+                {onToggleVisibility && isPro() && (
                   <Button
                     variant="ghost"
                     size="icon"

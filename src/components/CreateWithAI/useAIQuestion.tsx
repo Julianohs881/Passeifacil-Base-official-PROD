@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/utils/supabase";
+import { useAuth } from "@/context/AuthContext";
 
 interface UseAIQuestionProps {
   quizId: string;
@@ -12,8 +13,27 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [processingStep, setProcessingStep] = useState<string | null>(null);
   const { toast } = useToast();
+  const { hasReachedAILimit, isPro, userProfile } = useAuth();
 
   const createQuestionWithAI = async (content: string, contentType: "text" | "image") => {
+    if (!isPro()) {
+      toast({
+        title: "Recurso exclusivo PRO",
+        description: "Faça upgrade para o plano PRO para utilizar a criação de questões com IA.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (hasReachedAILimit()) {
+      toast({
+        title: "Limite de questões atingido",
+        description: "Você atingiu o limite de 50 questões criadas com IA.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     if (!content) {
       toast({
         title: "Conteúdo necessário",

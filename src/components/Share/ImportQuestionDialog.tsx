@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { ImportCodeForm } from "./ImportCodeForm";
 import { useImportQuestionCode } from "@/hooks/useImportQuestionCode";
+import PremiumFeatureGate from "../PremiumFeatureGate";
+import { useAuth } from "@/context/AuthContext";
 
 interface ImportQuestionDialogProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ export function ImportQuestionDialog({
   onSuccess,
 }: ImportQuestionDialogProps) {
   const { loading, handleImport } = useImportQuestionCode(quizId, onClose, onSuccess);
+  const { isPro } = useAuth();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -33,7 +36,16 @@ export function ImportQuestionDialog({
             Insira um código de compartilhamento de questão (formato P1234567) para adicioná-la ao quiz atual.
           </DialogDescription>
         </DialogHeader>
-        <ImportCodeForm onImport={handleImport} loading={loading} />
+        
+        {isPro() ? (
+          <ImportCodeForm onImport={handleImport} loading={loading} />
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8">
+            <PremiumFeatureGate feature="import" className="w-full">
+              <ImportCodeForm onImport={handleImport} loading={loading} />
+            </PremiumFeatureGate>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

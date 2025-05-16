@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthContextType } from "../types";
+import { AuthContextType, UserProfile } from "../types";
 import { useToast } from "@/hooks/use-toast";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -11,13 +11,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return;
+      }
+
+      setUserProfile(data as UserProfile);
+    } catch (error) {
+      console.error("Error in fetchUserProfile:", error);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setSession(session);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setUserProfile(null);
+      }
+      
       setLoading(false);
     });
 
@@ -27,6 +54,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
         setSession(session);
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        }
       } catch (error) {
         console.error("Error checking session:", error);
       } finally {
@@ -106,8 +137,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateAIQuestionsCreated = async () => {
+    if (!user) return;
+    
+    try {
+      // Update local state
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          ai_questions_created: (userProfile.ai_questions_created || 0) + 1
+        });
+      }
+      
+      // Update in database
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          ai_questions_created: (userProfile?.ai_questions_created || 0) + 1
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error("Error updating AI questions count:", error);
+      }
+    } catch (error) {
+      console.error("Error in updateAIQuestionsCreated:", error);
+    }
+  };
+
+  const isPro = () => userProfile?.plan === 'pro';
+  const hasReachedAILimit = () => !isPro() || (userProfile?.ai_questions_created || 0) >= 50;
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      signIn, 
+      signUp, 
+      signOut,
+      userProfile,
+      isPro,
+      hasReachedAILimit,
+      updateAIQuestionsCreated
+    }}>
       {children}
     </AuthContext.Provider>
   );
