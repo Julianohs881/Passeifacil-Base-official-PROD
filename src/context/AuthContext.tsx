@@ -33,7 +33,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: data.id,
           plan: data.plan as UserPlan,
           ai_questions_created: data.ai_questions_created || 0,
-          created_at: data.created_at
+          created_at: data.created_at,
+          name: data.name || undefined,
+          avatar_url: data.avatar_url || undefined
         };
         setUserProfile(typedProfile);
       }
@@ -60,12 +62,55 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: data.id,
           plan: data.plan as UserPlan,
           ai_questions_created: data.ai_questions_created || 0,
-          created_at: data.created_at
+          created_at: data.created_at,
+          name: data.name || undefined,
+          avatar_url: data.avatar_url || undefined
         };
         setUserProfile(typedProfile);
       }
     } catch (error) {
       console.error("Erro ao buscar perfil do usuário:", error);
+    }
+  };
+
+  const updateProfile = async ({ name, avatarUrl }: { name?: string, avatarUrl?: string }) => {
+    if (!user) return;
+
+    try {
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (avatarUrl !== undefined) updates.avatar_url = avatarUrl;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          ...(name !== undefined ? { name } : {}),
+          ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {})
+        });
+      }
+
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso.",
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: error.message || "Não foi possível atualizar seu perfil.",
+        variant: "destructive",
+      });
+      return false;
     }
   };
 
@@ -129,22 +174,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, name: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin,
+          data: {
+            name: name
+          }
         },
       });
 
       if (error) throw error;
 
+      // Update the profile with the name
+      if (data?.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ name })
+          .eq('id', data.user.id);
+        
+        if (profileError) {
+          console.error("Error updating profile with name:", profileError);
+        }
+      }
+
       toast({
         title: "Registro realizado com sucesso!",
         description: "Verifique seu e-mail para confirmar sua conta.",
       });
+      
+      return data;
     } catch (error: any) {
       toast({
         title: "Erro ao criar conta",
@@ -295,6 +357,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         hasReachedAILimit,
         updateAIQuestionsCreated,
         updateUserProfile,
+        updateProfile,
         getAIUsageStats,
         resetAIQuestionsCount
       }}

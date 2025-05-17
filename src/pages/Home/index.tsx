@@ -1,200 +1,111 @@
-
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Quiz } from "@/types";
-import AddQuizModal from "@/components/QuizForms/AddQuizModal";
-import RenameQuizModal from "@/components/RenameQuizModal";
-import DeleteQuizDialog from "@/components/DeleteQuizDialog";
-import ChangeColorPopover from "@/components/ChangeColorPopover";
-import { ImportCodeDialog } from "@/components/Share/ImportCodeDialog";
-import { HomePageHeader } from "./HomePageHeader";
-import { QuizGrid } from "./QuizGrid";
-import { useHomePageQuizzes } from "./useHomePageQuizzes";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import UpgradeBanner from "@/components/UpgradeBanner";
-import PlanUpgradeDialog from "@/components/PlanUpgradeDialog";
-import AIUsageDisplay from "@/components/CreateWithAI/AIUsageDisplay";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { PlusCircle } from "lucide-react";
+import QuizCard from "@/components/QuizCard";
+import ProfileIncompleteAlert from "@/components/ProfileIncompleteAlert";
+
+const HomePageHeader = ({ onCreateQuiz }: { onCreateQuiz: () => void }) => (
+  <div className="flex items-center justify-between mb-6">
+    <div>
+      <h1 className="text-2xl font-bold text-gray-800">Seus Quizzes</h1>
+      <p className="text-gray-500">
+        Crie e gerencie seus quizzes personalizados
+      </p>
+    </div>
+    <Button onClick={onCreateQuiz} className="bg-violet-500 hover:bg-violet-600">
+      <PlusCircle className="mr-2 h-4 w-4" />
+      Criar Quiz
+    </Button>
+  </div>
+);
 
 const Home = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isPremiumWarningOpen, setIsPremiumWarningOpen] = useState(false);
-  const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
-  const colorPickerAnchorRef = useRef<HTMLButtonElement>(null);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { user, isPro } = useAuth();
-  const { quizzes, fetchQuizzes, handleToggleVisibility } = useHomePageQuizzes();
 
-  const handleQuizCreated = () => {
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
     fetchQuizzes();
-  };
+  }, [user]);
 
-  const handleEditQuiz = (quiz: Quiz) => {
-    setSelectedQuiz(quiz);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDeleteQuiz = (id: string) => {
-    setSelectedQuiz({ id } as Quiz);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDeleteQuiz = async () => {
-    if (!selectedQuiz?.id) return;
-
+  const fetchQuizzes = async () => {
+    setLoading(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("quizzes")
-        .delete()
-        .eq("id", selectedQuiz.id);
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar quizzes:", error);
+        return;
+      }
 
-      fetchQuizzes();
-      setIsDeleteDialogOpen(false);
-    } catch (error) {
-      console.error("Error deleting quiz:", error);
+      setQuizzes(data || []);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleOpenImportDialog = () => {
-    if (isPro()) {
-      setIsImportDialogOpen(true);
-    } else {
-      setIsUpgradeDialogOpen(true);
-    }
-  };
-
-  const handleOpenColorPicker = (quiz: Quiz) => {
-    setSelectedQuiz(quiz);
-    setIsColorPickerOpen(true);
-  };
-
-  const handleOpenUpgradeDialog = () => {
-    setIsUpgradeDialogOpen(true);
+  const handleCreateQuiz = () => {
+    navigate("/quizzes/new");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container mx-auto py-4 sm:py-8 px-4">
-        {/* New Upgrade Banner */}
-        <UpgradeBanner onUpgradeClick={handleOpenUpgradeDialog} />
-        
-        {/* AI Usage Display for Pro Users */}
-        {isPro() && (
-          <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border">
-            <AIUsageDisplay />
-          </div>
-        )}
-        
-        <HomePageHeader 
-          onOpenCreateQuiz={() => setIsDialogOpen(true)}
-          onOpenImportDialog={handleOpenImportDialog}
-        />
+    <div className="container py-6">
+      <ProfileIncompleteAlert />
+      <HomePageHeader onCreateQuiz={handleCreateQuiz} />
 
-        <QuizGrid 
-          quizzes={quizzes}
-          onOpenCreateQuiz={() => setIsDialogOpen(true)}
-          onDeleteQuiz={handleDeleteQuiz}
-          onEditQuiz={handleEditQuiz}
-          onChangeColor={handleOpenColorPicker}
-          onToggleVisibility={handleToggleVisibility}
-        />
-
-        {/* Add Quiz Dialog */}
-        <AddQuizModal
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-          onSave={async (quiz) => {
-            try {
-              const { error } = await supabase
-                .from("quizzes")
-                .insert({
-                  ...quiz,
-                  user_id: user?.id,
-                });
-
-              if (error) throw error;
-              
-              handleQuizCreated();
-            } catch (error) {
-              console.error("Error creating quiz:", error);
-            }
-          }}
-        />
-
-        {/* Edit Quiz Dialog */}
-        <RenameQuizModal
-          isOpen={isEditDialogOpen}
-          onClose={() => setIsEditDialogOpen(false)}
-          quiz={selectedQuiz}
-          onSave={async (updatedQuiz) => {
-            try {
-              const { error } = await supabase
-                .from("quizzes")
-                .update({ title: updatedQuiz.title })
-                .eq("id", updatedQuiz.id);
-
-              if (error) throw error;
-              
-              fetchQuizzes();
-            } catch (error) {
-              console.error("Error updating quiz:", error);
-            }
-          }}
-        />
-
-        {/* Delete Quiz Dialog */}
-        <DeleteQuizDialog
-          isOpen={isDeleteDialogOpen}
-          onClose={() => setIsDeleteDialogOpen(false)}
-          quiz={selectedQuiz}
-          onConfirm={confirmDeleteQuiz}
-        />
-
-        {/* Color Picker Popover */}
-        <ChangeColorPopover
-          isOpen={isColorPickerOpen}
-          onClose={() => setIsColorPickerOpen(false)}
-          quiz={selectedQuiz}
-          onSave={async (quiz, newColor) => {
-            try {
-              const { error } = await supabase
-                .from("quizzes")
-                .update({ color: newColor })
-                .eq("id", quiz.id);
-
-              if (error) throw error;
-              
-              fetchQuizzes();
-            } catch (error) {
-              console.error("Error updating quiz color:", error);
-            }
-          }}
-        />
-
-        {/* Import Code Dialog - only show for PRO users */}
-        {isPro() && (
-          <ImportCodeDialog
-            isOpen={isImportDialogOpen}
-            onClose={() => setIsImportDialogOpen(false)}
-            onSuccess={fetchQuizzes}
-          />
-        )}
-        
-        {/* Upgrade Dialog - replaces the Premium Feature Warning */}
-        <PlanUpgradeDialog
-          isOpen={isUpgradeDialogOpen}
-          onClose={() => setIsUpgradeDialogOpen(false)}
-        />
-      </main>
+      {loading ? (
+        <div className="flex justify-center my-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#0D6EFD]"></div>
+        </div>
+      ) : quizzes.length === 0 ? (
+        <Card className="border-2 border-dashed border-gray-200 rounded-md">
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">
+              Nenhum Quiz Criado
+            </CardTitle>
+            <CardDescription>
+              Comece a criar seus quizzes agora mesmo!
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <p className="text-gray-500">
+              Crie quizzes personalizados e compartilhe com seus amigos e
+              alunos.
+            </p>
+            <Button onClick={handleCreateQuiz} className="bg-violet-500 hover:bg-violet-600">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Criar Primeiro Quiz
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {quizzes.map((quiz) => (
+            <QuizCard key={quiz.id} quiz={quiz} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

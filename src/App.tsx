@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import Quiz from "./pages/Quiz";
 import Explore from "./pages/Explore";
 import NotFound from "./pages/NotFound";
+import UserProfile from "./pages/UserProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
 
@@ -64,6 +65,16 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Quiz />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* User Profile route */}
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <UserProfile />
                   </ProtectedRoute>
                 }
               />

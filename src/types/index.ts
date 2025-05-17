@@ -1,4 +1,3 @@
-
 import { Session, User } from "@supabase/supabase-js";
 
 export type ColorOption =
@@ -91,6 +90,8 @@ export interface UserProfile {
   plan: UserPlan;
   ai_questions_created?: number;
   created_at: string;
+  name?: string;
+  avatar_url?: string;
 }
 
 export interface AuthContextType {
@@ -98,13 +99,14 @@ export interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<any>;
   signOut: () => Promise<void>;
   userProfile: UserProfile | null;
   isPro: () => boolean;
   hasReachedAILimit: () => boolean;
   updateAIQuestionsCreated: () => Promise<void>;
   updateUserProfile: () => Promise<void>;
+  updateProfile?: (data: { name?: string, avatarUrl?: string }) => Promise<boolean>;
   getAIUsageStats?: () => {
     used: number;
     limit: number;
