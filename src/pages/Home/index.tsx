@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import UpgradeBanner from "@/components/UpgradeBanner";
 import PlanUpgradeDialog from "@/components/PlanUpgradeDialog";
+import AIUsageDisplay from "@/components/CreateWithAI/AIUsageDisplay";
 
 const Home = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -85,6 +86,13 @@ const Home = () => {
       <main className="container mx-auto py-4 sm:py-8 px-4">
         {/* New Upgrade Banner */}
         <UpgradeBanner onUpgradeClick={handleOpenUpgradeDialog} />
+        
+        {/* AI Usage Display for Pro Users */}
+        {isPro() && (
+          <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border">
+            <AIUsageDisplay />
+          </div>
+        )}
         
         <HomePageHeader 
           onOpenCreateQuiz={() => setIsDialogOpen(true)}

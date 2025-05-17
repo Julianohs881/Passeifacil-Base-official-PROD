@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,6 +177,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
+      console.log("Updating AI questions created count");
+      
       // Update local state with properly typed object
       if (userProfile) {
         const updatedProfile: UserProfile = {
@@ -183,6 +186,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ai_questions_created: (userProfile.ai_questions_created || 0) + 1
         };
         setUserProfile(updatedProfile);
+        
+        console.log("New AI questions count:", updatedProfile.ai_questions_created);
       }
       
       // Update in database
@@ -195,9 +200,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error("Error updating AI questions count:", error);
+        throw error;
       }
+      
+      console.log("AI questions count updated successfully in database");
+      
+      // Refresh profile data to ensure we have the latest count
+      await fetchUserProfile(user.id);
+      
     } catch (error) {
       console.error("Error in updateAIQuestionsCreated:", error);
+      toast({
+        title: "Erro ao atualizar contagem",
+        description: "Não foi possível atualizar sua contagem de questões com IA.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -206,7 +223,63 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return userProfile?.plan === 'pro';
   };
   
-  const hasReachedAILimit = () => !isPro() || (userProfile?.ai_questions_created || 0) >= 50;
+  // Check if the user has reached their monthly AI question limit
+  const hasReachedAILimit = () => {
+    // If not Pro, or if they've created 50 or more questions, they've reached the limit
+    return !isPro() || (userProfile?.ai_questions_created || 0) >= 50;
+  };
+
+  // Get the current month's usage statistics
+  const getAIUsageStats = () => {
+    const aiQuestionsCreated = userProfile?.ai_questions_created || 0;
+    const aiQuestionsLimit = 50;
+    const aiQuestionsRemaining = Math.max(0, aiQuestionsLimit - aiQuestionsCreated);
+    
+    return {
+      used: aiQuestionsCreated,
+      limit: aiQuestionsLimit,
+      remaining: aiQuestionsRemaining,
+      percentUsed: Math.min(100, (aiQuestionsCreated / aiQuestionsLimit) * 100)
+    };
+  };
+
+  // Reset AI question count (this would typically be done by a scheduled job each month)
+  const resetAIQuestionsCount = async () => {
+    if (!user) return;
+    
+    try {
+      // Update local state
+      if (userProfile) {
+        const updatedProfile: UserProfile = {
+          ...userProfile,
+          ai_questions_created: 0
+        };
+        setUserProfile(updatedProfile);
+      }
+      
+      // Update in database
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          ai_questions_created: 0
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Contagem resetada",
+        description: "Sua contagem de questões com IA foi resetada.",
+      });
+    } catch (error) {
+      console.error("Error in resetAIQuestionsCount:", error);
+      toast({
+        title: "Erro ao resetar contagem",
+        description: "Não foi possível resetar sua contagem de questões com IA.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <AuthContext.Provider
@@ -222,6 +295,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         hasReachedAILimit,
         updateAIQuestionsCreated,
         updateUserProfile,
+        getAIUsageStats,
+        resetAIQuestionsCount
       }}
     >
       {children}
