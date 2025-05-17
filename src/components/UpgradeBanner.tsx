@@ -18,7 +18,7 @@ interface UpgradeBannerProps {
 
 const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
   const { isPro } = useAuth();
-  const { createCheckoutSession, isLoading } = useStripeSubscription();
+  const { createCheckoutSession, isLoading, openCustomerPortal } = useStripeSubscription();
   const { toast } = useToast();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
@@ -31,14 +31,18 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
     
     try {
       const result = await createCheckoutSession();
+      
       if (!result.success && result.error) {
         // Se há redirecionamento para o portal
-        if (result.redirectToPortal) {
+        if ('redirectToPortal' in result && result.redirectToPortal) {
           toast({
             title: "Redirecionando para o portal",
             description: "Você já possui uma assinatura ativa, redirecionando para o portal de gerenciamento.",
             duration: 3000,
           });
+          
+          // Chama a função para abrir o portal do cliente
+          await openCustomerPortal();
           return;
         }
         

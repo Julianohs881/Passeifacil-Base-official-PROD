@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
@@ -66,7 +65,11 @@ export const useStripeSubscription = () => {
             duration: 3000,
           });
           
-          return openCustomerPortal();
+          return { 
+            success: false, 
+            error: { message: data.error },
+            redirectToPortal: true 
+          };
         }
         
         throw new Error(data.error);
@@ -88,7 +91,11 @@ export const useStripeSubscription = () => {
         duration: 5000,
       });
       
-      return { success: false, error };
+      return { 
+        success: false, 
+        error,
+        redirectToPortal: false
+      };
     } finally {
       setIsLoading(false);
     }
