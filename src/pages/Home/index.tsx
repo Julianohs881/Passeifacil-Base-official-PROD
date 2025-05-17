@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Quiz } from "@/types";
+import { Quiz, parseColorOption, ColorOption, VisibilityOption } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -59,7 +60,13 @@ const Home = () => {
         return;
       }
 
-      setQuizzes(data || []);
+      // Parse the color property to ensure it's a valid ColorOption
+      const parsedQuizzes: Quiz[] = (data || []).map(quiz => ({
+        ...quiz,
+        color: parseColorOption(quiz.color)
+      }));
+      
+      setQuizzes(parsedQuizzes);
     } finally {
       setLoading(false);
     }
@@ -67,6 +74,50 @@ const Home = () => {
 
   const handleCreateQuiz = () => {
     navigate("/quizzes/new");
+  };
+
+  const handleDeleteQuiz = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("quizzes")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+      
+      // Update local state by filtering out the deleted quiz
+      setQuizzes(quizzes.filter(quiz => quiz.id !== id));
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+    }
+  };
+
+  const handleEditQuiz = (quiz: Quiz) => {
+    // Navigate to edit page or open edit modal
+    console.log("Edit quiz:", quiz);
+  };
+
+  const handleColorChange = (quiz: Quiz) => {
+    // Open color change popover or modal
+    console.log("Change color for quiz:", quiz);
+  };
+
+  const handleToggleVisibility = async (quiz: Quiz, newVisibility: VisibilityOption) => {
+    try {
+      const { error } = await supabase
+        .from("quizzes")
+        .update({ visibility: newVisibility })
+        .eq("id", quiz.id);
+
+      if (error) throw error;
+      
+      // Update the local state to reflect the change
+      setQuizzes(quizzes.map(q => 
+        q.id === quiz.id ? { ...q, visibility: newVisibility } : q
+      ));
+    } catch (error) {
+      console.error("Error toggling visibility:", error);
+    }
   };
 
   return (
@@ -102,7 +153,14 @@ const Home = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {quizzes.map((quiz) => (
-            <QuizCard key={quiz.id} quiz={quiz} />
+            <QuizCard 
+              key={quiz.id} 
+              quiz={quiz} 
+              onDelete={handleDeleteQuiz}
+              onEdit={handleEditQuiz}
+              onColorChange={handleColorChange}
+              onToggleVisibility={handleToggleVisibility}
+            />
           ))}
         </div>
       )}
