@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -63,7 +62,7 @@ const NavBar = () => {
             />
           </Link>
           
-          {user && userProfile?.plan === "premium" && (
+          {user && userProfile?.plan === "pro" && (
             <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
               <PopoverTrigger asChild>
                 <Button 
