@@ -8,6 +8,7 @@ interface QuizNavigationButtonsProps {
   totalQuestions: number;
   onPrevious: () => void;
   onNext: () => void;
+  className?: string;
 }
 
 const QuizNavigationButtons = ({
@@ -15,6 +16,7 @@ const QuizNavigationButtons = ({
   totalQuestions,
   onPrevious,
   onNext,
+  className = "",
 }: QuizNavigationButtonsProps) => {
   const { toast } = useToast();
 
@@ -30,26 +32,26 @@ const QuizNavigationButtons = ({
   };
 
   return (
-    <div className="nav-btns">
+    <div className={`flex justify-center space-x-4 ${className}`}>
       <Button
         variant="outline"
-        size="icon"
-        className={`nav-btn prev ${
+        size="lg"
+        className={`h-12 w-12 rounded-full ${
           currentIndex === 0 ? "opacity-40 pointer-events-none" : ""
         }`}
         onClick={onPrevious}
         disabled={currentIndex === 0}
         aria-label="Ir para questão anterior"
       >
-        <ArrowLeft size={18} />
+        <ArrowLeft size={20} />
       </Button>
       <Button
-        size="icon"
-        className="nav-btn next"
+        size="lg"
+        className="h-12 w-12 rounded-full"
         onClick={handleNext}
         aria-label="Ir para próxima questão"
       >
-        <ArrowRight size={18} />
+        <ArrowRight size={20} />
       </Button>
     </div>
   );

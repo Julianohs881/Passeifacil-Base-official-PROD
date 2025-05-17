@@ -5,6 +5,7 @@ import CreateWithAIButton from "@/components/CreateWithAI/CreateWithAIButton";
 import QuizNavigationButtons from "@/components/QuizNavigationButtons";
 import { FileCode2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface QuizFooterProps {
   quizId: string;
@@ -29,6 +30,7 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
 }) => {
   const { isPro } = useAuth();
   const isPROUser = isPro();
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center px-4 sm:px-6 py-4 bg-white border-t gap-4">
@@ -62,14 +64,18 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
           />
         )}
       </div>
-      <div className="w-full sm:w-auto flex justify-center sm:justify-end mt-2 sm:mt-0">
-        <QuizNavigationButtons
-          currentIndex={currentQuestionIndex}
-          totalQuestions={totalQuestions}
-          onPrevious={onPrevious}
-          onNext={onNext}
-        />
-      </div>
+      
+      {/* Only show navigation buttons in footer on desktop */}
+      {!isMobile && (
+        <div className="w-full sm:w-auto flex justify-center sm:justify-end mt-2 sm:mt-0">
+          <QuizNavigationButtons
+            currentIndex={currentQuestionIndex}
+            totalQuestions={totalQuestions}
+            onPrevious={onPrevious}
+            onNext={onNext}
+          />
+        </div>
+      )}
     </div>
   );
 };

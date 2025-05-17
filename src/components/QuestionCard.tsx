@@ -25,6 +25,8 @@ import {
 import CommentSection from "./Comments/CommentSection";
 import { useAuth } from "@/context/AuthContext";
 import { ShareCodeDialog } from "./Share/ShareCodeDialog";
+import QuizNavigationButtons from "./QuizNavigationButtons";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface QuestionCardProps {
   question: Question;
@@ -36,6 +38,8 @@ interface QuestionCardProps {
   currentIndex: number;
   totalQuestions: number;
   isPublicQuiz?: boolean;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -48,6 +52,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   currentIndex,
   totalQuestions,
   isPublicQuiz = false,
+  onPrevious,
+  onNext,
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -55,6 +61,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const isAnswered = userAnswer !== undefined;
   const isCorrect = userAnswer === question.correct_index;
   const { user, isPro } = useAuth();
+  const isMobile = useMediaQuery("(max-width: 640px)");
   
   // Verificar se o usuário atual é o criador do quiz
   const isCreator = user?.id === question.user_id;
@@ -185,6 +192,18 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             <div className="text-blue-700 whitespace-pre-line">
               {renderFormattedText(question.explanation)}
             </div>
+          </div>
+        )}
+
+        {/* Mobile Navigation Buttons - show only on mobile */}
+        {isMobile && onPrevious && onNext && (
+          <div className="mt-8 mb-4">
+            <QuizNavigationButtons
+              currentIndex={currentIndex}
+              totalQuestions={totalQuestions}
+              onPrevious={onPrevious}
+              onNext={onNext}
+            />
           </div>
         )}
 

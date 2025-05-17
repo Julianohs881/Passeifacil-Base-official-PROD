@@ -138,6 +138,8 @@ const Quiz = () => {
                   currentIndex={currentQuestionIndex}
                   totalQuestions={questions.length}
                   isPublicQuiz={isPublicQuiz}
+                  onPrevious={goToPreviousQuestion}
+                  onNext={goToNextQuestion}
                 />
               ) : null}
             </div>
