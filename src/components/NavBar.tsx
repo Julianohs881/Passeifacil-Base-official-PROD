@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -9,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-
 const NavBar = () => {
   const {
     user,
@@ -23,7 +21,6 @@ const NavBar = () => {
   const {
     toast
   } = useToast();
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -32,11 +29,9 @@ const NavBar = () => {
       console.error("Failed to sign out", error);
     }
   };
-
   const handleLogoSizeChange = (value: number[]) => {
     setLogoSize(value[0]);
   };
-
   const saveLogoSize = () => {
     localStorage.setItem("logo-size", logoSize.toString());
     setShowLogoEditor(false);
@@ -53,7 +48,6 @@ const NavBar = () => {
       setLogoSize(parseInt(savedSize));
     }
   }, []);
-  
   return <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
@@ -63,9 +57,7 @@ const NavBar = () => {
           
           {user && userProfile?.plan === "pro" && <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="ml-2">
-                  <Edit2 className="h-4 w-4" />
-                </Button>
+                
               </PopoverTrigger>
               <PopoverContent className="w-80">
                 <div className="space-y-4">

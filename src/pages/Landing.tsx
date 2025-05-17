@@ -23,7 +23,7 @@ const Landing = () => {
   const handleOpenUpgradeDialog = () => {
     setIsUpgradeDialogOpen(true);
   };
-  return <div className="min-h-screen bg-white pt-20 my-0 py-[6px]">
+  return <div className="min-h-screen bg-white pt-20 my-[2px] py-0">
       {/* Hero Section */}
       <section className="pt-16 pb-16 md:pt-24 md:pb-24 px-0 py-0">
         <div className="container mx-auto px-6 md:px-8 lg:px-12">
