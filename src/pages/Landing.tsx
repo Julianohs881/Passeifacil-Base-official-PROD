@@ -1,36 +1,20 @@
-
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  GraduationCap, 
-  Check, 
-  ArrowRight, 
-  Upload, 
-  Zap, 
-  Users, 
-  User, 
-  HelpCircle, 
-  Facebook, 
-  Instagram, 
-  Twitter,
-  Crown
-} from "lucide-react";
+import { GraduationCap, Check, ArrowRight, Upload, Zap, Users, User, HelpCircle, Facebook, Instagram, Twitter, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import PlanUpgradeDialog from "@/components/PlanUpgradeDialog";
-
 const Landing = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
-  
   const handleOpenUpgradeDialog = () => {
     setIsUpgradeDialogOpen(true);
   };
-  
-  return (
-    <div className="min-h-screen bg-white pt-20">
+  return <div className="min-h-screen bg-white pt-20">
       {/* Hero Section */}
-      <section className="pt-16 pb-16 md:pt-24 md:pb-24">
+      <section className="pt-16 pb-16 md:pt-24 md:pb-24 px-px py-0">
         <div className="container mx-auto px-6 md:px-8 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
@@ -47,22 +31,14 @@ const Landing = () => {
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </Link>
-                <Button 
-                  onClick={handleOpenUpgradeDialog}
-                  variant="outline" 
-                  className="border-blue-500 text-blue-900 hover:bg-blue-50 w-full sm:w-auto"
-                >
+                <Button onClick={handleOpenUpgradeDialog} variant="outline" className="border-blue-500 text-blue-900 hover:bg-blue-50 w-full sm:w-auto">
                   Veja os Benefícios do PRO
                 </Button>
               </div>
             </div>
             <div className="order-1 md:order-2 flex justify-center md:justify-end">
               <div className="relative">
-                <img 
-                  src="/lovable-uploads/d0b7d885-b5b8-4bab-81b6-9afe1e2720a7.png" 
-                  alt="Estudantes interagindo com quizzes" 
-                  className="w-full max-w-lg"
-                />
+                <img src="/lovable-uploads/d0b7d885-b5b8-4bab-81b6-9afe1e2720a7.png" alt="Estudantes interagindo com quizzes" className="w-full max-w-lg" />
               </div>
             </div>
           </div>
@@ -206,10 +182,7 @@ const Landing = () => {
           </div>
           
           <div className="text-center">
-            <Button 
-              onClick={handleOpenUpgradeDialog}
-              className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white text-xl px-10 py-6 rounded-full shadow-md"
-            >
+            <Button onClick={handleOpenUpgradeDialog} className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white text-xl px-10 py-6 rounded-full shadow-md">
               <Crown className="h-5 w-5 mr-2" />
               Quero ser PRO
             </Button>
@@ -368,10 +341,7 @@ const Landing = () => {
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </Link>
-            <Button 
-              onClick={handleOpenUpgradeDialog}
-              className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white text-lg px-8 py-6 rounded-full shadow-lg w-full sm:w-auto"
-            >
+            <Button onClick={handleOpenUpgradeDialog} className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white text-lg px-8 py-6 rounded-full shadow-lg w-full sm:w-auto">
               <Crown className="h-5 w-5 mr-2" />
               Quero ser PRO
             </Button>
@@ -435,12 +405,7 @@ const Landing = () => {
       </footer>
 
       {/* Plan Upgrade Dialog */}
-      <PlanUpgradeDialog 
-        isOpen={isUpgradeDialogOpen} 
-        onClose={() => setIsUpgradeDialogOpen(false)} 
-      />
-    </div>
-  );
+      <PlanUpgradeDialog isOpen={isUpgradeDialogOpen} onClose={() => setIsUpgradeDialogOpen(false)} />
+    </div>;
 };
-
 export default Landing;
