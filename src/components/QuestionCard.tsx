@@ -63,7 +63,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     handleCloseShareDialog
   } = useQuestionShare(question, isPROUser);
   return <div className="flex flex-col h-full">
-      <Card className="p-3 sm:p-6 flex-1 overflow-auto py-[41px]">
+      <Card className="p-3 sm:p-6 flex-1 overflow-auto py-[54px]">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
           <Badge variant="outline" className="text-sm font-normal">
             Questão {currentIndex + 1}/{totalQuestions}
