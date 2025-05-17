@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Lock } from "lucide-react";
 import { Button } from "./ui/button";
@@ -23,7 +24,12 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   className,
   hideCompletely = true // Default to completely hiding the feature for free users
 }) => {
-  const { isPro, hasReachedAILimit } = useAuth();
+  const { isPro, hasReachedAILimit, userProfile } = useAuth();
+  
+  // Calculate AI usage metrics for Pro users
+  const aiQuestionsCreated = userProfile?.ai_questions_created || 0;
+  const aiQuestionsLimit = 50;
+  const aiQuestionsRemaining = Math.max(0, aiQuestionsLimit - aiQuestionsCreated);
   
   // Check if user is PRO and if it's the AI feature, check if they've reached the limit
   const hasAccess = isPro() && (feature !== 'ai' || !hasReachedAILimit());
@@ -40,7 +46,7 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
 
   // Otherwise, show the disabled version with upgrade message (for cases where we explicitly want to show it)
   const message = feature === 'ai' && isPro()
-    ? "Você atingiu o limite de 50 questões criadas com IA."
+    ? `Você atingiu o limite de ${aiQuestionsLimit} questões criadas com IA neste mês.`
     : `Recurso exclusivo para assinantes PRO.`;
 
   return (
@@ -50,15 +56,20 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 backdrop-blur-sm rounded-lg">
         <Lock className="w-8 h-8 text-gray-500 mb-2" />
-        <p className="text-sm text-gray-700 font-medium mb-2">
+        <p className="text-sm text-gray-700 font-medium mb-2 text-center px-4">
           {message}
         </p>
+        {feature === 'ai' && isPro() && (
+          <p className="text-xs text-gray-600 mb-2 text-center px-4">
+            Você já criou {aiQuestionsCreated} de {aiQuestionsLimit} questões este mês.
+          </p>
+        )}
         <Button 
           variant="default" 
           size="sm"
           className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600"
         >
-          Fazer Upgrade
+          {feature === 'ai' && isPro() ? "Aguarde o próximo mês" : "Fazer Upgrade"}
         </Button>
       </div>
     </div>

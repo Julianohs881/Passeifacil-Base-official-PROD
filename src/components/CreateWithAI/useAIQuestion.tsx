@@ -26,9 +26,13 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
     }
 
     if (hasReachedAILimit()) {
+      // Calculate remaining questions (should be 0 if limit is reached)
+      const aiQuestionsCreated = userProfile?.ai_questions_created || 0;
+      const aiQuestionsLimit = 50;
+      
       toast({
         title: "Limite de questões atingido",
-        description: "Você atingiu o limite de 50 questões criadas com IA.",
+        description: `Você já criou ${aiQuestionsCreated} de ${aiQuestionsLimit} questões com IA este mês. O contador será resetado no próximo mês.`,
         variant: "destructive",
       });
       return false;
@@ -92,9 +96,14 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
 
       if (saveError) throw saveError;
 
+      // Calculate remaining questions after this operation
+      const aiQuestionsCreated = (userProfile?.ai_questions_created || 0) + 1;
+      const aiQuestionsLimit = 50;
+      const aiQuestionsRemaining = Math.max(0, aiQuestionsLimit - aiQuestionsCreated);
+
       toast({
         title: "Questão criada com sucesso",
-        description: "A questão foi extraída, formatada e adicionada ao quiz.",
+        description: `A questão foi extraída, formatada e adicionada ao quiz. Você ainda pode criar ${aiQuestionsRemaining} questões com IA este mês.`,
       });
 
       onSuccess();

@@ -9,11 +9,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, Copy, AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShareCodeDialogProps {
   isOpen: boolean;
@@ -31,12 +32,33 @@ export function ShareCodeDialog({
   type,
 }: ShareCodeDialogProps) {
   const [copied, setCopied] = useState(false);
+  const [displayCode, setDisplayCode] = useState<string | null>(null);
+  const [errorState, setErrorState] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 640px)");
 
-  const handleCopy = () => {
+  // Set the display code when the component mounts or when the code prop changes
+  useEffect(() => {
+    // Reset error state first
+    setErrorState(false);
+    setErrorMessage(null);
+    
     if (code) {
-      navigator.clipboard.writeText(code);
+      console.log(`${type} share code available:`, code);
+      setDisplayCode(code);
+    } else {
+      console.error(`No ${type} share code provided to dialog`);
+      setErrorState(true);
+      setErrorMessage(`Não foi possível obter o código da ${type === "quiz" ? "quiz" : "questão"}, tente novamente.`);
+      setDisplayCode(null);
+    }
+  }, [code, type]);
+
+  const handleCopy = () => {
+    if (displayCode) {
+      navigator.clipboard.writeText(displayCode);
       setCopied(true);
       toast({
         title: "Código copiado!",
@@ -65,26 +87,40 @@ export function ShareCodeDialog({
             <div className="text-sm text-gray-500">
               <span className="font-medium">{title}</span>
             </div>
-            <div className="flex flex-col space-y-2">
-              <Input
-                id="share-code-mobile"
-                value={code || ""}
-                readOnly
-                className="font-mono text-center text-lg"
-              />
-              <Button 
-                type="button" 
-                onClick={handleCopy} 
-                variant="outline"
-                className="w-full"
-              >
-                {copied ? 
-                  <Check className="h-4 w-4 mr-2 text-green-600" /> : 
-                  <Copy className="h-4 w-4 mr-2" />
-                }
-                {copied ? "Copiado!" : "Copiar código"}
-              </Button>
-            </div>
+            
+            {loading ? (
+              <div className="flex items-center justify-center p-6">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <span className="ml-2">Carregando código...</span>
+              </div>
+            ) : errorState ? (
+              <div className="flex items-center p-3 bg-red-50 border border-red-100 rounded-md text-red-700 space-x-2">
+                <AlertCircle className="h-5 w-5" />
+                <span>{errorMessage || "Não foi possível obter o código da questão, tente novamente."}</span>
+              </div>
+            ) : (
+              <div className="flex flex-col space-y-2">
+                <Input
+                  id="share-code-mobile"
+                  value={displayCode || ""}
+                  readOnly
+                  className="font-mono text-center text-lg"
+                />
+                <Button 
+                  type="button" 
+                  onClick={handleCopy} 
+                  variant="outline"
+                  className="w-full"
+                  disabled={!displayCode}
+                >
+                  {copied ? 
+                    <Check className="h-4 w-4 mr-2 text-green-600" /> : 
+                    <Copy className="h-4 w-4 mr-2" />
+                  }
+                  {copied ? "Copiado!" : "Copiar código"}
+                </Button>
+              </div>
+            )}
           </div>
 
           <SheetFooter className="flex justify-center pt-2">
@@ -112,28 +148,42 @@ export function ShareCodeDialog({
           <div className="text-sm text-gray-500">
             <span className="font-medium">{title}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="grid flex-1 gap-2">
-              <Input
-                id="share-code"
-                value={code || ""}
-                readOnly
-                className="font-mono text-center text-lg"
-              />
+          
+          {loading ? (
+            <div className="flex items-center justify-center p-6">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <span className="ml-2">Carregando código...</span>
             </div>
-            <Button 
-              type="button" 
-              size="icon" 
-              onClick={handleCopy} 
-              variant="outline"
-              className={copied ? "bg-green-50" : ""}
-            >
-              {copied ? 
-                <Check className="h-4 w-4 text-green-600" /> : 
-                <Copy className="h-4 w-4" />
-              }
-            </Button>
-          </div>
+          ) : errorState ? (
+            <div className="flex items-center p-3 bg-red-50 border border-red-100 rounded-md text-red-700 space-x-2">
+              <AlertCircle className="h-5 w-5" />
+              <span>{errorMessage || "Não foi possível obter o código da questão, tente novamente."}</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <div className="grid flex-1 gap-2">
+                <Input
+                  id="share-code"
+                  value={displayCode || ""}
+                  readOnly
+                  className="font-mono text-center text-lg"
+                />
+              </div>
+              <Button 
+                type="button" 
+                size="icon" 
+                onClick={handleCopy} 
+                variant="outline"
+                className={copied ? "bg-green-50" : ""}
+                disabled={!displayCode}
+              >
+                {copied ? 
+                  <Check className="h-4 w-4 text-green-600" /> : 
+                  <Copy className="h-4 w-4" />
+                }
+              </Button>
+            </div>
+          )}
         </div>
         <DialogFooter className="sm:justify-center">
           <Button variant="outline" onClick={onClose}>
