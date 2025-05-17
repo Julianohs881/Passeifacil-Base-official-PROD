@@ -77,12 +77,12 @@ const NavBar = () => {
     <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex justify-between items-center">
-          {/* Logo with maximum height */}
-          <Link to="/" className="flex items-center">
+          {/* Logo com altura máxima */}
+          <Link to="/" className="flex items-center min-w-0">
             <div className="relative h-8 sm:h-12 flex items-center">
               <GraduationCap className="w-8 h-8 sm:w-10 sm:h-10 text-blue-900" />
               <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 absolute bottom-0 right-0" />
-              <span className="ml-2 sm:ml-3 text-lg sm:text-xl font-bold text-blue-900 whitespace-nowrap">Passei Fácil</span>
+              <span className="ml-2 sm:ml-3 text-lg sm:text-xl font-bold text-blue-900 truncate">Passei Fácil</span>
             </div>
           </Link>
           
@@ -90,7 +90,7 @@ const NavBar = () => {
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
-                <Link to="/quizzes">
+                <Link to="/quizzes" className="min-w-[40px] min-h-[40px] flex items-center">
                   <Button 
                     size="sm" 
                     variant="outline"
@@ -104,7 +104,7 @@ const NavBar = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
-                  className="text-blue-900 hover:bg-blue-50 whitespace-nowrap"
+                  className="min-w-[40px] min-h-[40px] text-blue-900 hover:bg-blue-50 whitespace-nowrap"
                 >
                   Sair
                 </Button>
@@ -117,7 +117,7 @@ const NavBar = () => {
                       onClick={handleManageSubscription}
                       size="sm"
                       disabled={isLoading}
-                      className={`${isPro() 
+                      className={`min-w-[40px] min-h-[40px] ${isPro() 
                         ? "border border-amber-400 bg-white text-amber-600 hover:bg-amber-50" 
                         : "bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white"} rounded-full`}
                     >
@@ -142,7 +142,7 @@ const NavBar = () => {
                   <PremiumFeatureGate feature="explore">
                     <Link 
                       to="/explore" 
-                      className="flex items-center text-sm text-gray-600 hover:text-blue-900"
+                      className="min-w-[40px] min-h-[40px] flex items-center text-sm text-gray-600 hover:text-blue-900"
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       <span className="inline-block">Explorar</span>
@@ -152,7 +152,7 @@ const NavBar = () => {
               </>
             ) : (
               <>
-                <Link to="/login">
+                <Link to="/login" className="min-w-[40px] min-h-[40px] flex items-center">
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -161,7 +161,7 @@ const NavBar = () => {
                     Entrar
                   </Button>
                 </Link>
-                <Link to="/register">
+                <Link to="/register" className="min-w-[40px] min-h-[40px] flex items-center">
                   <Button 
                     size="sm" 
                     className="bg-blue-500 hover:bg-blue-600 text-white whitespace-nowrap"
@@ -179,7 +179,7 @@ const NavBar = () => {
                   variant="ghost" 
                   size="icon" 
                   onClick={toggleMobileMenu} 
-                  className="ml-1"
+                  className="min-w-[40px] min-h-[40px] ml-1"
                 >
                   {mobileMenuOpen ? (
                     <X className="h-5 w-5" />

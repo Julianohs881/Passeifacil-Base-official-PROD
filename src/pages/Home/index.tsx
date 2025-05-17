@@ -1,9 +1,9 @@
+
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Quiz } from "@/types";
-import NavBar from "@/components/NavBar";
 import AddQuizModal from "@/components/QuizForms/AddQuizModal";
 import RenameQuizModal from "@/components/RenameQuizModal";
 import DeleteQuizDialog from "@/components/DeleteQuizDialog";
@@ -82,8 +82,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavBar />
-      <main className="container mx-auto py-8 px-4">
+      <main className="container mx-auto py-4 sm:py-8 px-4">
         {/* New Upgrade Banner */}
         <UpgradeBanner onUpgradeClick={handleOpenUpgradeDialog} />
         

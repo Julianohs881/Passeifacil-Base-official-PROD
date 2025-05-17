@@ -81,25 +81,25 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
         className="group relative block"
       >
         <div
-          className={`quiz-card ${quiz.color} p-5 flex flex-col justify-between`}
+          className={`quiz-card ${quiz.color} p-4 h-32 sm:h-44`}
         >
           {/* Indicador de visibilidade */}
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-2 left-2">
             {quiz.visibility === "public" ? (
               <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
                 <Eye className="h-3 w-3 mr-1" />
-                Público
+                <span className="hidden sm:inline">Público</span>
               </span>
             ) : (
               <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
                 <EyeOff className="h-3 w-3 mr-1" />
-                Privado
+                <span className="hidden sm:inline">Privado</span>
               </span>
             )}
           </div>
 
           {/* Action buttons - Mostrar apenas se o usuário for o criador */}
-          <div className="absolute top-3 right-3 flex space-x-1">
+          <div className="absolute top-2 right-2 flex space-x-1">
             {/* Share button - only show for PRO users */}
             {isPROUser && (
               <Button
@@ -163,7 +163,7 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
 
           {/* Título do quiz centralizado verticalmente e horizontalmente */}
           <div className="flex-grow flex items-center justify-center">
-            <h3 className="text-base font-medium text-white text-center">
+            <h3 className="text-sm sm:text-base font-medium text-white text-center break-words line-clamp-3">
               {quiz.title}
             </h3>
           </div>
