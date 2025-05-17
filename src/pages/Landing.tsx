@@ -14,7 +14,7 @@ const Landing = () => {
   };
   return <div className="min-h-screen bg-white pt-20">
       {/* Hero Section */}
-      <section className="pt-16 pb-16 md:pt-24 md:pb-24 px-px py-0">
+      <section className="pt-16 pb-16 md:pt-24 md:pb-24 px-0 py-0">
         <div className="container mx-auto px-6 md:px-8 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
