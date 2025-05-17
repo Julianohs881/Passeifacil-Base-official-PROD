@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { GraduationCap, Check, ArrowRight, Upload, Zap, Users, User, HelpCircle, Facebook, Instagram, Twitter, Crown } from "lucide-react";
@@ -27,6 +28,14 @@ const Landing = () => {
         <div className="container mx-auto px-6 md:px-8 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
+              {/* Logo centered above the title */}
+              <div className="flex justify-center md:justify-start mb-6">
+                <img 
+                  src="/lovable-uploads/87bf90af-5c0d-4be1-b613-3e54a190ca5e.png"
+                  alt="Passei Fácil Logo"
+                  className="h-[60px] md:h-[64px] lg:h-[72px] w-auto object-contain"
+                />
+              </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-blue-900 mb-6 leading-tight">
                 O jeito mais fácil de estudar e criar questões!
               </h1>
