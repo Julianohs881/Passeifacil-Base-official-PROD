@@ -26,7 +26,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      setUserProfile(data as UserProfile);
+      // Make sure the data conforms to the UserProfile type
+      if (data) {
+        const typedProfile: UserProfile = {
+          id: data.id,
+          plan: data.plan,
+          ai_questions_created: data.ai_questions_created || 0,
+          created_at: data.created_at
+        };
+        setUserProfile(typedProfile);
+      }
     } catch (error) {
       console.error("Error in fetchUserProfile:", error);
     }
@@ -44,7 +53,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       if (error) throw error;
       
-      setUserProfile(data);
+      // Make sure the data conforms to the UserProfile type
+      if (data) {
+        const typedProfile: UserProfile = {
+          id: data.id,
+          plan: data.plan,
+          ai_questions_created: data.ai_questions_created || 0,
+          created_at: data.created_at
+        };
+        setUserProfile(typedProfile);
+      }
     } catch (error) {
       console.error("Erro ao buscar perfil do usuário:", error);
     }
@@ -158,12 +176,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
-      // Update local state
+      // Update local state with properly typed object
       if (userProfile) {
-        setUserProfile({
+        const updatedProfile: UserProfile = {
           ...userProfile,
           ai_questions_created: (userProfile.ai_questions_created || 0) + 1
-        });
+        };
+        setUserProfile(updatedProfile);
       }
       
       // Update in database

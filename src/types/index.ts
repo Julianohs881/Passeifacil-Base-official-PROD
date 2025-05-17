@@ -1,3 +1,4 @@
+
 export interface Quiz {
   id: string;
   user_id: string;
@@ -99,7 +100,8 @@ export function parseColorOption(color: string | undefined): ColorOption {
 
 import { User, Session } from "@supabase/supabase-js";
 
-export type UserPlan = 'gratuito' | 'pro';
+// Modified to accept raw string values from the database
+export type UserPlan = 'gratuito' | 'pro' | string;
 
 export interface UserProfile {
   id: string;
