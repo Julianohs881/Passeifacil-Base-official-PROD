@@ -31,4 +31,14 @@
   .glassmorphism {
     @apply bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl shadow-md;
   }
+
+  /* Adicionando animações para elementos da landing page */
+  .animated-fade-in {
+    @apply animate-fade-in;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
 }
+
