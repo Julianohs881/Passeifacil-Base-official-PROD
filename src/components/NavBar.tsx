@@ -1,10 +1,15 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, Edit2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
+
 const NavBar = () => {
   const {
     user,
@@ -13,6 +18,10 @@ const NavBar = () => {
   } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [logoSize, setLogoSize] = useState(20); // Default size value
+  const [showLogoEditor, setShowLogoEditor] = useState(false);
+  const { toast } = useToast();
+  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -21,11 +30,76 @@ const NavBar = () => {
       console.error("Failed to sign out", error);
     }
   };
+
+  const handleLogoSizeChange = (value: number[]) => {
+    setLogoSize(value[0]);
+  };
+
+  const saveLogoSize = () => {
+    localStorage.setItem("logo-size", logoSize.toString());
+    setShowLogoEditor(false);
+    toast({
+      title: "Tamanho do logo salvo",
+      description: "O tamanho do logo foi atualizado com sucesso."
+    });
+  };
+
+  // Load saved logo size from localStorage on component mount
+  useState(() => {
+    const savedSize = localStorage.getItem("logo-size");
+    if (savedSize) {
+      setLogoSize(parseInt(savedSize));
+    }
+  });
+
   return <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center">
-          <img src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" alt="Passei Fácil" className="h-12 max-h-[300px] w-auto object-contain" />
-        </Link>
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" 
+              alt="Passei Fácil" 
+              className={`h-${logoSize} max-h-[48px] w-auto object-contain`} 
+            />
+          </Link>
+          
+          {user && userProfile?.plan === "premium" && (
+            <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="ml-2 text-gray-500 hover:text-violet-600"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-4">
+                  <h3 className="font-medium">Ajustar tamanho do logo</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Menor</span>
+                      <span>Maior</span>
+                    </div>
+                    <Slider 
+                      defaultValue={[logoSize]} 
+                      max={24} 
+                      min={12} 
+                      step={1}
+                      onValueChange={handleLogoSizeChange}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={saveLogoSize} size="sm">
+                      Salvar
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
 
         {/* Mobile menu */}
         <div className="md:hidden">
