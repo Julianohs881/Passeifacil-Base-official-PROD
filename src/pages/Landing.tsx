@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { GraduationCap, Check, ArrowRight, Upload, Zap, Users, User, HelpCircle, Facebook, Instagram, Twitter, Crown } from "lucide-react";
@@ -8,11 +7,12 @@ import PlanUpgradeDialog from "@/components/PlanUpgradeDialog";
 
 // Price configuration object for easy editing
 const PRICING_CONFIG = {
-  monthlyPriceDisplay: "R$ 19,90", // Display price (formatted with comma)
-  monthlyPriceAmount: 1990, // Amount in cents for Stripe
+  monthlyPriceDisplay: "R$ 19,90",
+  // Display price (formatted with comma)
+  monthlyPriceAmount: 1990,
+  // Amount in cents for Stripe
   currency: "brl"
 };
-
 const Landing = () => {
   const {
     user
@@ -21,7 +21,6 @@ const Landing = () => {
   const handleOpenUpgradeDialog = () => {
     setIsUpgradeDialogOpen(true);
   };
-  
   return <div className="min-h-screen bg-white pt-20">
       {/* Hero Section */}
       <section className="pt-16 pb-16 md:pt-24 md:pb-24 px-0 py-0">
@@ -29,14 +28,10 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
               {/* Logo centered above the title */}
-              <div className="flex justify-center md:justify-start mb-6">
-                <img 
-                  src="/lovable-uploads/87bf90af-5c0d-4be1-b613-3e54a190ca5e.png"
-                  alt="Passei Fácil Logo"
-                  className="h-[60px] md:h-[64px] lg:h-[72px] w-auto object-contain"
-                />
+              <div className="flex justify-center md:justify-start mb-6 px-0 py-0 rounded-none my-[2px]">
+                <img alt="Passei Fácil Logo" src="/lovable-uploads/4ed732db-a250-4cac-ba13-9727435d44dc.png" className="h-[400px] md:h-[64px] lg:h-[72px] w-auto object-contain" />
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-blue-900 mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-bold text-blue-900 mb-6 leading-tight px-0 mx-[11px] my-0 py-0 lg:text-6xl">
                 O jeito mais fácil de estudar e criar questões!
               </h1>
               <p className="text-lg md:text-xl text-gray-700 mb-8">
