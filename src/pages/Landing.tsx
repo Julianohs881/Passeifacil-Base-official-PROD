@@ -4,6 +4,14 @@ import { GraduationCap, Check, ArrowRight, Upload, Zap, Users, User, HelpCircle,
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import PlanUpgradeDialog from "@/components/PlanUpgradeDialog";
+
+// Price configuration object for easy editing
+const PRICING_CONFIG = {
+  monthlyPriceDisplay: "R$ 19,90", // Display price (formatted with comma)
+  monthlyPriceAmount: 1990, // Amount in cents for Stripe
+  currency: "brl"
+};
+
 const Landing = () => {
   const {
     user
@@ -12,6 +20,7 @@ const Landing = () => {
   const handleOpenUpgradeDialog = () => {
     setIsUpgradeDialogOpen(true);
   };
+  
   return <div className="min-h-screen bg-white pt-20">
       {/* Hero Section */}
       <section className="pt-16 pb-16 md:pt-24 md:pb-24 px-0 py-0">
@@ -144,7 +153,7 @@ const Landing = () => {
               <div className="absolute top-0 right-0 bg-amber-400 text-white px-4 py-1 rounded-bl-lg font-medium">Recomendado</div>
               <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 border-b">
                 <h3 className="text-xl font-bold text-white">Plano PRO</h3>
-                <p className="text-2xl font-bold mt-2 text-white">R$ 14,90<span className="text-base font-normal">/mês</span></p>
+                <p className="text-2xl font-bold mt-2 text-white">{PRICING_CONFIG.monthlyPriceDisplay}<span className="text-base font-normal">/mês</span></p>
               </div>
               <div className="p-6 space-y-4">
                 <div className="flex items-start">
@@ -388,7 +397,7 @@ const Landing = () => {
             <div>
               <h3 className="font-bold text-lg mb-4">Suporte</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Política de Privacidade</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white">Pol��tica de Privacidade</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white">Termos de Uso</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white">FAQ</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white">Ajuda</a></li>
