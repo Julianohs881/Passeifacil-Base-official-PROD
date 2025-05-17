@@ -60,10 +60,12 @@ const Home = () => {
         return;
       }
 
-      // Parse the color property to ensure it's a valid ColorOption
+      // Parse the color and visibility properties to ensure they conform to their expected types
       const parsedQuizzes: Quiz[] = (data || []).map(quiz => ({
         ...quiz,
-        color: parseColorOption(quiz.color)
+        color: parseColorOption(quiz.color),
+        // Ensure visibility is either "public" or "private" (if not, default to "private")
+        visibility: (quiz.visibility === "public" ? "public" : "private") as VisibilityOption
       }));
       
       setQuizzes(parsedQuizzes);
