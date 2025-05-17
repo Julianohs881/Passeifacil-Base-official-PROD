@@ -67,7 +67,7 @@ function App() {
               }
             />
             
-            {/* Explore page - acessível para todos os usuários autenticados */}
+            {/* Explore page - available for all authenticated users */}
             <Route 
               path="/explore" 
               element={

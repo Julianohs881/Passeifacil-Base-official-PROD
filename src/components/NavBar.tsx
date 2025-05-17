@@ -77,7 +77,7 @@ const NavBar = () => {
     <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex justify-between items-center">
-          {/* Logo com altura máxima */}
+          {/* Logo with maximum height */}
           <Link to="/" className="flex items-center">
             <div className="relative h-8 sm:h-12 flex items-center">
               <GraduationCap className="w-8 h-8 sm:w-10 sm:h-10 text-blue-900" />
@@ -86,7 +86,7 @@ const NavBar = () => {
             </div>
           </Link>
           
-          {/* Botões de navegação - sempre visíveis */}
+          {/* Navigation buttons - always visible */}
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
@@ -172,7 +172,7 @@ const NavBar = () => {
               </>
             )}
             
-            {/* Menu mobile para opções adicionais */}
+            {/* Mobile menu for additional options */}
             {user && isMobile && (
               <div className="relative">
                 <Button 
