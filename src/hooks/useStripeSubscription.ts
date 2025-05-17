@@ -16,16 +16,30 @@ export const useStripeSubscription = () => {
     // Se o erro vier diretamente da função Edge
     if (error.message?.includes("Edge Function returned")) {
       console.log("Erro completo da Edge Function:", error);
-      return "Erro de comunicação com o servidor. Verifique os logs para mais detalhes.";
+      
+      try {
+        // Tentar extrair o corpo da resposta como JSON
+        if (error.body) {
+          const errorBody = JSON.parse(error.body);
+          if (errorBody.error) return errorBody.error;
+          if (errorBody.details) return errorBody.details;
+          if (errorBody.message) return errorBody.message;
+        }
+      } catch (parseError) {
+        console.log("Erro ao parsear corpo do erro:", parseError);
+      }
+      
+      return "Erro de comunicação com o servidor. Verifique se você tem uma conexão estável com a internet e tente novamente.";
     }
     
     // Se for um erro com estrutura detalhada
-    if (error.error) return error.error;
+    if (typeof error === 'object') {
+      if (error.error) return error.error;
+      if (error.message) return error.message;
+      if (error.details) return error.details;
+    }
     
     // Se for um erro com mensagem simples
-    if (error.message) return error.message;
-    
-    // Fallback para qualquer outro formato de erro
     return typeof error === 'string' ? error : JSON.stringify(error);
   };
   
@@ -44,6 +58,7 @@ export const useStripeSubscription = () => {
       }
       
       if (data.error) {
+        // Se o erro indicar que o usuário já tem uma assinatura ativa
         if (data.redirectToPortal) {
           toast({
             title: "Você já possui uma assinatura ativa",

@@ -32,11 +32,24 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
     try {
       const result = await createCheckoutSession();
       if (!result.success && result.error) {
+        // Se há redirecionamento para o portal
+        if (result.redirectToPortal) {
+          toast({
+            title: "Redirecionando para o portal",
+            description: "Você já possui uma assinatura ativa, redirecionando para o portal de gerenciamento.",
+            duration: 3000,
+          });
+          return;
+        }
+        
         // Armazenar a mensagem de erro para exibição
         setErrorMessage(
           result.error.message || 
           "Ocorreu um erro ao processar sua solicitação. Verifique os logs para mais detalhes."
         );
+        
+        // Log detalhado do erro
+        console.error("Detalhes do erro de checkout:", result.error);
       }
     } catch (error: any) {
       console.error("Erro não tratado ao processar checkout:", error);

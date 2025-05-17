@@ -51,84 +51,131 @@ serve(async (req) => {
     if (!user?.email) throw new Error("Usuário não autenticado ou email não disponível");
     logStep("Usuário autenticado", { userId: user.id, email: user.email });
     
-    // Inicializar o Stripe
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    
-    // Verificar se o usuário já existe como cliente no Stripe
-    logStep("Buscando cliente no Stripe");
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Cliente encontrado no Stripe", { customerId });
+    try {
+      // Inicializar o Stripe
+      const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
       
-      // Verificar se o cliente já tem uma assinatura ativa
-      const subscriptions = await stripe.subscriptions.list({
+      // Verificar se o usuário já existe como cliente no Stripe
+      logStep("Buscando cliente no Stripe");
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      let customerId;
+      
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Cliente encontrado no Stripe", { customerId });
+        
+        // Verificar se o cliente já tem uma assinatura ativa
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customerId,
+          status: "active",
+          limit: 1,
+        });
+        
+        if (subscriptions.data.length > 0) {
+          logStep("Cliente já possui uma assinatura ativa");
+          return new Response(JSON.stringify({ 
+            error: "Você já possui uma assinatura ativa",
+            hasActiveSubscription: true,
+            redirectToPortal: true
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200, // Mudando para 200 para evitar erros genéricos no frontend
+          });
+        }
+      } else {
+        logStep("Cliente não encontrado no Stripe, será criado durante o checkout");
+      }
+      
+      // Verificar se há um produto cadastrado no Stripe
+      logStep("Verificando produtos disponíveis");
+      const products = await stripe.products.list({ active: true, limit: 1 });
+      if (products.data.length === 0) {
+        throw new Error("Nenhum produto disponível no Stripe. Configure um produto antes de continuar.");
+      }
+      
+      // Verificar se há um preço cadastrado
+      logStep("Verificando preços disponíveis");
+      const prices = await stripe.prices.list({ active: true, limit: 1 });
+      if (prices.data.length === 0) {
+        throw new Error("Nenhum preço definido no Stripe. Configure um preço antes de continuar.");
+      }
+      
+      // Criar sessão de checkout do Stripe
+      logStep("Criando sessão de checkout");
+      const session = await stripe.checkout.sessions.create({
         customer: customerId,
-        status: "active",
-        limit: 1,
+        customer_email: customerId ? undefined : user.email,
+        line_items: [
+          {
+            price_data: {
+              currency: "brl",
+              product_data: { 
+                name: "Passei Fácil PRO",
+                description: "Acesso a todas as funcionalidades premium do Passei Fácil"
+              },
+              unit_amount: 1990, // R$19,90
+              recurring: { interval: "month" },
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: `${req.headers.get("origin")}/quizzes?subscription=success`,
+        cancel_url: `${req.headers.get("origin")}/quizzes?subscription=canceled`,
       });
       
-      if (subscriptions.data.length > 0) {
-        logStep("Cliente já possui uma assinatura ativa");
-        return new Response(JSON.stringify({ 
-          error: "Você já possui uma assinatura ativa",
-          hasActiveSubscription: true,
-          redirectToPortal: true
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        });
+      if (!session.url) {
+        throw new Error("Falha ao criar URL da sessão de checkout");
       }
-    } else {
-      logStep("Cliente não encontrado no Stripe, será criado durante o checkout");
+      
+      logStep("Sessão de checkout criada com sucesso", { 
+        sessionId: session.id,
+        url: session.url
+      });
+      
+      return new Response(JSON.stringify({ url: session.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } catch (stripeError: any) {
+      // Capturar erros específicos da API do Stripe
+      logStep("ERRO do Stripe", { 
+        message: stripeError.message,
+        type: stripeError.type,
+        code: stripeError.code
+      });
+      
+      let errorMessage = "Erro ao processar pagamento com o Stripe: ";
+      
+      if (stripeError.type === 'StripeInvalidRequestError') {
+        errorMessage += "Solicitação inválida. Verifique os dados fornecidos.";
+      } else if (stripeError.type === 'StripeAuthenticationError') {
+        errorMessage += "Falha na autenticação do Stripe. Verifique a chave API.";
+      } else if (stripeError.type === 'StripeAPIError') {
+        errorMessage += "Erro na API do Stripe. O serviço pode estar indisponível temporariamente.";
+      } else if (stripeError.type === 'StripeConnectionError') {
+        errorMessage += "Erro de conexão com o Stripe. Verifique sua conexão com a internet.";
+      } else if (stripeError.type === 'StripeRateLimitError') {
+        errorMessage += "Muitas solicitações ao Stripe. Tente novamente mais tarde.";
+      } else {
+        errorMessage += stripeError.message || "Erro desconhecido.";
+      }
+      
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
-    
-    // Criar sessão de checkout do Stripe
-    logStep("Criando sessão de checkout");
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price_data: {
-            currency: "brl",
-            product_data: { 
-              name: "Passei Fácil PRO",
-              description: "Acesso a todas as funcionalidades premium do Passei Fácil"
-            },
-            unit_amount: 1990, // R$19,90
-            recurring: { interval: "month" },
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "subscription",
-      success_url: `${req.headers.get("origin")}/quizzes?subscription=success`,
-      cancel_url: `${req.headers.get("origin")}/quizzes?subscription=canceled`,
-    });
-    
-    if (!session.url) {
-      throw new Error("Falha ao criar URL da sessão de checkout");
-    }
-    
-    logStep("Sessão de checkout criada com sucesso", { 
-      sessionId: session.id,
-      url: session.url
-    });
-    
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERRO em create-checkout", { message: errorMessage });
     
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      details: "Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde ou entre em contato com o suporte."
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 400, // Mudando para 400 para ser mais específico
     });
   }
 });
