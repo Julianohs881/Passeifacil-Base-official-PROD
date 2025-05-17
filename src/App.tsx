@@ -28,7 +28,7 @@ function App() {
     <AuthProvider>
       <Router>
         <NavBar />
-        <main className="min-h-screen">
+        <main className="pt-16 sm:pt-20 min-h-screen">
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
@@ -89,4 +89,3 @@ function App() {
 }
 
 export default App;
-
