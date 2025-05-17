@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Question, isUserCreator } from "../types";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,8 @@ import {
   Edit,
   Trash2,
   Share2,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
