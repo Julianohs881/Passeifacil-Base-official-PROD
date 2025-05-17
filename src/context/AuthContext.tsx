@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthContextType, UserProfile } from "../types";
+import { AuthContextType, UserProfile, UserPlan } from "../types";
 import { useToast } from "@/hooks/use-toast";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data) {
         const typedProfile: UserProfile = {
           id: data.id,
-          plan: data.plan,
+          plan: data.plan as UserPlan,
           ai_questions_created: data.ai_questions_created || 0,
           created_at: data.created_at
         };
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data) {
         const typedProfile: UserProfile = {
           id: data.id,
-          plan: data.plan,
+          plan: data.plan as UserPlan,
           ai_questions_created: data.ai_questions_created || 0,
           created_at: data.created_at
         };

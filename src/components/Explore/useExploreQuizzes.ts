@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/utils/supabase";
-import { parseColorOption } from "@/types";
+import { parseColorOption, ColorOption } from "@/types";
 import { ExtendedQuiz } from "./types";
 import { FilterValues } from "./ExploreFilters";
 
