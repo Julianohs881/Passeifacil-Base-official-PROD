@@ -11,7 +11,7 @@ import Explore from "./pages/Explore";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AddQuizModal from "@/components/QuizForms/AddQuizModal";
+import NavBar from "./components/NavBar";
 
 // Redirect to home if authenticated, otherwise show login
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
@@ -24,31 +24,12 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Página para criar novo quiz
-const NewQuiz = () => {
-  const { user } = useAuth();
-  
-  const handleSaveQuiz = async (quiz) => {
-    // Esta função será implementada para salvar o quiz
-    console.log("Salvando novo quiz:", quiz);
-  };
-  
-  return (
-    <div className="pt-16 sm:pt-20">
-      <AddQuizModal 
-        isOpen={true} 
-        onClose={() => window.history.back()} 
-        onSave={handleSaveQuiz}
-      />
-    </div>
-  );
-};
-
 function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen">
+          <NavBar />
           <main className="pt-16 sm:pt-20">
             <Routes>
               {/* Public routes */}
@@ -84,16 +65,6 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Quiz />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* New Quiz route */}
-              <Route 
-                path="/quizzes/new" 
-                element={
-                  <ProtectedRoute>
-                    <NewQuiz />
                   </ProtectedRoute>
                 }
               />
