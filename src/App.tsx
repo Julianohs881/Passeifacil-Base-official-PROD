@@ -10,6 +10,7 @@ import Quiz from "./pages/Quiz";
 import Explore from "./pages/Explore";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import NavBar from "./components/NavBar";
 
 // Redirect to home if authenticated, otherwise show login
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
@@ -26,57 +27,60 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Landing />} />
-          <Route 
-            path="/login" 
-            element={
-              <AuthRedirect>
-                <Login />
-              </AuthRedirect>
-            }
-          />
-          <Route 
-            path="/register" 
-            element={
-              <AuthRedirect>
-                <Register />
-              </AuthRedirect>
-            }
-          />
+        <NavBar />
+        <main className="min-h-screen">
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Landing />} />
+            <Route 
+              path="/login" 
+              element={
+                <AuthRedirect>
+                  <Login />
+                </AuthRedirect>
+              }
+            />
+            <Route 
+              path="/register" 
+              element={
+                <AuthRedirect>
+                  <Register />
+                </AuthRedirect>
+              }
+            />
 
-          {/* Protected routes */}
-          <Route 
-            path="/quizzes" 
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
-          <Route 
-            path="/quiz/:id" 
-            element={
-              <ProtectedRoute>
-                <Quiz />
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Explore page - acessível para todos os usuários autenticados */}
-          <Route 
-            path="/explore" 
-            element={
-              <ProtectedRoute>
-                <Explore />
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected routes */}
+            <Route 
+              path="/quizzes" 
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/quiz/:id" 
+              element={
+                <ProtectedRoute>
+                  <Quiz />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Explore page - acessível para todos os usuários autenticados */}
+            <Route 
+              path="/explore" 
+              element={
+                <ProtectedRoute>
+                  <Explore />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* 404 route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* 404 route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
         
         <Toaster />
       </Router>
@@ -85,3 +89,4 @@ function App() {
 }
 
 export default App;
+

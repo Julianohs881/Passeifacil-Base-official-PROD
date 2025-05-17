@@ -1,4 +1,5 @@
 
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,6 +9,11 @@
 @layer base {
   body {
     font-family: 'Roboto', sans-serif;
+  }
+
+  /* Ensure content doesn't get hidden under fixed header */
+  main {
+    padding-top: env(safe-area-inset-top, 0);
   }
 }
 
@@ -32,7 +38,22 @@
     @apply bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl shadow-md;
   }
 
-  /* Adicionando animações para elementos da landing page */
+  /* Container com largura máxima para garantir boa exibição em todas as telas */
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Header spacing */
+  .header-offset {
+    @apply pt-20;
+  }
+
+  /* Espaçamento adequado para elementos de navegação */
+  .nav-spacing {
+    @apply space-x-2 md:space-x-4;
+  }
+
+  /* Animações para elementos da landing page */
   .animated-fade-in {
     @apply animate-fade-in;
   }
@@ -41,4 +62,3 @@
     @apply transition-transform duration-200 hover:scale-105;
   }
 }
-

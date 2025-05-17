@@ -27,52 +27,9 @@ const Landing = () => {
   };
   
   return (
-    <div className="min-h-screen bg-white">
-      {/* Cabeçalho Fixo */}
-      <header className="fixed top-0 left-0 w-full bg-white shadow-sm z-50">
-        <div className="container mx-auto px-6 md:px-8 lg:px-12 py-4 flex justify-between items-center">
-          <Link to="/" className="flex items-center">
-            <div className="relative">
-              <GraduationCap className="w-10 h-10 text-blue-900" />
-              <Check className="w-5 h-5 text-emerald-500 absolute bottom-0 right-0" />
-            </div>
-            <span className="ml-3 text-2xl font-bold text-blue-900">Passei Fácil</span>
-          </Link>
-          
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <Link to="/quizzes">
-                <Button variant="outline" className="border-blue-500 text-blue-900 rounded-full">
-                  Meus Quizzes
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" className="text-blue-900 hover:bg-blue-50">
-                    Entrar
-                  </Button>
-                </Link>
-                <Link to="/quizzes">
-                  <Button variant="ghost" className="text-blue-900 hover:bg-blue-50">
-                    Meus Quizzes
-                  </Button>
-                </Link>
-              </>
-            )}
-            <Button 
-              onClick={handleOpenUpgradeDialog}
-              className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white rounded-full shadow-md"
-            >
-              <Crown className="h-4 w-4 mr-1" />
-              Seja PRO
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-white pt-20">
       {/* Hero Section */}
-      <section className="pt-28 pb-16 md:pt-36 md:pb-24">
+      <section className="pt-16 pb-16 md:pt-24 md:pb-24">
         <div className="container mx-auto px-6 md:px-8 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
@@ -101,7 +58,7 @@ const Landing = () => {
             <div className="order-1 md:order-2 flex justify-center md:justify-end">
               <div className="relative">
                 <img 
-                  src="/lovable-uploads/9a385c39-1c2d-41fa-941c-4362b6130fe6.png" 
+                  src="/lovable-uploads/53bcbba0-62ef-428c-8dd5-8067d1c55eb4.png" 
                   alt="Estudantes interagindo com quizzes" 
                   className="w-full max-w-lg"
                 />
