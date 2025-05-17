@@ -16,7 +16,8 @@ export const useStripeSubscription = () => {
       const { data, error } = await supabase.functions.invoke('create-checkout');
       
       if (error) {
-        throw error;
+        console.error("Erro ao invocar função create-checkout:", error);
+        throw new Error(error.message);
       }
       
       if (data.error) {
@@ -60,6 +61,7 @@ export const useStripeSubscription = () => {
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
+        console.error("Erro ao invocar função check-subscription:", error);
         throw error;
       }
       
@@ -101,7 +103,8 @@ export const useStripeSubscription = () => {
       const { data, error } = await supabase.functions.invoke('customer-portal');
       
       if (error) {
-        throw error;
+        console.error("Erro ao invocar função customer-portal:", error);
+        throw new Error(error.message);
       }
       
       if (data.error) {
@@ -109,16 +112,19 @@ export const useStripeSubscription = () => {
       }
       
       // Abrir o portal de clientes do Stripe em uma nova aba
-      window.open(data.url, '_blank');
-      
-      return { success: true };
+      if (data.url) {
+        window.open(data.url, '_blank');
+        return { success: true };
+      } else {
+        throw new Error("URL do portal não disponível");
+      }
     } catch (error: any) {
       console.error("Erro ao abrir portal do cliente:", error);
       
       toast({
         variant: "destructive",
         title: "Erro ao abrir portal de gerenciamento",
-        description: error?.message || "Ocorreu um erro ao tentar acessar seu portal de assinatura.",
+        description: error?.message || "Ocorreu um erro ao tentar acessar seu portal de assinatura. Verifique se o portal do cliente está configurado no Stripe.",
         duration: 5000,
       });
       

@@ -4,6 +4,7 @@ import { Crown, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useStripeSubscription } from "@/hooks/useStripeSubscription";
+import { useToast } from "@/hooks/use-toast";
 
 interface UpgradeBannerProps {
   onUpgradeClick: () => void;
@@ -12,13 +13,24 @@ interface UpgradeBannerProps {
 const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
   const { isPro } = useAuth();
   const { createCheckoutSession, isLoading } = useStripeSubscription();
+  const { toast } = useToast();
   
   // Função para lidar com o clique direto no botão de upgrade
   const handleDirectUpgrade = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    await createCheckoutSession();
+    try {
+      await createCheckoutSession();
+    } catch (error) {
+      console.error("Erro ao processar checkout:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao processar assinatura",
+        description: "Por favor, tente novamente ou entre em contato com o suporte.",
+        duration: 5000,
+      });
+    }
   };
   
   // Don't show banner for PRO users

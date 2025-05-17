@@ -24,11 +24,26 @@ serve(async (req) => {
   try {
     logStep("Função iniciada");
 
-    // Obter a chave do Stripe do ambiente
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY não está configurada");
     logStep("Chave do Stripe verificada");
     
+    // Verificar configuração do portal do cliente no Stripe
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    
+    try {
+      // Tenta obter a configuração do portal do cliente para verificar se está configurada
+      await stripe.billingPortal.configurations.list({ limit: 1 });
+    } catch (configError) {
+      logStep("AVISO: Portal do cliente não está configurado no Stripe", { message: configError.message });
+      return new Response(JSON.stringify({ 
+        error: "Portal do cliente do Stripe não está configurado. Configure-o em https://dashboard.stripe.com/test/settings/billing/portal"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
     // Criar cliente Supabase com chave de serviço para operações de escrita
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -51,32 +66,45 @@ serve(async (req) => {
     if (!user?.email) throw new Error("Usuário não autenticado ou email não disponível");
     logStep("Usuário autenticado", { userId: user.id, email: user.email });
     
-    // Inicializar o Stripe
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    
-    // Verificar se o usuário existe como cliente no Stripe
+    // Verificar se o cliente já existe no Stripe
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
+    // Se não existe cliente no Stripe, criar um novo
+    let customerId;
     if (customers.data.length === 0) {
-      throw new Error("Nenhum cliente Stripe encontrado para este usuário");
+      logStep("Cliente não encontrado no Stripe, criando novo cliente");
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          supabase_uid: user.id
+        }
+      });
+      customerId = customer.id;
+      logStep("Novo cliente criado no Stripe", { customerId });
+    } else {
+      customerId = customers.data[0].id;
+      logStep("Cliente existente encontrado no Stripe", { customerId });
     }
     
-    const customerId = customers.data[0].id;
-    logStep("Cliente Stripe encontrado", { customerId });
-
-    // Criar sessão do portal de clientes
-    const origin = req.headers.get("origin") || "http://localhost:5173";
-    const portalSession = await stripe.billingPortal.sessions.create({
+    // Criar a sessão do portal do cliente
+    const origin = req.headers.get("origin") || "https://hrpchhrykumcdeolvtfs.supabase.co";
+    logStep("Criando sessão de portal para cliente", { customerId, returnUrl: origin });
+    
+    const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/quizzes`,
+      return_url: origin,
     });
     
-    logStep("Sessão do portal de clientes criada com sucesso", { 
-      sessionId: portalSession.id, 
-      url: portalSession.url 
+    if (!session.url) {
+      throw new Error("Falha ao criar URL da sessão do portal");
+    }
+    
+    logStep("Sessão do portal criada com sucesso", { 
+      sessionId: session.id,
+      url: session.url
     });
     
-    return new Response(JSON.stringify({ url: portalSession.url }), {
+    return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
