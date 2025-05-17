@@ -14,35 +14,30 @@ const PRICING_CONFIG = {
   // Amount in cents for Stripe
   currency: "brl"
 };
-
 const Landing = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const isMobile = useIsMobile();
-  
   const handleOpenUpgradeDialog = () => {
     setIsUpgradeDialogOpen(true);
   };
-  
-  return <div className="min-h-screen bg-white pt-20">
+  return <div className="min-h-screen bg-white pt-20 my-0 py-[6px]">
       {/* Hero Section */}
       <section className="pt-16 pb-16 md:pt-24 md:pb-24 px-0 py-0">
         <div className="container mx-auto px-6 md:px-8 lg:px-12">
           {/* Mobile-only logo at the top */}
-          {isMobile && (
-            <div className="flex justify-center mb-8 mt-0">
-              <img alt="Passei Fácil Logo" src="/lovable-uploads/4ed732db-a250-4cac-ba13-9727435d44dc.png" className="h-[64px] w-auto object-contain" />
-            </div>
-          )}
+          {isMobile && <div className="flex justify-center mb-8 mt-0">
+              <img alt="Passei Fácil Logo" src="/lovable-uploads/4ed732db-a250-4cac-ba13-9727435d44dc.png" className="h-[104px] w-auto object-contain" />
+            </div>}
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
               {/* Logo centered above the title - visible only on desktop */}
-              {!isMobile && (
-                <div className="flex justify-center md:justify-start mb-6 px-0 py-0 rounded-none my-[2px]">
+              {!isMobile && <div className="flex justify-center md:justify-start mb-6 px-0 py-0 rounded-none my-[2px]">
                   <img alt="Passei Fácil Logo" src="/lovable-uploads/4ed732db-a250-4cac-ba13-9727435d44dc.png" className="h-[64px] lg:h-[72px] w-auto object-contain" />
-                </div>
-              )}
+                </div>}
               
               <h1 className="text-4xl md:text-5xl font-bold text-blue-900 mb-6 leading-tight px-0 mx-[11px] my-0 py-0 lg:text-6xl">
                 O jeito mais fácil de estudar e criar questões!
