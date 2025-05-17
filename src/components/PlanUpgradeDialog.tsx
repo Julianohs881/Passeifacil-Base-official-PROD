@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
-import { Check, Crown } from "lucide-react";
+import { Check, Crown, X } from "lucide-react";
 
 interface PlanUpgradeDialogProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ interface PlanUpgradeDialogProps {
 const PlanUpgradeDialog: React.FC<PlanUpgradeDialogProps> = ({ isOpen, onClose }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md glassmorphism">
+      <DialogContent className="sm:max-w-lg glassmorphism">
         <DialogHeader>
           <DialogTitle className="text-center flex flex-col items-center">
             <div className="bg-gradient-to-r from-amber-400 to-yellow-500 p-3 rounded-full mb-2">
@@ -32,60 +32,65 @@ const PlanUpgradeDialog: React.FC<PlanUpgradeDialogProps> = ({ isOpen, onClose }
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3">Plano Gratuito</h3>
-            <ul className="space-y-2">
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
-                <span className="text-sm">Criar quizzes e questões manualmente</span>
-              </li>
-              <li className="flex items-start opacity-50">
-                <span className="h-4 w-4 mr-2 mt-1 flex-shrink-0">✗</span>
-                <span className="text-sm">Criar questões com IA</span>
-              </li>
-              <li className="flex items-start opacity-50">
-                <span className="h-4 w-4 mr-2 mt-1 flex-shrink-0">✗</span>
-                <span className="text-sm">Explorar quizzes públicos</span>
-              </li>
-              <li className="flex items-start opacity-50">
-                <span className="h-4 w-4 mr-2 mt-1 flex-shrink-0">✗</span>
-                <span className="text-sm">Compartilhar quizzes/questões</span>
-              </li>
-              <li className="flex items-start opacity-50">
-                <span className="h-4 w-4 mr-2 mt-1 flex-shrink-0">✗</span>
-                <span className="text-sm">Importar/exportar conteúdo</span>
-              </li>
-            </ul>
-          </div>
-          <div className="border border-amber-300 rounded-lg p-4 bg-amber-50">
-            <h3 className="font-medium flex items-center mb-3">
-              Plano PRO
-              <Crown className="h-4 w-4 ml-2 text-amber-500" />
-            </h3>
-            <ul className="space-y-2">
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
-                <span className="text-sm">Criar quizzes e questões manualmente</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
-                <span className="text-sm">Criar até 50 questões com IA</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
-                <span className="text-sm">Explorar quizzes públicos</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
-                <span className="text-sm">Compartilhar quizzes/questões</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
-                <span className="text-sm">Importar/exportar conteúdo</span>
-              </li>
-            </ul>
-          </div>
+        {/* Comparison Table */}
+        <div className="overflow-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-3 text-left border-b">Função</th>
+                <th className="p-3 text-center border-b">Gratuito</th>
+                <th className="p-3 text-center border-b">PRO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="p-3">Criar quiz manualmente</td>
+                <td className="p-3 text-center">
+                  <Check className="h-5 w-5 mx-auto text-green-500" />
+                </td>
+                <td className="p-3 text-center">
+                  <Check className="h-5 w-5 mx-auto text-green-500" />
+                </td>
+              </tr>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="p-3">Criar questões com IA</td>
+                <td className="p-3 text-center">
+                  <X className="h-5 w-5 mx-auto text-red-500" />
+                </td>
+                <td className="p-3 text-center flex justify-center items-center">
+                  <Check className="h-5 w-5 text-green-500 mr-1" />
+                  <span>(50)</span>
+                </td>
+              </tr>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="p-3">Explorar quizzes públicos</td>
+                <td className="p-3 text-center">
+                  <X className="h-5 w-5 mx-auto text-red-500" />
+                </td>
+                <td className="p-3 text-center">
+                  <Check className="h-5 w-5 mx-auto text-green-500" />
+                </td>
+              </tr>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="p-3">Compartilhar/importar/exportar</td>
+                <td className="p-3 text-center">
+                  <X className="h-5 w-5 mx-auto text-red-500" />
+                </td>
+                <td className="p-3 text-center">
+                  <Check className="h-5 w-5 mx-auto text-green-500" />
+                </td>
+              </tr>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="p-3">Suporte prioritário</td>
+                <td className="p-3 text-center">
+                  <X className="h-5 w-5 mx-auto text-red-500" />
+                </td>
+                <td className="p-3 text-center">
+                  <Check className="h-5 w-5 mx-auto text-green-500" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <DialogFooter className="sm:justify-center">

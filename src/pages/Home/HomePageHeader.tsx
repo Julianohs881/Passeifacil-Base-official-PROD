@@ -26,27 +26,26 @@ export const HomePageHeader = ({ onOpenCreateQuiz, onOpenImportDialog }: HomePag
           Novo Quiz
         </Button>
         
-        {/* Only show Explore button for PRO users */}
+        {/* Only show these buttons for PRO users */}
         {isPro() && (
-          <Button 
-            onClick={() => navigate("/explore")}
-            variant="outline"
-            className="flex-1 md:flex-none border-blue-500 text-blue-900"
-          >
-            Explorar
-          </Button>
-        )}
-        
-        {/* Only show Import button for PRO users */}
-        {isPro() && (
-          <Button
-            onClick={onOpenImportDialog}
-            variant="outline"
-            className="flex-1 md:flex-none"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Importar por Código
-          </Button>
+          <>
+            <Button 
+              onClick={() => navigate("/explore")}
+              variant="outline"
+              className="flex-1 md:flex-none border-blue-500 text-blue-900"
+            >
+              Explorar
+            </Button>
+            
+            <Button
+              onClick={onOpenImportDialog}
+              variant="outline"
+              className="flex-1 md:flex-none"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Importar por Código
+            </Button>
+          </>
         )}
       </div>
     </div>

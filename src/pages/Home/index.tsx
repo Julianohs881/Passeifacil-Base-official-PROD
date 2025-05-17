@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -15,6 +14,8 @@ import { QuizGrid } from "./QuizGrid";
 import { useHomePageQuizzes } from "./useHomePageQuizzes";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import UpgradeBanner from "@/components/UpgradeBanner";
+import PlanUpgradeDialog from "@/components/PlanUpgradeDialog";
 
 const Home = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -24,6 +25,7 @@ const Home = () => {
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isPremiumWarningOpen, setIsPremiumWarningOpen] = useState(false);
+  const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const colorPickerAnchorRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
   const { user, isPro } = useAuth();
@@ -65,7 +67,7 @@ const Home = () => {
     if (isPro()) {
       setIsImportDialogOpen(true);
     } else {
-      setIsPremiumWarningOpen(true);
+      setIsUpgradeDialogOpen(true);
     }
   };
 
@@ -74,10 +76,17 @@ const Home = () => {
     setIsColorPickerOpen(true);
   };
 
+  const handleOpenUpgradeDialog = () => {
+    setIsUpgradeDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
       <main className="container mx-auto py-8 px-4">
+        {/* New Upgrade Banner */}
+        <UpgradeBanner onUpgradeClick={handleOpenUpgradeDialog} />
+        
         <HomePageHeader 
           onOpenCreateQuiz={() => setIsDialogOpen(true)}
           onOpenImportDialog={handleOpenImportDialog}
@@ -173,27 +182,11 @@ const Home = () => {
           />
         )}
         
-        {/* Premium Feature Warning Dialog */}
-        <Dialog open={isPremiumWarningOpen} onOpenChange={setIsPremiumWarningOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Recurso Pro</DialogTitle>
-              <DialogDescription>
-                Função exclusiva para assinantes PRO. Faça upgrade para liberar esta ferramenta!
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-center mt-4">
-              <Button 
-                variant="default" 
-                size="sm"
-                className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600"
-                onClick={() => setIsPremiumWarningOpen(false)}
-              >
-                Fazer Upgrade
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Upgrade Dialog - replaces the Premium Feature Warning */}
+        <PlanUpgradeDialog
+          isOpen={isUpgradeDialogOpen}
+          onClose={() => setIsUpgradeDialogOpen(false)}
+        />
       </main>
     </div>
   );

@@ -2,17 +2,24 @@
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "./ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { GraduationCap, Check, Eye } from "lucide-react";
+import { GraduationCap, Check, Eye, Crown } from "lucide-react";
 import PlanBadge from "./PlanBadge";
 import PremiumFeatureGate from "./PremiumFeatureGate";
+import { useState } from "react";
+import PlanUpgradeDialog from "./PlanUpgradeDialog";
 
 const NavBar = () => {
-  const { user, signOut, userProfile } = useAuth();
+  const { user, signOut, userProfile, isPro } = useAuth();
   const navigate = useNavigate();
+  const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleOpenUpgradeDialog = () => {
+    setIsUpgradeDialogOpen(true);
   };
 
   return (
@@ -30,7 +37,20 @@ const NavBar = () => {
           {user ? (
             <>
               {userProfile && (
-                <PlanBadge plan={userProfile.plan} />
+                <div className="flex items-center gap-2">
+                  <PlanBadge plan={userProfile.plan} />
+                  
+                  {!isPro() && (
+                    <Button
+                      onClick={handleOpenUpgradeDialog}
+                      size="sm"
+                      className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white rounded-full"
+                    >
+                      <Crown className="h-3.5 w-3.5 mr-1" />
+                      <span>Fazer Upgrade</span>
+                    </Button>
+                  )}
+                </div>
               )}
               
               <PremiumFeatureGate feature="explore">
@@ -68,6 +88,12 @@ const NavBar = () => {
           )}
         </div>
       </div>
+
+      {/* Plan Upgrade Dialog */}
+      <PlanUpgradeDialog 
+        isOpen={isUpgradeDialogOpen} 
+        onClose={() => setIsUpgradeDialogOpen(false)} 
+      />
     </header>
   );
 };
