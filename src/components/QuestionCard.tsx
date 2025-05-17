@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Question, isUserCreator } from "../types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import {
   Share2,
   CheckCircle,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,6 +27,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ShareCodeDialog } from "./Share/ShareCodeDialog";
 import QuizNavigationButtons from "./QuizNavigationButtons";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuestionCardProps {
   question: Question;
@@ -56,6 +58,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [isLoadingShareCode, setIsLoadingShareCode] = useState(false);
   const userAnswer = userAnswers[question.id];
   const isAnswered = userAnswer !== undefined;
   const isCorrect = userAnswer === question.correct_index;
@@ -65,6 +69,60 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   // Verificar se o usuário atual é o criador do quiz
   const isCreator = user?.id === question.user_id;
   const isPROUser = isPro();
+
+  // Effect to load share code if the question doesn't have one
+  useEffect(() => {
+    if (question.share_code) {
+      console.log("Question has share_code:", question.share_code);
+      setShareCode(question.share_code);
+      return;
+    }
+
+    const fetchShareCode = async () => {
+      if (!question.id) return;
+      
+      console.log("Fetching share code for question:", question.id);
+      setIsLoadingShareCode(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from("questions")
+          .select("share_code")
+          .eq("id", question.id)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching share code:", error);
+          setShareCode(null);
+          return;
+        }
+        
+        console.log("Received share code data:", data);
+        if (data && data.share_code) {
+          setShareCode(data.share_code);
+        } else {
+          console.error("No share code found for question");
+          setShareCode(null);
+        }
+      } catch (error) {
+        console.error("Exception fetching share code:", error);
+        setShareCode(null);
+      } finally {
+        setIsLoadingShareCode(false);
+      }
+    };
+    
+    if (isPROUser && isShareDialogOpen) {
+      fetchShareCode();
+    }
+  }, [question.id, question.share_code, isShareDialogOpen, isPROUser]);
+
+  // Handle opening share dialog
+  const handleOpenShareDialog = () => {
+    // Pre-set share code from question if available
+    setShareCode(question.share_code);
+    setIsShareDialogOpen(true);
+  };
 
   // Function to render the statement with proper line breaks
   const renderFormattedText = (text: string) => {
@@ -90,7 +148,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsShareDialogOpen(true)}
+                onClick={handleOpenShareDialog}
                 className="action-button text-gray-600 hover:text-blue-600 hover:bg-blue-50"
               >
                 <Share2 className="h-4 w-4 mr-1" />
@@ -248,7 +306,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           title={question.statement.length > 40 
             ? question.statement.substring(0, 40) + "..." 
             : question.statement}
-          code={question.share_code}
+          code={isLoadingShareCode ? null : shareCode}
           type="question"
         />
       )}

@@ -10,10 +10,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { Check, Copy, AlertCircle } from "lucide-react";
+import { Check, Copy, AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShareCodeDialogProps {
   isOpen: boolean;
@@ -33,19 +34,27 @@ export function ShareCodeDialog({
   const [copied, setCopied] = useState(false);
   const [displayCode, setDisplayCode] = useState<string | null>(null);
   const [errorState, setErrorState] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 640px)");
 
   // Set the display code when the component mounts or when the code prop changes
   useEffect(() => {
+    // Reset error state first
+    setErrorState(false);
+    setErrorMessage(null);
+    
     if (code) {
+      console.log(`${type} share code available:`, code);
       setDisplayCode(code);
-      setErrorState(false);
     } else {
+      console.error(`No ${type} share code provided to dialog`);
       setErrorState(true);
+      setErrorMessage(`Não foi possível obter o código da ${type === "quiz" ? "quiz" : "questão"}, tente novamente.`);
       setDisplayCode(null);
     }
-  }, [code]);
+  }, [code, type]);
 
   const handleCopy = () => {
     if (displayCode) {
@@ -79,10 +88,15 @@ export function ShareCodeDialog({
               <span className="font-medium">{title}</span>
             </div>
             
-            {errorState ? (
+            {loading ? (
+              <div className="flex items-center justify-center p-6">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <span className="ml-2">Carregando código...</span>
+              </div>
+            ) : errorState ? (
               <div className="flex items-center p-3 bg-red-50 border border-red-100 rounded-md text-red-700 space-x-2">
                 <AlertCircle className="h-5 w-5" />
-                <span>Não foi possível obter o código da questão, tente novamente.</span>
+                <span>{errorMessage || "Não foi possível obter o código da questão, tente novamente."}</span>
               </div>
             ) : (
               <div className="flex flex-col space-y-2">
@@ -135,10 +149,15 @@ export function ShareCodeDialog({
             <span className="font-medium">{title}</span>
           </div>
           
-          {errorState ? (
+          {loading ? (
+            <div className="flex items-center justify-center p-6">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <span className="ml-2">Carregando código...</span>
+            </div>
+          ) : errorState ? (
             <div className="flex items-center p-3 bg-red-50 border border-red-100 rounded-md text-red-700 space-x-2">
               <AlertCircle className="h-5 w-5" />
-              <span>Não foi possível obter o código da questão, tente novamente.</span>
+              <span>{errorMessage || "Não foi possível obter o código da questão, tente novamente."}</span>
             </div>
           ) : (
             <div className="flex items-center space-x-2">
