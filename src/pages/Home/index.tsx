@@ -15,25 +15,14 @@ import {
 import { PlusCircle } from "lucide-react";
 import QuizCard from "@/components/QuizCard";
 import ProfileIncompleteAlert from "@/components/ProfileIncompleteAlert";
-
-const HomePageHeader = ({ onCreateQuiz }: { onCreateQuiz: () => void }) => (
-  <div className="flex items-center justify-between mb-6">
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800">Seus Quizzes</h1>
-      <p className="text-gray-500">
-        Crie e gerencie seus quizzes personalizados
-      </p>
-    </div>
-    <Button onClick={onCreateQuiz} className="bg-violet-500 hover:bg-violet-600">
-      <PlusCircle className="mr-2 h-4 w-4" />
-      Criar Quiz
-    </Button>
-  </div>
-);
+import { HomePageHeader } from "./HomePageHeader";
+import { ImportCodeDialog } from "@/components/Share/ImportCodeDialog";
+import { QuizGrid } from "./QuizGrid";
 
 const Home = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -122,10 +111,26 @@ const Home = () => {
     }
   };
 
+  const handleOpenImportDialog = () => {
+    setIsImportDialogOpen(true);
+  };
+
+  const handleCloseImportDialog = () => {
+    setIsImportDialogOpen(false);
+  };
+
+  const handleImportSuccess = () => {
+    fetchQuizzes();
+  };
+
   return (
     <div className="container py-6">
       <ProfileIncompleteAlert />
-      <HomePageHeader onCreateQuiz={handleCreateQuiz} />
+      
+      <HomePageHeader 
+        onOpenCreateQuiz={handleCreateQuiz}
+        onOpenImportDialog={handleOpenImportDialog}
+      />
 
       {loading ? (
         <div className="flex justify-center my-4">
@@ -153,19 +158,21 @@ const Home = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {quizzes.map((quiz) => (
-            <QuizCard 
-              key={quiz.id} 
-              quiz={quiz} 
-              onDelete={handleDeleteQuiz}
-              onEdit={handleEditQuiz}
-              onColorChange={handleColorChange}
-              onToggleVisibility={handleToggleVisibility}
-            />
-          ))}
-        </div>
+        <QuizGrid
+          quizzes={quizzes}
+          onOpenCreateQuiz={handleCreateQuiz}
+          onDeleteQuiz={handleDeleteQuiz}
+          onEditQuiz={handleEditQuiz}
+          onChangeColor={handleColorChange}
+          onToggleVisibility={handleToggleVisibility}
+        />
       )}
+
+      <ImportCodeDialog 
+        isOpen={isImportDialogOpen}
+        onClose={handleCloseImportDialog}
+        onSuccess={handleImportSuccess}
+      />
     </div>
   );
 };
