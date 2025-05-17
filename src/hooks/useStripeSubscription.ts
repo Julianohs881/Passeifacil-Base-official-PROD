@@ -9,15 +9,38 @@ export const useStripeSubscription = () => {
   const { toast } = useToast();
   const { updateUserProfile } = useAuth();
   
+  // Função para extrair mensagem de erro detalhada
+  const extractDetailedErrorMessage = (error: any): string => {
+    if (!error) return "Erro desconhecido";
+    
+    // Se o erro vier diretamente da função Edge
+    if (error.message?.includes("Edge Function returned")) {
+      console.log("Erro completo da Edge Function:", error);
+      return "Erro de comunicação com o servidor. Verifique os logs para mais detalhes.";
+    }
+    
+    // Se for um erro com estrutura detalhada
+    if (error.error) return error.error;
+    
+    // Se for um erro com mensagem simples
+    if (error.message) return error.message;
+    
+    // Fallback para qualquer outro formato de erro
+    return typeof error === 'string' ? error : JSON.stringify(error);
+  };
+  
   const createCheckoutSession = async () => {
     setIsLoading(true);
     
     try {
+      // Registrar início da operação para debugging
+      console.log("Iniciando criação de sessão de checkout");
+      
       const { data, error } = await supabase.functions.invoke('create-checkout');
       
       if (error) {
-        console.error("Erro ao invocar função create-checkout:", error);
-        throw new Error(error.message);
+        console.error("Erro detalhado ao invocar função create-checkout:", error);
+        throw new Error(`Erro na função create-checkout: ${extractDetailedErrorMessage(error)}`);
       }
       
       if (data.error) {
@@ -39,12 +62,14 @@ export const useStripeSubscription = () => {
       
       return { success: true };
     } catch (error: any) {
-      console.error("Erro ao criar sessão de checkout:", error);
+      console.error("Erro completo ao criar sessão de checkout:", error);
+      
+      const detailedMessage = extractDetailedErrorMessage(error);
       
       toast({
         variant: "destructive",
         title: "Erro ao iniciar processo de assinatura",
-        description: error?.message || "Ocorreu um erro ao processar sua solicitação.",
+        description: detailedMessage,
         duration: 5000,
       });
       
@@ -58,11 +83,13 @@ export const useStripeSubscription = () => {
     setIsLoading(true);
     
     try {
+      console.log("Verificando status de assinatura");
+      
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
-        console.error("Erro ao invocar função check-subscription:", error);
-        throw error;
+        console.error("Erro detalhado ao invocar função check-subscription:", error);
+        throw new Error(`Erro na verificação de assinatura: ${extractDetailedErrorMessage(error)}`);
       }
       
       if (data.error) {
@@ -81,12 +108,14 @@ export const useStripeSubscription = () => {
         subscription_end: data.subscription_end
       };
     } catch (error: any) {
-      console.error("Erro ao verificar status da assinatura:", error);
+      console.error("Erro completo ao verificar status da assinatura:", error);
+      
+      const detailedMessage = extractDetailedErrorMessage(error);
       
       toast({
         variant: "destructive",
         title: "Erro ao verificar assinatura",
-        description: error?.message || "Ocorreu um erro ao verificar seu status de assinatura.",
+        description: detailedMessage,
         duration: 5000,
       });
       
@@ -100,14 +129,21 @@ export const useStripeSubscription = () => {
     setIsLoading(true);
     
     try {
+      console.log("Iniciando abertura do portal do cliente");
+      
       const { data, error } = await supabase.functions.invoke('customer-portal');
       
       if (error) {
-        console.error("Erro ao invocar função customer-portal:", error);
-        throw new Error(error.message);
+        console.error("Erro detalhado ao invocar função customer-portal:", error);
+        throw new Error(`Erro no portal do cliente: ${extractDetailedErrorMessage(error)}`);
       }
       
       if (data.error) {
+        // Verifica se é o erro específico de configuração do portal não encontrada
+        if (data.error.includes("Portal do cliente do Stripe não está configurado")) {
+          throw new Error("O Portal do Cliente do Stripe não está configurado. Acesse o Dashboard do Stripe para configurá-lo em: Configurações > Portal do Cliente.");
+        }
+        
         throw new Error(data.error);
       }
       
@@ -119,12 +155,14 @@ export const useStripeSubscription = () => {
         throw new Error("URL do portal não disponível");
       }
     } catch (error: any) {
-      console.error("Erro ao abrir portal do cliente:", error);
+      console.error("Erro completo ao abrir portal do cliente:", error);
+      
+      const detailedMessage = extractDetailedErrorMessage(error);
       
       toast({
         variant: "destructive",
         title: "Erro ao abrir portal de gerenciamento",
-        description: error?.message || "Ocorreu um erro ao tentar acessar seu portal de assinatura. Verifique se o portal do cliente está configurado no Stripe.",
+        description: detailedMessage,
         duration: 5000,
       });
       

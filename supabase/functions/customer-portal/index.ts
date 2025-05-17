@@ -33,11 +33,23 @@ serve(async (req) => {
     
     try {
       // Tenta obter a configuração do portal do cliente para verificar se está configurada
-      await stripe.billingPortal.configurations.list({ limit: 1 });
-    } catch (configError) {
-      logStep("AVISO: Portal do cliente não está configurado no Stripe", { message: configError.message });
+      const configs = await stripe.billingPortal.configurations.list({ limit: 1 });
+      
+      if (configs.data.length === 0) {
+        logStep("ERRO: Portal do cliente não está configurado no Stripe");
+        return new Response(JSON.stringify({ 
+          error: "Portal do cliente do Stripe não está configurado. Configure-o em https://dashboard.stripe.com/settings/billing/portal"
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      
+      logStep("Portal do cliente verificado e configurado corretamente");
+    } catch (configError: any) {
+      logStep("ERRO: Falha ao verificar portal do cliente", { message: configError.message });
       return new Response(JSON.stringify({ 
-        error: "Portal do cliente do Stripe não está configurado. Configure-o em https://dashboard.stripe.com/test/settings/billing/portal"
+        error: `Erro ao verificar configuração do portal do cliente: ${configError.message}. Configure-o em https://dashboard.stripe.com/settings/billing/portal`
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -90,24 +102,34 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "https://hrpchhrykumcdeolvtfs.supabase.co";
     logStep("Criando sessão de portal para cliente", { customerId, returnUrl: origin });
     
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: origin,
-    });
-    
-    if (!session.url) {
-      throw new Error("Falha ao criar URL da sessão do portal");
+    try {
+      const session = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: origin,
+      });
+      
+      if (!session.url) {
+        throw new Error("Falha ao criar URL da sessão do portal");
+      }
+      
+      logStep("Sessão do portal criada com sucesso", { 
+        sessionId: session.id,
+        url: session.url
+      });
+      
+      return new Response(JSON.stringify({ url: session.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } catch (portalError: any) {
+      logStep("ERRO ao criar sessão do portal", { error: portalError });
+      return new Response(JSON.stringify({ 
+        error: `Erro ao criar sessão do portal: ${portalError.message}. Verifique se o portal está configurado corretamente no Stripe.`
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
-    
-    logStep("Sessão do portal criada com sucesso", { 
-      sessionId: session.id,
-      url: session.url
-    });
-    
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERRO em customer-portal", { message: errorMessage });
