@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { 
@@ -101,37 +100,11 @@ const Landing = () => {
             </div>
             <div className="order-1 md:order-2 flex justify-center md:justify-end">
               <div className="relative">
-                <div className="w-full max-w-lg">
-                  <svg className="w-full h-auto" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    {/* Document with questions illustration */}
-                    <rect x="100" y="50" width="250" height="300" rx="8" fill="#E5EEF6" />
-                    <rect x="120" y="80" width="210" height="10" rx="2" fill="#A0AEC0" />
-                    <rect x="120" y="100" width="190" height="10" rx="2" fill="#A0AEC0" />
-                    <rect x="120" y="120" width="210" height="10" rx="2" fill="#A0AEC0" />
-                    <rect x="120" y="150" width="30" height="30" rx="15" fill="#4299E1" />
-                    <rect x="160" y="160" width="150" height="10" rx="2" fill="#A0AEC0" />
-                    <rect x="120" y="200" width="30" height="30" rx="15" fill="#4299E1" />
-                    <rect x="160" y="210" width="170" height="10" rx="2" fill="#A0AEC0" />
-                    <rect x="120" y="250" width="30" height="30" rx="15" fill="#4299E1" />
-                    <rect x="160" y="260" width="130" height="10" rx="2" fill="#A0AEC0" />
-                    
-                    {/* Image becoming quiz illustration */}
-                    <rect x="370" y="100" width="150" height="120" rx="8" fill="#9AE6B4" />
-                    <path d="M420 140 L450 170 L470 130" stroke="#2F855A" strokeWidth="4" />
-                    <rect x="390" y="240" width="20" height="20" rx="2" fill="#4299E1" />
-                    <rect x="420" y="240" width="80" height="10" rx="2" fill="#A0AEC0" />
-                    <rect x="390" y="270" width="20" height="20" rx="2" fill="#4299E1" />
-                    <rect x="420" y="270" width="70" height="10" rx="2" fill="#A0AEC0" />
-                    <rect x="390" y="300" width="20" height="20" rx="2" fill="#4299E1" />
-                    <rect x="420" y="300" width="90" height="10" rx="2" fill="#A0AEC0" />
-                    
-                    {/* Students */}
-                    <circle cx="270" cy="350" r="30" fill="#FBD38D" />
-                    <rect x="250" y="390" width="40" height="60" rx="4" fill="#2C5282" />
-                    <circle cx="500" cy="320" r="30" fill="#FBD38D" />
-                    <rect x="480" y="360" width="40" height="60" rx="4" fill="#2C5282" />
-                  </svg>
-                </div>
+                <img 
+                  src="/lovable-uploads/9a385c39-1c2d-41fa-941c-4362b6130fe6.png" 
+                  alt="Estudantes interagindo com quizzes" 
+                  className="w-full max-w-lg"
+                />
               </div>
             </div>
           </div>
