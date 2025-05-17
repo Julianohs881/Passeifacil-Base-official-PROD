@@ -63,7 +63,7 @@ const NavBar = () => {
             />
           </Link>
           
-          {user && userProfile?.plan === "pro" && (
+          {user && userProfile?.plan === "premium" && (
             <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
               <PopoverTrigger asChild>
                 <Button 
