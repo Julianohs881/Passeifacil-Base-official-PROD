@@ -141,9 +141,7 @@ const Landing = () => {
             </div>
             
             <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl overflow-hidden shadow-lg border-2 border-amber-400 relative">
-              <div className="absolute top-0 right-0 bg-amber-400 text-white px-4 py-1 rounded-bl-lg font-medium">
-                Recomendado
-              </div>
+              <div className="absolute top-0 right-0 bg-amber-400 text-white px-4 py-1 rounded-bl-lg font-medium">Recomendado</div>
               <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 border-b">
                 <h3 className="text-xl font-bold text-white">Plano PRO</h3>
                 <p className="text-2xl font-bold mt-2 text-white">R$ 14,90<span className="text-base font-normal">/mês</span></p>
