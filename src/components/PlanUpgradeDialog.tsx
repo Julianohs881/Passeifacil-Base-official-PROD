@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
-import { Check, Crown, X } from "lucide-react";
+import { Check, Crown, X, Loader2 } from "lucide-react";
+import { useStripeSubscription } from "@/hooks/useStripeSubscription";
 
 interface PlanUpgradeDialogProps {
   isOpen: boolean;
@@ -17,6 +18,15 @@ interface PlanUpgradeDialogProps {
 }
 
 const PlanUpgradeDialog: React.FC<PlanUpgradeDialogProps> = ({ isOpen, onClose }) => {
+  const { createCheckoutSession, isLoading } = useStripeSubscription();
+  
+  const handleUpgrade = async () => {
+    const result = await createCheckoutSession();
+    if (result.success) {
+      onClose();
+    }
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg glassmorphism">
@@ -89,6 +99,15 @@ const PlanUpgradeDialog: React.FC<PlanUpgradeDialogProps> = ({ isOpen, onClose }
                   <Check className="h-5 w-5 mx-auto text-green-500" />
                 </td>
               </tr>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="p-3">Preço</td>
+                <td className="p-3 text-center font-medium">
+                  R$0,00
+                </td>
+                <td className="p-3 text-center font-medium">
+                  R$19,90<span className="text-sm text-gray-500">/mês</span>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -96,9 +115,20 @@ const PlanUpgradeDialog: React.FC<PlanUpgradeDialogProps> = ({ isOpen, onClose }
         <DialogFooter className="sm:justify-center">
           <Button 
             className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 sm:w-full"
+            onClick={handleUpgrade}
+            disabled={isLoading}
           >
-            <Crown className="h-4 w-4 mr-2" />
-            Fazer Upgrade para PRO
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processando...
+              </>
+            ) : (
+              <>
+                <Crown className="h-4 w-4 mr-2" />
+                Fazer Upgrade para PRO
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

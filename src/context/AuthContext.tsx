@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +29,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserProfile(data as UserProfile);
     } catch (error) {
       console.error("Error in fetchUserProfile:", error);
+    }
+  };
+
+  const updateUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+        
+      if (error) throw error;
+      
+      setUserProfile(data);
+    } catch (error) {
+      console.error("Erro ao buscar perfil do usuário:", error);
     }
   };
 
@@ -165,22 +182,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const isPro = () => userProfile?.plan === 'pro';
+  // Atualizar a função isPro para ser mais clara
+  const isPro = () => {
+    return userProfile?.plan === 'pro';
+  };
+  
   const hasReachedAILimit = () => !isPro() || (userProfile?.ai_questions_created || 0) >= 50;
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      loading, 
-      signIn, 
-      signUp, 
-      signOut,
-      userProfile,
-      isPro,
-      hasReachedAILimit,
-      updateAIQuestionsCreated
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        userProfile,
+        isPro,
+        hasReachedAILimit,
+        updateAIQuestionsCreated,
+        updateUserProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

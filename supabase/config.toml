@@ -1,1 +1,16 @@
+
 project_id = "hrpchhrykumcdeolvtfs"
+
+[api]
+
+[db]
+shadow_database_flag = false
+
+[functions]
+
+[functions.create-checkout]
+
+[functions.check-subscription]
+
+[functions.customer-portal]
+

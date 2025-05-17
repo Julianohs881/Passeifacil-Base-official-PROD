@@ -1,8 +1,9 @@
 
 import React from "react";
-import { Crown } from "lucide-react";
+import { Crown, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { useStripeSubscription } from "@/hooks/useStripeSubscription";
 
 interface UpgradeBannerProps {
   onUpgradeClick: () => void;
@@ -10,6 +11,15 @@ interface UpgradeBannerProps {
 
 const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
   const { isPro } = useAuth();
+  const { createCheckoutSession, isLoading } = useStripeSubscription();
+  
+  // Função para lidar com o clique direto no botão de upgrade
+  const handleDirectUpgrade = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    await createCheckoutSession();
+  };
   
   // Don't show banner for PRO users
   if (isPro()) {
@@ -24,13 +34,31 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
           No plano gratuito? Libere IA, explorar, importar/exportar e muito mais com o PRO!
         </p>
       </div>
-      <Button 
-        onClick={onUpgradeClick}
-        size="sm"
-        className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 whitespace-nowrap"
-      >
-        Fazer Upgrade
-      </Button>
+      <div className="flex space-x-2">
+        <Button 
+          onClick={isLoading ? undefined : onUpgradeClick}
+          size="sm"
+          disabled={isLoading}
+          className="bg-white border border-amber-400 text-amber-600 hover:bg-amber-50 whitespace-nowrap"
+        >
+          Ver benefícios
+        </Button>
+        <Button 
+          onClick={isLoading ? undefined : handleDirectUpgrade}
+          size="sm"
+          disabled={isLoading}
+          className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 whitespace-nowrap"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+              Aguarde...
+            </>
+          ) : (
+            <>Assinar PRO</>
+          )}
+        </Button>
+      </div>
     </div>
   );
 };

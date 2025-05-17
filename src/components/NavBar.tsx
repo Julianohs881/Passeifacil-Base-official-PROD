@@ -1,17 +1,22 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "./ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { GraduationCap, Check, Eye, Crown } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { GraduationCap, Check, Eye, Crown, Settings } from "lucide-react";
 import PlanBadge from "./PlanBadge";
 import PremiumFeatureGate from "./PremiumFeatureGate";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PlanUpgradeDialog from "./PlanUpgradeDialog";
+import { useStripeSubscription } from "@/hooks/useStripeSubscription";
+import { useToast } from "@/hooks/use-toast";
 
 const NavBar = () => {
   const { user, signOut, userProfile, isPro } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
+  const { verifySubscriptionStatus, openCustomerPortal, isLoading } = useStripeSubscription();
+  const { toast } = useToast();
 
   const handleSignOut = async () => {
     await signOut();
@@ -21,6 +26,45 @@ const NavBar = () => {
   const handleOpenUpgradeDialog = () => {
     setIsUpgradeDialogOpen(true);
   };
+  
+  const handleManageSubscription = async () => {
+    if (isPro()) {
+      await openCustomerPortal();
+    } else {
+      setIsUpgradeDialogOpen(true);
+    }
+  };
+  
+  // Verificar o status da assinatura quando parâmetros de URL indicam retorno do Stripe
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const subscriptionStatus = queryParams.get('subscription');
+    
+    if (subscriptionStatus === 'success') {
+      // Verificar e atualizar o status da assinatura
+      verifySubscriptionStatus().then((result) => {
+        if (result.success) {
+          toast({
+            title: "Assinatura PRO ativada com sucesso!",
+            description: "Você agora tem acesso a todos os recursos premium.",
+            duration: 5000,
+          });
+          
+          // Limpar os parâmetros da URL
+          navigate(location.pathname, { replace: true });
+        }
+      });
+    } else if (subscriptionStatus === 'canceled') {
+      toast({
+        title: "Processo de assinatura cancelado",
+        description: "Você pode tentar novamente quando desejar.",
+        duration: 5000,
+      });
+      
+      // Limpar os parâmetros da URL
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.search]);
 
   return (
     <header className="bg-white shadow-sm">
@@ -40,16 +84,28 @@ const NavBar = () => {
                 <div className="flex items-center gap-2">
                   <PlanBadge plan={userProfile.plan} />
                   
-                  {!isPro() && (
-                    <Button
-                      onClick={handleOpenUpgradeDialog}
-                      size="sm"
-                      className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white rounded-full"
-                    >
-                      <Crown className="h-3.5 w-3.5 mr-1" />
-                      <span>Fazer Upgrade</span>
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleManageSubscription}
+                    size="sm"
+                    disabled={isLoading}
+                    className={`${isPro() 
+                      ? "border border-amber-400 bg-white text-amber-600 hover:bg-amber-50" 
+                      : "bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white"} rounded-full`}
+                  >
+                    {isLoading ? (
+                      <span>Aguarde...</span>
+                    ) : isPro() ? (
+                      <>
+                        <Settings className="h-3.5 w-3.5 mr-1" />
+                        <span>Gerenciar PRO</span>
+                      </>
+                    ) : (
+                      <>
+                        <Crown className="h-3.5 w-3.5 mr-1" />
+                        <span>Fazer Upgrade</span>
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
               

@@ -1,4 +1,3 @@
-
 export interface Quiz {
   id: string;
   user_id: string;
@@ -120,4 +119,5 @@ export interface AuthContextType {
   isPro: () => boolean;
   hasReachedAILimit: () => boolean;
   updateAIQuestionsCreated: () => Promise<void>;
+  updateUserProfile: () => Promise<void>; // Nova função adicionada
 }
