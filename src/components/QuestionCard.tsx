@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Question } from "../types";
 import { Card } from "@/components/ui/card";
@@ -16,7 +15,6 @@ import QuestionExplanation from "./Question/QuestionExplanation";
 import DeleteQuestionDialog from "./Question/DeleteQuestionDialog";
 import { useQuestionShare } from "./Question/useQuestionShare";
 import FormattedText from "./Question/FormattedText";
-
 interface QuestionCardProps {
   question: Question;
   userAnswers: Record<string, number>;
@@ -30,7 +28,6 @@ interface QuestionCardProps {
   onPrevious?: () => void;
   onNext?: () => void;
 }
-
 const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
   userAnswers,
@@ -42,14 +39,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   totalQuestions,
   isPublicQuiz = false,
   onPrevious,
-  onNext,
+  onNext
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const userAnswer = userAnswers[question.id];
   const isAnswered = userAnswer !== undefined;
-  const { user, isPro } = useAuth();
+  const {
+    user,
+    isPro
+  } = useAuth();
   const isMobile = useMediaQuery("(max-width: 640px)");
-  
+
   // Check if the current user is the creator of the quiz
   const isCreator = user?.id === question.user_id;
   const isPROUser = isPro();
@@ -62,82 +62,38 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     handleOpenShareDialog,
     handleCloseShareDialog
   } = useQuestionShare(question, isPROUser);
-
-  return (
-    <div className="flex flex-col h-full">
-      <Card className="p-3 sm:p-6 flex-1 overflow-auto">
+  return <div className="flex flex-col h-full">
+      <Card className="p-3 sm:p-6 flex-1 overflow-auto py-[41px]">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
           <Badge variant="outline" className="text-sm font-normal">
             Questão {currentIndex + 1}/{totalQuestions}
           </Badge>
           
-          <QuestionActions
-            question={question}
-            isCreator={isCreator}
-            onOpenEditModal={onOpenEditModal}
-            onOpenDeleteDialog={() => setIsDeleteDialogOpen(true)}
-            onOpenShareDialog={handleOpenShareDialog}
-          />
+          <QuestionActions question={question} isCreator={isCreator} onOpenEditModal={onOpenEditModal} onOpenDeleteDialog={() => setIsDeleteDialogOpen(true)} onOpenShareDialog={handleOpenShareDialog} />
         </div>
 
         <div className="mb-6 whitespace-pre-line">
           <FormattedText text={question.statement} />
         </div>
 
-        <QuestionOptions 
-          question={question}
-          userAnswer={userAnswer}
-          handleAnswer={handleAnswer}
-        />
+        <QuestionOptions question={question} userAnswer={userAnswer} handleAnswer={handleAnswer} />
 
-        <QuestionExplanation 
-          explanation={question.explanation}
-          isVisible={isAnswered}
-        />
+        <QuestionExplanation explanation={question.explanation} isVisible={isAnswered} />
 
         {/* Mobile Navigation Buttons - show only on mobile */}
-        {isMobile && onPrevious && onNext && (
-          <div className="mt-8 mb-4">
-            <QuizNavigationButtons
-              currentIndex={currentIndex}
-              totalQuestions={totalQuestions}
-              onPrevious={onPrevious}
-              onNext={onNext}
-            />
-          </div>
-        )}
+        {isMobile && onPrevious && onNext && <div className="mt-8 mb-4">
+            <QuizNavigationButtons currentIndex={currentIndex} totalQuestions={totalQuestions} onPrevious={onPrevious} onNext={onNext} />
+          </div>}
 
         {/* Comments section - only for public quizzes and PRO users */}
-        {isPublicQuiz && isPROUser && (
-          <CommentSection 
-            questionId={question.id} 
-            userAnswer={userAnswer} 
-            isPublicQuiz={isPublicQuiz}
-          />
-        )}
+        {isPublicQuiz && isPROUser && <CommentSection questionId={question.id} userAnswer={userAnswer} isPublicQuiz={isPublicQuiz} />}
       </Card>
 
       {/* Delete Question Dialog */}
-      <DeleteQuestionDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onDelete={() => onDeleteQuestion(question.id)}
-      />
+      <DeleteQuestionDialog isOpen={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)} onDelete={() => onDeleteQuestion(question.id)} />
 
       {/* Share Dialog - only if PRO user */}
-      {isPROUser && (
-        <ShareCodeDialog
-          isOpen={isShareDialogOpen}
-          onClose={handleCloseShareDialog}
-          title={question.statement.length > 40 
-            ? question.statement.substring(0, 40) + "..." 
-            : question.statement}
-          code={isLoadingShareCode ? null : shareCode}
-          type="question"
-        />
-      )}
-    </div>
-  );
+      {isPROUser && <ShareCodeDialog isOpen={isShareDialogOpen} onClose={handleCloseShareDialog} title={question.statement.length > 40 ? question.statement.substring(0, 40) + "..." : question.statement} code={isLoadingShareCode ? null : shareCode} type="question" />}
+    </div>;
 };
-
 export default QuestionCard;
