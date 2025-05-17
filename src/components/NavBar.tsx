@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -30,8 +31,12 @@ const NavBar = () => {
   return (
     <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="text-xl font-semibold text-gray-800">
-          Quiz Platform
+        <Link to="/" className="flex items-center">
+          <img 
+            src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" 
+            alt="Passei Fácil" 
+            className="h-12 max-h-[48px] w-auto"
+          />
         </Link>
 
         {/* Mobile menu */}
