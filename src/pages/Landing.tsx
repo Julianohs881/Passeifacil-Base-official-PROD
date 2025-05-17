@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { 
@@ -58,7 +59,7 @@ const Landing = () => {
             <div className="order-1 md:order-2 flex justify-center md:justify-end">
               <div className="relative">
                 <img 
-                  src="/lovable-uploads/53bcbba0-62ef-428c-8dd5-8067d1c55eb4.png" 
+                  src="/lovable-uploads/d0b7d885-b5b8-4bab-81b6-9afe1e2720a7.png" 
                   alt="Estudantes interagindo com quizzes" 
                   className="w-full max-w-lg"
                 />
