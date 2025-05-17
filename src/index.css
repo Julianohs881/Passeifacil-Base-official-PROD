@@ -61,4 +61,13 @@
   .hover-scale {
     @apply transition-transform duration-200 hover:scale-105;
   }
+  
+  /* Fix for action buttons in QuestionCard */
+  .action-buttons-container {
+    @apply flex flex-wrap gap-2 w-full justify-center sm:justify-start;
+  }
+  
+  .action-button {
+    @apply flex-1 sm:flex-none text-center sm:text-left whitespace-nowrap;
+  }
 }

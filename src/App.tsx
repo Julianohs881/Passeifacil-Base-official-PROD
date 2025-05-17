@@ -27,62 +27,64 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <NavBar />
-        <main className="pt-16 sm:pt-20 min-h-screen">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Landing />} />
-            <Route 
-              path="/login" 
-              element={
-                <AuthRedirect>
-                  <Login />
-                </AuthRedirect>
-              }
-            />
-            <Route 
-              path="/register" 
-              element={
-                <AuthRedirect>
-                  <Register />
-                </AuthRedirect>
-              }
-            />
+        <div className="min-h-screen">
+          <NavBar />
+          <main className="pt-16 sm:pt-20">
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Landing />} />
+              <Route 
+                path="/login" 
+                element={
+                  <AuthRedirect>
+                    <Login />
+                  </AuthRedirect>
+                }
+              />
+              <Route 
+                path="/register" 
+                element={
+                  <AuthRedirect>
+                    <Register />
+                  </AuthRedirect>
+                }
+              />
 
-            {/* Protected routes */}
-            <Route 
-              path="/quizzes" 
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              }
-            />
-            <Route 
-              path="/quiz/:id" 
-              element={
-                <ProtectedRoute>
-                  <Quiz />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Explore page - available for all authenticated users */}
-            <Route 
-              path="/explore" 
-              element={
-                <ProtectedRoute>
-                  <Explore />
-                </ProtectedRoute>
-              }
-            />
+              {/* Protected routes */}
+              <Route 
+                path="/quizzes" 
+                element={
+                  <ProtectedRoute>
+                    <Home />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="/quiz/:id" 
+                element={
+                  <ProtectedRoute>
+                    <Quiz />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Explore page - available for all authenticated users */}
+              <Route 
+                path="/explore" 
+                element={
+                  <ProtectedRoute>
+                    <Explore />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* 404 route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-        
-        <Toaster />
+              {/* 404 route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+          
+          <Toaster />
+        </div>
       </Router>
     </AuthProvider>
   );

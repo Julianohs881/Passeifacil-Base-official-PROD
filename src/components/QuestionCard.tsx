@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Question, isUserCreator } from "../types";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,6 @@ import { Card } from "@/components/ui/card";
 import {
   Edit,
   Trash2,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   Share2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -85,17 +81,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             Questão {currentIndex + 1}/{totalQuestions}
           </Badge>
           
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start">
+          <div className="action-buttons-container">
             {/* Share button - only show for PRO users */}
             {isPROUser && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsShareDialogOpen(true)}
-                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                className="action-button text-gray-600 hover:text-blue-600 hover:bg-blue-50"
               >
                 <Share2 className="h-4 w-4 mr-1" />
-                Compartilhar
+                <span className="whitespace-nowrap">Compartilhar</span>
               </Button>
             )}
             
@@ -106,19 +102,19 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => onOpenEditModal(question)}
-                  className="text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                  className="action-button text-gray-600 hover:text-blue-600 hover:bg-blue-50"
                 >
                   <Edit className="h-4 w-4 mr-1" />
-                  Editar
+                  <span className="whitespace-nowrap">Editar</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setIsDeleteDialogOpen(true)}
-                  className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                  className="action-button text-gray-600 hover:text-red-600 hover:bg-red-50"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
-                  Excluir
+                  <span className="whitespace-nowrap">Excluir</span>
                 </Button>
               </>
             )}
