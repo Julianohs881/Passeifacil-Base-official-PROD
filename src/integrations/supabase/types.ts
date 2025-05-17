@@ -47,26 +47,20 @@ export type Database = {
       profiles: {
         Row: {
           ai_questions_created: number | null
-          avatar_url: string | null
           created_at: string
           id: string
-          name: string | null
           plan: string
         }
         Insert: {
           ai_questions_created?: number | null
-          avatar_url?: string | null
           created_at?: string
           id: string
-          name?: string | null
           plan?: string
         }
         Update: {
           ai_questions_created?: number | null
-          avatar_url?: string | null
           created_at?: string
           id?: string
-          name?: string | null
           plan?: string
         }
         Relationships: []

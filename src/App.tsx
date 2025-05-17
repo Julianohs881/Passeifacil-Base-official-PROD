@@ -9,10 +9,8 @@ import Register from "./pages/Register";
 import Quiz from "./pages/Quiz";
 import Explore from "./pages/Explore";
 import NotFound from "./pages/NotFound";
-import UserProfile from "./pages/UserProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
-import CreateQuiz from "./pages/CreateQuiz"; // Add import for the new component
 
 // Redirect to home if authenticated, otherwise show login
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
@@ -66,26 +64,6 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Quiz />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Add new route for quiz creation */}
-              <Route 
-                path="/quizzes/new" 
-                element={
-                  <ProtectedRoute>
-                    <CreateQuiz />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* User Profile route */}
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <UserProfile />
                   </ProtectedRoute>
                 }
               />

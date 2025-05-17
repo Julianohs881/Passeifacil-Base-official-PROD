@@ -1,161 +1,236 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+
 import { useAuth } from "@/context/AuthContext";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Menu, Edit2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Slider } from "@/components/ui/slider";
+import { Button } from "./ui/button";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { GraduationCap, Check, Eye, Crown, Settings, Menu, X, BookOpen } from "lucide-react";
+import PlanBadge from "./PlanBadge";
+import PremiumFeatureGate from "./PremiumFeatureGate";
+import { useState, useEffect } from "react";
+import PlanUpgradeDialog from "./PlanUpgradeDialog";
+import { useStripeSubscription } from "@/hooks/useStripeSubscription";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 const NavBar = () => {
   const {
     user,
     signOut,
-    userProfile
+    userProfile,
+    isPro
   } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const [logoSize, setLogoSize] = useState(20); // Default size value
-  const [showLogoEditor, setShowLogoEditor] = useState(false);
+  const location = useLocation();
+  const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
+  const {
+    verifySubscriptionStatus,
+    openCustomerPortal,
+    isLoading
+  } = useStripeSubscription();
   const {
     toast
   } = useToast();
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate("/login");
-    } catch (error) {
-      console.error("Failed to sign out", error);
+    await signOut();
+    navigate('/');
+  };
+  
+  const handleOpenUpgradeDialog = () => {
+    setIsUpgradeDialogOpen(true);
+  };
+  
+  const handleManageSubscription = async () => {
+    if (isPro()) {
+      await openCustomerPortal();
+    } else {
+      setIsUpgradeDialogOpen(true);
     }
   };
-  const handleLogoSizeChange = (value: number[]) => {
-    setLogoSize(value[0]);
-  };
-  const saveLogoSize = () => {
-    localStorage.setItem("logo-size", logoSize.toString());
-    setShowLogoEditor(false);
-    toast({
-      title: "Tamanho do logo salvo",
-      description: "O tamanho do logo foi atualizado com sucesso."
-    });
+  
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  // Load saved logo size from localStorage on component mount
+  // Verificar o status da assinatura quando parâmetros de URL indicam retorno do Stripe
   useEffect(() => {
-    const savedSize = localStorage.getItem("logo-size");
-    if (savedSize) {
-      setLogoSize(parseInt(savedSize));
+    const queryParams = new URLSearchParams(location.search);
+    const subscriptionStatus = queryParams.get('subscription');
+    if (subscriptionStatus === 'success') {
+      // Verificar e atualizar o status da assinatura
+      verifySubscriptionStatus().then(result => {
+        if (result.success) {
+          toast({
+            title: "Assinatura PRO ativada com sucesso!",
+            description: "Você agora tem acesso a todos os recursos premium.",
+            duration: 5000
+          });
+
+          // Limpar os parâmetros da URL
+          navigate(location.pathname, {
+            replace: true
+          });
+        }
+      });
+    } else if (subscriptionStatus === 'canceled') {
+      toast({
+        title: "Processo de assinatura cancelado",
+        description: "Você pode tentar novamente quando desejar.",
+        duration: 5000
+      });
+
+      // Limpar os parâmetros da URL
+      navigate(location.pathname, {
+        replace: true
+      });
     }
-  }, []);
-  return <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
-      <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center">
-            <img src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" alt="Passei Fácil" className={`h-${logoSize} max-h-[48px] w-auto object-contain`} />
+  }, [location.search]);
+  
+  return (
+    <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex justify-between items-center">
+          {/* Logo com altura máxima */}
+          <Link to="/" className="flex items-center min-w-0">
+            <div className="relative h-8 sm:h-12 flex items-center">
+              <GraduationCap className="w-8 h-8 sm:w-10 sm:h-10 text-blue-900" />
+              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 absolute bottom-0 right-0" />
+              <span className="ml-2 sm:ml-3 text-lg sm:text-xl font-bold text-blue-900 truncate">Passei Fácil</span>
+            </div>
           </Link>
           
-          {user && userProfile?.plan === "pro" && <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
-              <PopoverTrigger asChild>
+          {/* Navigation buttons - always visible */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {user ? (
+              <>
+                <Link to="/quizzes" className="min-w-[40px] min-h-[40px] flex items-center">
+                  <Button variant="ghost" size="sm" className="text-blue-900 hover:bg-blue-50">
+                    <BookOpen className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Meu Quiz</span>
+                  </Button>
+                </Link>
                 
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-4">
-                  <h3 className="font-medium">Ajustar tamanho do logo</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Menor</span>
-                      <span>Maior</span>
-                    </div>
-                    <Slider defaultValue={[logoSize]} max={24} min={12} step={1} onValueChange={handleLogoSizeChange} />
-                  </div>
-                  <div className="flex justify-end">
-                    <Button onClick={saveLogoSize} size="sm">
-                      Salvar
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleSignOut} 
+                  className="min-w-[40px] min-h-[40px] text-blue-900 hover:bg-blue-50 whitespace-nowrap"
+                >
+                  Sair
+                </Button>
+                
+                {userProfile && !isMobile && (
+                  <div className="flex items-center gap-2 ml-2">
+                    <PlanBadge plan={userProfile.plan} />
+                    
+                    <Button 
+                      onClick={handleManageSubscription} 
+                      size="sm" 
+                      disabled={isLoading} 
+                      className={`min-w-[40px] min-h-[40px] ${isPro() ? "border border-amber-400 bg-white text-amber-600 hover:bg-amber-50" : "bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white"} rounded-full`}
+                    >
+                      {isLoading ? (
+                        <span>Aguarde...</span>
+                      ) : isPro() ? (
+                        <>
+                          <Settings className="h-3.5 w-3.5 mr-1" />
+                          <span>Gerenciar PRO</span>
+                        </>
+                      ) : (
+                        <>
+                          <Crown className="h-3.5 w-3.5 mr-1" />
+                          <span>Fazer Upgrade</span>
+                        </>
+                      )}
                     </Button>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>}
-        </div>
-
-        {/* Mobile menu */}
-        <div className="md:hidden">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64">
-              <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
-                <SheetDescription>
-                  Explore the platform and manage your account.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="flex flex-col space-y-2 mt-4">
-                <Link to="/quizzes" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
-                  Meus Quizzes
+                )}
+                
+                {!isMobile && (
+                  <PremiumFeatureGate feature="explore">
+                    <Link to="/explore" className="min-w-[40px] min-h-[40px] flex items-center text-sm text-gray-600 hover:text-blue-900">
+                      <Eye className="h-4 w-4 mr-1" />
+                      <span className="inline-block">Explorar</span>
+                    </Link>
+                  </PremiumFeatureGate>
+                )}
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="min-w-[40px] min-h-[40px] flex items-center">
+                  <Button variant="outline" size="sm" className="border-blue-500 text-blue-900 hover:bg-blue-50 whitespace-nowrap">
+                    Entrar
+                  </Button>
                 </Link>
-                <Link to="/explore" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
-                  Explorar
+                <Link to="/register" className="min-w-[40px] min-h-[40px] flex items-center">
+                  <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white whitespace-nowrap">
+                    Criar conta
+                  </Button>
                 </Link>
-                {user ? <>
-                    <Link to="/profile" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
-                      Perfil
-                    </Link>
-                    <Button variant="ghost" size="sm" className="justify-start" onClick={handleSignOut}>
-                      Sair
-                    </Button>
-                  </> : <>
-                    <Link to="/login" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
-                      Login
-                    </Link>
-                    <Link to="/register" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
-                      Register
-                    </Link>
-                  </>}
+              </>
+            )}
+            
+            {/* Mobile menu for additional options */}
+            {user && isMobile && (
+              <div className="relative">
+                <Button variant="ghost" size="icon" onClick={toggleMobileMenu} className="min-w-[40px] min-h-[40px] ml-1">
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </Button>
+                
+                {mobileMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50">
+                    {userProfile && (
+                      <div className="px-4 py-2">
+                        <PlanBadge plan={userProfile.plan} />
+                        
+                        <Button 
+                          onClick={handleManageSubscription} 
+                          size="sm" 
+                          disabled={isLoading} 
+                          className={`${isPro() ? "border border-amber-400 bg-white text-amber-600 hover:bg-amber-50" : "bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white"} rounded-full w-full mt-2`}
+                        >
+                          {isLoading ? (
+                            <span>Aguarde...</span>
+                          ) : isPro() ? (
+                            <>
+                              <Settings className="h-3.5 w-3.5 mr-1" />
+                              <span>Gerenciar PRO</span>
+                            </>
+                          ) : (
+                            <>
+                              <Crown className="h-3.5 w-3.5 mr-1" />
+                              <span>Fazer Upgrade</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <PremiumFeatureGate feature="explore">
+                      <Link 
+                        to="/explore" 
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <div className="flex items-center">
+                          <Eye className="h-4 w-4 mr-2" />
+                          <span>Explorar</span>
+                        </div>
+                      </Link>
+                    </PremiumFeatureGate>
+                  </div>
+                )}
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-
-        {/* Desktop menu */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Link to="/quizzes" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
-            Meus Quizzes
-          </Link>
-          <Link to="/explore" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
-            Explorar
-          </Link>
-
-          {user && <div className="flex items-center gap-4">
-              <Link to="/profile" className="flex items-center gap-2 hover:text-violet-600 transition-colors">
-                <Avatar className="h-8 w-8">
-                  {userProfile?.avatar_url ? <AvatarImage src={userProfile.avatar_url} alt={userProfile.name || "User"} /> : <AvatarFallback className="bg-violet-100 text-violet-600">
-                      {userProfile?.name ? userProfile.name[0].toUpperCase() : "U"}
-                    </AvatarFallback>}
-                </Avatar>
-                <span className="hidden md:inline">
-                  {userProfile?.name || "Perfil"}
-                </span>
-              </Link>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                Sair
-              </Button>
-            </div>}
-
-          {!user && <div>
-              <Link to="/login" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
-                Login
-              </Link>
-              <Link to="/register" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
-                Register
-              </Link>
-            </div>}
+            )}
+          </div>
         </div>
       </div>
-    </nav>;
+
+      {/* Plan Upgrade Dialog */}
+      <PlanUpgradeDialog isOpen={isUpgradeDialogOpen} onClose={() => setIsUpgradeDialogOpen(false)} />
+    </header>
+  );
 };
+
 export default NavBar;

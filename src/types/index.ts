@@ -1,4 +1,18 @@
-import { Session, User } from "@supabase/supabase-js";
+
+export interface Quiz {
+  id: string;
+  user_id: string;
+  title: string;
+  color: string;
+  created_at: string;
+  visibility: VisibilityOption;
+  faculty?: string;
+  course_year?: string;
+  course?: string;
+  share_code: string | null;
+}
+
+export type VisibilityOption = "public" | "private";
 
 export type ColorOption =
   | "bg-red-500"
@@ -17,9 +31,9 @@ export type ColorOption =
   | "bg-purple-500"
   | "bg-fuchsia-500"
   | "bg-pink-500"
-  | "bg-rose-500"
-  | "bg-gray-500";
+  | "bg-rose-500";
 
+// Define the array of available colors
 export const QUIZ_COLORS: ColorOption[] = [
   "bg-red-500",
   "bg-orange-500",
@@ -37,61 +51,63 @@ export const QUIZ_COLORS: ColorOption[] = [
   "bg-purple-500",
   "bg-fuchsia-500",
   "bg-pink-500",
-  "bg-rose-500",
-  "bg-gray-500"
+  "bg-rose-500"
 ];
 
-export type VisibilityOption = "public" | "private";
-export type UserPlan = "gratuito" | "pro";
-export type QuestionStatus = "unanswered" | "correct" | "incorrect";
-
-export interface Quiz {
+export type Question = {
   id: string;
-  created_at: string;
-  title: string;
-  color: ColorOption;
-  visibility: VisibilityOption;
-  user_id: string;
-  faculty?: string;
-  course_year?: string;
-  course?: string;
-  share_code: string | null;
-}
-
-export interface Question {
-  id: string;
-  created_at: string;
   quiz_id: string;
+  user_id?: string; // Adding this field to fix the QuestionCard error
   statement: string;
   options: string[];
   correct_index: number;
-  explanation?: string;
-  user_id?: string;
+  explanation: string | null;
+  created_at: string;
   share_code: string | null;
-}
+};
 
+// Add Comment interface for CommentItem and CommentSection components
 export interface Comment {
   id: string;
-  created_at: string;
   question_id: string;
   user_id: string;
   content: string;
+  created_at: string;
   user_answer?: number;
 }
 
+// Add QuizResult interface for QuestionNavigator component
 export interface QuizResult {
   correctAnswers: number;
   totalQuestions: number;
   percentage: number;
 }
 
+// Add QuestionStatus for use-quiz.tsx
+export type QuestionStatus = 'unanswered' | 'correct' | 'incorrect';
+
+// Helper functions
+export function isUserCreator(userId: string | undefined, resourceUserId: string | undefined): boolean {
+  return !!userId && !!resourceUserId && userId === resourceUserId;
+}
+
+export function parseColorOption(color: string | undefined): ColorOption {
+  if (!color || !QUIZ_COLORS.includes(color as ColorOption)) {
+    return "bg-violet-500"; // Default color
+  }
+  return color as ColorOption;
+}
+
+import { User, Session } from "@supabase/supabase-js";
+
+// Modified to accept raw string values from the database
+export type UserPlan = 'gratuito' | 'pro' | string;
+
 export interface UserProfile {
   id: string;
   plan: UserPlan;
-  ai_questions_created?: number;
+  ai_questions_created: number;
   created_at: string;
-  name?: string;
-  avatar_url?: string;
 }
 
 export interface AuthContextType {
@@ -99,32 +115,11 @@ export interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<any>;
+  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   userProfile: UserProfile | null;
   isPro: () => boolean;
   hasReachedAILimit: () => boolean;
   updateAIQuestionsCreated: () => Promise<void>;
-  updateUserProfile: () => Promise<void>;
-  updateProfile?: (data: { name?: string, avatarUrl?: string }) => Promise<boolean>;
-  getAIUsageStats?: () => {
-    used: number;
-    limit: number;
-    remaining: number;
-    percentUsed: number;
-  };
-  resetAIQuestionsCount?: () => Promise<void>;
+  updateUserProfile: () => Promise<void>; // Nova função adicionada
 }
-
-// Helper function to parse a string to a valid ColorOption
-export const parseColorOption = (color: string | undefined): ColorOption => {
-  if (!color) return "bg-violet-500";
-  
-  // Check if the string is already a valid ColorOption
-  if (QUIZ_COLORS.includes(color as ColorOption)) {
-    return color as ColorOption;
-  }
-  
-  // Default fallback
-  return "bg-violet-500";
-};

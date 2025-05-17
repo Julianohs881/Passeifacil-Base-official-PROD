@@ -14,7 +14,6 @@ import QuizEmptyState from "@/components/Quiz/QuizEmptyState";
 import { ImportQuestionDialog } from "@/components/Share/ImportQuestionDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import AIUsageDisplay from "@/components/CreateWithAI/AIUsageDisplay";
 
 const Quiz = () => {
   const { id } = useParams<{ id: string }>();
@@ -96,15 +95,6 @@ const Quiz = () => {
         <div className="flex flex-col flex-1">
           {/* Back button and Quiz Title */}
           <QuizHeader title={quiz?.title} />
-          
-          {/* Pro user AI usage display */}
-          {isPROUser && isCreator && (
-            <div className="px-4 py-2 bg-blue-50 border-b border-blue-100">
-              <div className="container mx-auto">
-                <AIUsageDisplay variant="compact" />
-              </div>
-            </div>
-          )}
           
           {/* Main content */}
           <div className="flex flex-1 overflow-hidden">

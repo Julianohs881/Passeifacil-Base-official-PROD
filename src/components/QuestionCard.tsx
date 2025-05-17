@@ -1,20 +1,32 @@
+
 import React, { useState } from "react";
-import { Question } from "../types";
+import { Question, isUserCreator } from "../types";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Edit,
+  Trash2,
+  Share2,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import CommentSection from "./Comments/CommentSection";
 import { useAuth } from "@/context/AuthContext";
 import { ShareCodeDialog } from "./Share/ShareCodeDialog";
 import QuizNavigationButtons from "./QuizNavigationButtons";
 import { useMediaQuery } from "@/hooks/use-mobile";
-import CommentSection from "./Comments/CommentSection";
 
-// Import new components
-import QuestionActions from "./Question/QuestionActions";
-import QuestionOptions from "./Question/QuestionOptions";
-import QuestionExplanation from "./Question/QuestionExplanation";
-import DeleteQuestionDialog from "./Question/DeleteQuestionDialog";
-import { useQuestionShare } from "./Question/useQuestionShare";
-import FormattedText from "./Question/FormattedText";
 interface QuestionCardProps {
   question: Question;
   userAnswers: Record<string, number>;
@@ -28,6 +40,7 @@ interface QuestionCardProps {
   onPrevious?: () => void;
   onNext?: () => void;
 }
+
 const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
   userAnswers,
@@ -39,61 +52,208 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   totalQuestions,
   isPublicQuiz = false,
   onPrevious,
-  onNext
+  onNext,
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const userAnswer = userAnswers[question.id];
   const isAnswered = userAnswer !== undefined;
-  const {
-    user,
-    isPro
-  } = useAuth();
+  const isCorrect = userAnswer === question.correct_index;
+  const { user, isPro } = useAuth();
   const isMobile = useMediaQuery("(max-width: 640px)");
-
-  // Check if the current user is the creator of the quiz
+  
+  // Verificar se o usuário atual é o criador do quiz
   const isCreator = user?.id === question.user_id;
   const isPROUser = isPro();
 
-  // Use the share hook
-  const {
-    shareCode,
-    isLoadingShareCode,
-    isShareDialogOpen,
-    handleOpenShareDialog,
-    handleCloseShareDialog
-  } = useQuestionShare(question, isPROUser);
-  return <div className="flex flex-col h-full">
-      <Card className="p-3 sm:p-6 flex-1 overflow-auto py-[57px]">
+  // Function to render the statement with proper line breaks
+  const renderFormattedText = (text: string) => {
+    return text.split('\n').map((line, index) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < text.split('\n').length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <Card className="p-3 sm:p-6 flex-1 overflow-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
-          <Badge variant="outline" className="text-sm font-normal py-0">
+          <Badge variant="outline" className="text-sm font-normal">
             Questão {currentIndex + 1}/{totalQuestions}
           </Badge>
           
-          <QuestionActions question={question} isCreator={isCreator} onOpenEditModal={onOpenEditModal} onOpenDeleteDialog={() => setIsDeleteDialogOpen(true)} onOpenShareDialog={handleOpenShareDialog} />
+          <div className="action-buttons-container">
+            {/* Share button - only show for PRO users */}
+            {isPROUser && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsShareDialogOpen(true)}
+                className="action-button text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              >
+                <Share2 className="h-4 w-4 mr-1" />
+                <span className="whitespace-nowrap">Compartilhar</span>
+              </Button>
+            )}
+            
+            {/* Creator-only buttons */}
+            {isCreator && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onOpenEditModal(question)}
+                  className="action-button text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  <span className="whitespace-nowrap">Editar</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="action-button text-gray-600 hover:text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  <span className="whitespace-nowrap">Excluir</span>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="mb-6 whitespace-pre-line">
-          <FormattedText text={question.statement} />
+          {renderFormattedText(question.statement)}
         </div>
 
-        <QuestionOptions question={question} userAnswer={userAnswer} handleAnswer={handleAnswer} />
+        <div className="space-y-3 mt-6 w-full">
+          {question.options.map((option, index) => {
+            const optionId = `option-${question.id}-${index}`;
+            const isSelected = userAnswer === index;
+            const isCorrectOption = question.correct_index === index;
 
-        <QuestionExplanation explanation={question.explanation} isVisible={isAnswered} />
+            let optionClass =
+              "p-3 sm:p-4 border rounded-lg cursor-pointer transition-all w-full break-words";
+
+            if (!isAnswered) {
+              optionClass += " hover:bg-gray-50";
+            } else if (isSelected) {
+              optionClass += isCorrectOption
+                ? " bg-green-50 border-green-300"
+                : " bg-red-50 border-red-300";
+            } else if (isCorrectOption) {
+              optionClass += " bg-green-50 border-green-300";
+            }
+
+            return (
+              <div
+                key={optionId}
+                className={optionClass}
+                onClick={() => !isAnswered && handleAnswer(index)}
+              >
+                <div className="flex items-start">
+                  <div className="mr-3 mt-0.5 flex-shrink-0">
+                    <span
+                      className={`flex items-center justify-center h-6 w-6 rounded-full text-sm font-medium ${
+                        isAnswered && isCorrectOption
+                          ? "bg-green-100 text-green-800"
+                          : isAnswered && isSelected
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                  </div>
+                  <div className="flex-1 pr-6">
+                    {renderFormattedText(option)}
+                  </div>
+                  {isAnswered && isSelected && isCorrectOption && (
+                    <CheckCircle className="h-5 w-5 text-green-600 ml-2 mt-0.5 flex-shrink-0 absolute right-6" />
+                  )}
+                  {isAnswered && isSelected && !isCorrectOption && (
+                    <XCircle className="h-5 w-5 text-red-600 ml-2 mt-0.5 flex-shrink-0 absolute right-6" />
+                  )}
+                  {isAnswered && !isSelected && isCorrectOption && (
+                    <CheckCircle className="h-5 w-5 text-green-600 ml-2 mt-0.5 flex-shrink-0 absolute right-6" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {isAnswered && question.explanation && (
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-md w-full">
+            <p className="font-medium text-blue-800 mb-1">Explicação:</p>
+            <div className="text-blue-700 whitespace-pre-line">
+              {renderFormattedText(question.explanation)}
+            </div>
+          </div>
+        )}
 
         {/* Mobile Navigation Buttons - show only on mobile */}
-        {isMobile && onPrevious && onNext && <div className="mt-8 mb-4">
-            <QuizNavigationButtons currentIndex={currentIndex} totalQuestions={totalQuestions} onPrevious={onPrevious} onNext={onNext} />
-          </div>}
+        {isMobile && onPrevious && onNext && (
+          <div className="mt-8 mb-4">
+            <QuizNavigationButtons
+              currentIndex={currentIndex}
+              totalQuestions={totalQuestions}
+              onPrevious={onPrevious}
+              onNext={onNext}
+            />
+          </div>
+        )}
 
-        {/* Comments section - only for public quizzes and PRO users */}
-        {isPublicQuiz && isPROUser && <CommentSection questionId={question.id} userAnswer={userAnswer} isPublicQuiz={isPublicQuiz} />}
+        {/* Seção de comentários - apenas para quizzes públicos e usuários PRO */}
+        {isPublicQuiz && isPROUser && (
+          <CommentSection 
+            questionId={question.id} 
+            userAnswer={userAnswer} 
+            isPublicQuiz={isPublicQuiz}
+          />
+        )}
       </Card>
 
-      {/* Delete Question Dialog */}
-      <DeleteQuestionDialog isOpen={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)} onDelete={() => onDeleteQuestion(question.id)} />
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A questão será permanentemente
+              removida do quiz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDeleteQuestion(question.id)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Share Dialog - only if PRO user */}
-      {isPROUser && <ShareCodeDialog isOpen={isShareDialogOpen} onClose={handleCloseShareDialog} title={question.statement.length > 40 ? question.statement.substring(0, 40) + "..." : question.statement} code={isLoadingShareCode ? null : shareCode} type="question" />}
-    </div>;
+      {isPROUser && (
+        <ShareCodeDialog
+          isOpen={isShareDialogOpen}
+          onClose={() => setIsShareDialogOpen(false)}
+          title={question.statement.length > 40 
+            ? question.statement.substring(0, 40) + "..." 
+            : question.statement}
+          code={question.share_code}
+          type="question"
+        />
+      )}
+    </div>
+  );
 };
+
 export default QuestionCard;
