@@ -51,8 +51,8 @@ const NavBar = () => {
   return <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
-          <Link to="/" className="flex items-center">
-            <img src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" alt="Passei Fácil" className={`h-${logoSize} max-h-[48px] w-auto object-contain`} />
+          <Link to="/" className="flex items-center mx-[68px]">
+            <img src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" alt="Passei Fácil" className="" />
           </Link>
           
           {user && userProfile?.plan === "pro" && <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
