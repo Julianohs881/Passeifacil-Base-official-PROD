@@ -4,3 +4,4 @@ project_id = "hrpchhrykumcdeolvtfs"
 # Makes the function public, so Stripe can call it without authentication
 [functions.stripe-webhook]
 verify_jwt = false
+

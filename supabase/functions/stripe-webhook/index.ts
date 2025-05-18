@@ -28,9 +28,14 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY não está configurada");
     
-    // Get the Stripe webhook secret from environment
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    if (!webhookSecret) throw new Error("STRIPE_WEBHOOK_SECRET não está configurada");
+    // Determine environment and select appropriate webhook secret
+    const isProduction = Deno.env.get("SUPABASE_ENV") === "production";
+    const webhookSecretKey = isProduction ? "STRIPE_WEBHOOK_SECRET" : "STRIPE_WEBHOOK_SECRET_TEST";
+    const webhookSecret = Deno.env.get(webhookSecretKey);
+
+    logStep(`Usando a chave de webhook para ambiente: ${isProduction ? 'produção' : 'teste'} (${webhookSecretKey})`);
+    
+    if (!webhookSecret) throw new Error(`${webhookSecretKey} não está configurada`);
     
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
