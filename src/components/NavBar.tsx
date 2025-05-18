@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-
 const NavBar = () => {
   const {
     user,
@@ -23,10 +22,9 @@ const NavBar = () => {
   const {
     toast
   } = useToast();
-  
+
   // Add state to track subscription success notification
   const [showedProWelcome, setShowedProWelcome] = useState(false);
-  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -35,11 +33,9 @@ const NavBar = () => {
       console.error("Failed to sign out", error);
     }
   };
-  
   const handleLogoSizeChange = (value: number[]) => {
     setLogoSize(value[0]);
   };
-  
   const saveLogoSize = () => {
     localStorage.setItem("logo-size", logoSize.toString());
     setShowLogoEditor(false);
@@ -56,21 +52,19 @@ const NavBar = () => {
       setLogoSize(parseInt(savedSize));
     }
   }, []);
-  
+
   // Show welcome toast when user becomes Pro
   useEffect(() => {
     const subscriptionSuccess = new URLSearchParams(location.search).get("subscription") === "success";
-    
-    if (userProfile?.plan === "pro" && !showedProWelcome && 
-        (subscriptionSuccess || sessionStorage.getItem("new_pro_user") === "true")) {
+    if (userProfile?.plan === "pro" && !showedProWelcome && (subscriptionSuccess || sessionStorage.getItem("new_pro_user") === "true")) {
       toast({
         title: "Parabéns! Agora você é Pro!",
         description: "Você agora tem acesso a todos os recursos premium do Passei Fácil.",
-        duration: 6000,
+        duration: 6000
       });
       setShowedProWelcome(true);
       sessionStorage.setItem("new_pro_user", "true");
-      
+
       // Clean up the URL if it has subscription=success
       if (subscriptionSuccess) {
         const newUrl = new URL(window.location.href);
@@ -79,23 +73,21 @@ const NavBar = () => {
       }
     }
   }, [userProfile, toast, showedProWelcome, location]);
-  
+
   // Verificar se o usuário acabou de assinar
   useEffect(() => {
     const isNewSubscriber = sessionStorage.getItem("new_subscriber");
     if (isNewSubscriber && userProfile?.has_access) {
       // Remove the flag
       sessionStorage.removeItem("new_subscriber");
-      
       toast({
         title: "Parabéns! Agora você é assinante do Passei Fácil!",
         description: "Agora você tem acesso a todas as funcionalidades da plataforma.",
         variant: "default",
-        duration: 5000,
+        duration: 5000
       });
     }
   }, [userProfile, toast]);
-  
   return <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
@@ -105,9 +97,7 @@ const NavBar = () => {
           
           {user && userProfile?.plan === "pro" && <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="ml-2 focus:outline-none">
-                  <Edit2 className="h-4 w-4" />
-                </Button>
+                
               </PopoverTrigger>
               <PopoverContent className="w-80">
                 <div className="space-y-4">
