@@ -22,7 +22,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
   
   // Verificar se o usuário tem acesso ao sistema
-  if (userProfile && !userProfile.has_access) {
+  // Modificado para verificar explicitamente se has_access é false
+  if (userProfile && userProfile.has_access === false) {
     return <Navigate to="/subscription" replace />;
   }
 

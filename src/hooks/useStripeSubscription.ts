@@ -79,14 +79,13 @@ export const useStripeSubscription = () => {
       // Flag to know this is a new subscriber
       sessionStorage.setItem("new_subscriber", "true");
       
-      // Abrir a URL de checkout do Stripe em uma nova aba
-      window.open(data.url, '_blank');
-      
-      // Verificar o status da assinatura após um breve atraso
-      // para permitir que o usuário complete o processo de checkout
+      // Atualizar o perfil do usuário imediatamente para refletir a mudança
       setTimeout(async () => {
         await verifySubscriptionStatus();
-      }, 5000);
+      }, 1000);
+      
+      // Abrir a URL de checkout do Stripe em uma nova aba
+      window.open(data.url, '_blank');
       
       return { success: true };
     } catch (error: any) {
@@ -134,8 +133,7 @@ export const useStripeSubscription = () => {
         
         // Check if user is now subscribed and show toast
         if (data.has_access) {
-          // This toast will be shown via NavBar component when it detects the user has access
-          sessionStorage.setItem("new_subscriber", "true");
+          console.log("Usuário tem acesso após verificação:", data);
         }
       }
       

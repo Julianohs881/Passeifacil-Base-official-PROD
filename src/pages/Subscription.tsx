@@ -9,27 +9,79 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Check, X, Loader2 } from "lucide-react";
 
 const Subscription = () => {
-  const { user, userProfile } = useAuth();
-  const { createCheckoutSession, isLoading } = useStripeSubscription();
+  const { user, userProfile, updateUserProfile } = useAuth();
+  const { createCheckoutSession, verifySubscriptionStatus, isLoading } = useStripeSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [checkingStatus, setCheckingStatus] = useState(true);
 
   useEffect(() => {
-    // Verificar se o usuário já tem acesso
-    if (userProfile) {
-      setCheckingStatus(false);
-      if (userProfile.has_access) {
-        // Se já tiver acesso, redirecionar para o dashboard
+    const checkSubscriptionStatus = async () => {
+      setCheckingStatus(true);
+      
+      // Se o usuário estiver logado, verificar o status da assinatura
+      if (user) {
+        // Verificar se existe um novo assinante pela sessão (retornando do checkout)
+        const isNewSubscriber = sessionStorage.getItem("new_subscriber");
+        
+        // Verificar manualmente o status da assinatura no Stripe
+        const result = await verifySubscriptionStatus();
+        
+        // Se o usuário tem acesso após a verificação, atualizar o perfil local
+        if (result.success && result.has_access) {
+          await updateUserProfile();
+          
+          // Se for um novo assinante, mostrar mensagem de boas-vindas
+          if (isNewSubscriber) {
+            toast({
+              title: "Assinatura ativada com sucesso!",
+              description: "Bem-vindo(a) ao Passei Fácil! Você já tem acesso completo.",
+              duration: 5000,
+            });
+            
+            sessionStorage.removeItem("new_subscriber");
+            navigate("/quizzes");
+            return;
+          }
+        }
+      }
+      
+      // Se tiver um perfil e já tem acesso, redirecionar para dashboard
+      if (userProfile && userProfile.has_access === true) {
         toast({
           title: "Assinatura ativa",
           description: "Você já possui uma assinatura ativa!",
           duration: 3000,
         });
         navigate("/quizzes");
+        return;
       }
-    }
-  }, [userProfile, navigate, toast]);
+      
+      setCheckingStatus(false);
+    };
+    
+    checkSubscriptionStatus();
+    
+    // Verificar o status a cada 5 segundos se estiver na página de assinatura
+    const intervalId = setInterval(() => {
+      if (userProfile && !userProfile.has_access) {
+        verifySubscriptionStatus().then(result => {
+          if (result.success && result.has_access) {
+            updateUserProfile().then(() => {
+              toast({
+                title: "Assinatura ativada!",
+                description: "Seu acesso foi liberado com sucesso.",
+                duration: 3000,
+              });
+              navigate("/quizzes");
+            });
+          }
+        });
+      }
+    }, 5000);
+    
+    return () => clearInterval(intervalId);
+  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus]);
 
   const handleSubscribe = async () => {
     if (!user) {

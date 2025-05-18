@@ -92,6 +92,10 @@ serve(async (req) => {
         throw new Error(`Usuário com email ${userEmail} não encontrado`);
       }
       
+      // Calcular data de expiração da assinatura (30 dias à frente por padrão)
+      const subscriptionEnd = new Date();
+      subscriptionEnd.setDate(subscriptionEnd.getDate() + 30);
+      
       // Update user profile with subscription details
       const { error: updateError } = await supabaseClient
         .from("profiles")
@@ -99,7 +103,8 @@ serve(async (req) => {
           has_access: true, 
           plan: "assinante",
           stripe_customer_id: session.customer,
-          subscription_status: "active"
+          subscription_status: "active",
+          subscription_end_date: subscriptionEnd.toISOString()
         })
         .eq("id", user.id);
       
