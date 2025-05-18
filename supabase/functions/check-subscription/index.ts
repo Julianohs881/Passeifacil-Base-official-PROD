@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -98,7 +97,32 @@ serve(async (req) => {
         endDate: subscriptionEnd 
       });
     } else {
-      logStep("Nenhuma assinatura ativa encontrada");
+      // Add an extra check for completed checkouts that might not have updated the plan
+      const checkouts = await stripe.checkout.sessions.list({
+        customer: customerId,
+        limit: 5,
+        status: 'complete'
+      });
+      
+      // Look for a recently completed checkout
+      const recentCheckout = checkouts.data.find(checkout => {
+        // Check if it's a recent checkout (last 24 hours)
+        const checkoutTime = new Date(checkout.created * 1000);
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+        return checkoutTime > oneDayAgo && checkout.payment_status === 'paid';
+      });
+      
+      if (recentCheckout) {
+        // If we found a recent successful checkout, set the plan to pro
+        plan = "pro";
+        logStep("Checkout recente bem-sucedido encontrado, atualizando para plano pro", { 
+          checkoutId: recentCheckout.id,
+          timestamp: new Date(recentCheckout.created * 1000).toISOString()
+        });
+      } else {
+        logStep("Nenhuma assinatura ativa ou checkout recente encontrado");
+      }
     }
 
     // Atualizar o perfil do usuário no Supabase
@@ -107,12 +131,12 @@ serve(async (req) => {
     }).eq("id", user.id);
 
     logStep("Banco de dados atualizado com informações de assinatura", { 
-      subscribed: hasActiveSub, 
+      subscribed: hasActiveSub || plan === "pro", 
       plan: plan 
     });
     
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
+      subscribed: hasActiveSub || plan === "pro",
       plan: plan,
       subscription_end: subscriptionEnd
     }), {

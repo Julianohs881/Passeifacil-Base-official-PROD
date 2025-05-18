@@ -1,16 +1,6 @@
 
 project_id = "hrpchhrykumcdeolvtfs"
 
-[api]
-
-[db]
-shadow_database_flag = false
-
-[functions]
-
-[functions.create-checkout]
-
-[functions.check-subscription]
-
-[functions.customer-portal]
-
+# Makes the function public, so Stripe can call it without authentication
+[functions.stripe-webhook]
+verify_jwt = false
