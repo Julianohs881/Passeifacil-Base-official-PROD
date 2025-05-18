@@ -7,7 +7,7 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, userProfile } = useAuth();
 
   if (loading) {
     return (
@@ -19,6 +19,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // Verificar se o usuário tem acesso ao sistema
+  if (userProfile && !userProfile.has_access) {
+    return <Navigate to="/subscription" replace />;
   }
 
   return <>{children}</>;

@@ -62,6 +62,41 @@ export interface Database {
           created_at?: string
         }
       }
+      profiles: {
+        Row: {
+          id: string
+          name: string | null
+          plan: string
+          has_access: boolean
+          stripe_customer_id: string | null
+          subscription_id: string | null
+          subscription_status: string | null
+          subscription_end_date: string | null
+          created_at: string
+        }
+        Insert: {
+          id: string
+          name?: string | null
+          plan?: string
+          has_access?: boolean
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_end_date?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          plan?: string
+          has_access?: boolean
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_end_date?: string | null
+          created_at?: string
+        }
+      }
     }
   }
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -80,6 +79,22 @@ const NavBar = () => {
       }
     }
   }, [userProfile, toast, showedProWelcome, location]);
+  
+  // Verificar se o usuário acabou de assinar
+  useEffect(() => {
+    const isNewSubscriber = sessionStorage.getItem("new_subscriber");
+    if (isNewSubscriber && userProfile?.has_access) {
+      // Remove the flag
+      sessionStorage.removeItem("new_subscriber");
+      
+      toast({
+        title: "Parabéns! Agora você é assinante do Passei Fácil!",
+        description: "Agora você tem acesso a todas as funcionalidades da plataforma.",
+        variant: "default",
+        duration: 5000,
+      });
+    }
+  }, [userProfile, toast]);
   
   return <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">

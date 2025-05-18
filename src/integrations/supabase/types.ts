@@ -49,25 +49,40 @@ export type Database = {
           ai_questions_created: number | null
           avatar_url: string | null
           created_at: string
+          has_access: boolean | null
           id: string
           name: string | null
           plan: string
+          stripe_customer_id: string | null
+          subscription_end_date: string | null
+          subscription_id: string | null
+          subscription_status: string | null
         }
         Insert: {
           ai_questions_created?: number | null
           avatar_url?: string | null
           created_at?: string
+          has_access?: boolean | null
           id: string
           name?: string | null
           plan?: string
+          stripe_customer_id?: string | null
+          subscription_end_date?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
         }
         Update: {
           ai_questions_created?: number | null
           avatar_url?: string | null
           created_at?: string
+          has_access?: boolean | null
           id?: string
           name?: string | null
           plan?: string
+          stripe_customer_id?: string | null
+          subscription_end_date?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
         }
         Relationships: []
       }

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
@@ -75,8 +76,8 @@ export const useStripeSubscription = () => {
         throw new Error(data.error);
       }
       
-      // Flag to know this is a new pro user
-      sessionStorage.setItem("new_pro_user", "true");
+      // Flag to know this is a new subscriber
+      sessionStorage.setItem("new_subscriber", "true");
       
       // Abrir a URL de checkout do Stripe em uma nova aba
       window.open(data.url, '_blank');
@@ -131,18 +132,19 @@ export const useStripeSubscription = () => {
       if (data) {
         await updateUserProfile();
         
-        // Check if user is now pro and show toast
-        if (data.plan === "pro") {
-          // This toast will be shown via NavBar component when it detects the user is pro
-          sessionStorage.setItem("new_pro_user", "true");
+        // Check if user is now subscribed and show toast
+        if (data.has_access) {
+          // This toast will be shown via NavBar component when it detects the user has access
+          sessionStorage.setItem("new_subscriber", "true");
         }
       }
       
       return { 
         success: true, 
-        subscribed: data.subscribed,
+        has_access: data.has_access,
         plan: data.plan,
-        subscription_end: data.subscription_end
+        subscription_status: data.subscription_status,
+        subscription_end: data.subscription_end_date
       };
     } catch (error: any) {
       console.error("Erro completo ao verificar status da assinatura:", error);

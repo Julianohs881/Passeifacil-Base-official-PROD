@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -59,14 +60,20 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("Nenhum cliente encontrado, atualizando estado sem assinatura");
       
-      // Atualizar o perfil do usuário para plano gratuito
+      // Atualizar o perfil do usuário sem acesso
       await supabaseClient.from("profiles").update({
-        plan: "gratuito"
+        has_access: false,
+        plan: "sem assinatura",
+        subscription_status: null,
+        subscription_id: null,
+        stripe_customer_id: null,
+        subscription_end_date: null
       }).eq("id", user.id);
       
       return new Response(JSON.stringify({ 
-        subscribed: false,
-        plan: "gratuito"
+        has_access: false,
+        plan: "sem assinatura",
+        subscription_status: null
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -84,29 +91,35 @@ serve(async (req) => {
     });
     const hasActiveSub = subscriptions.data.length > 0;
     
-    let plan = "gratuito";
+    let subscriptionStatus = "inativo";
+    let subscriptionId = null;
     let subscriptionEnd = null;
+    let hasAccess = false;
+    let plan = "sem assinatura";
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
+      subscriptionStatus = subscription.status;
+      subscriptionId = subscription.id;
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      plan = "pro";
+      hasAccess = true;
+      plan = "assinante";
       
       logStep("Assinatura ativa encontrada", { 
         subscriptionId: subscription.id, 
         endDate: subscriptionEnd 
       });
     } else {
-      // Add an extra check for completed checkouts that might not have updated the plan
+      // Verificar se há uma compra recente nos checkouts
       const checkouts = await stripe.checkout.sessions.list({
         customer: customerId,
         limit: 5,
         status: 'complete'
       });
       
-      // Look for a recently completed checkout
+      // Procurar por um checkout recente completado
       const recentCheckout = checkouts.data.find(checkout => {
-        // Check if it's a recent checkout (last 24 hours)
+        // Verificar se é um checkout recente (últimas 24 horas)
         const checkoutTime = new Date(checkout.created * 1000);
         const oneDayAgo = new Date();
         oneDayAgo.setDate(oneDayAgo.getDate() - 1);
@@ -114,9 +127,12 @@ serve(async (req) => {
       });
       
       if (recentCheckout) {
-        // If we found a recent successful checkout, set the plan to pro
-        plan = "pro";
-        logStep("Checkout recente bem-sucedido encontrado, atualizando para plano pro", { 
+        // Se encontrarmos um checkout recente bem-sucedido, dar acesso
+        hasAccess = true;
+        plan = "assinante";
+        subscriptionStatus = "pending_active";
+        
+        logStep("Checkout recente bem-sucedido encontrado, atualizando acesso", { 
           checkoutId: recentCheckout.id,
           timestamp: new Date(recentCheckout.created * 1000).toISOString()
         });
@@ -127,18 +143,24 @@ serve(async (req) => {
 
     // Atualizar o perfil do usuário no Supabase
     await supabaseClient.from("profiles").update({
-      plan: plan
+      has_access: hasAccess,
+      plan: plan,
+      subscription_status: subscriptionStatus,
+      subscription_id: subscriptionId,
+      stripe_customer_id: customerId,
+      subscription_end_date: subscriptionEnd
     }).eq("id", user.id);
 
     logStep("Banco de dados atualizado com informações de assinatura", { 
-      subscribed: hasActiveSub || plan === "pro", 
+      has_access: hasAccess, 
       plan: plan 
     });
     
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub || plan === "pro",
+      has_access: hasAccess,
       plan: plan,
-      subscription_end: subscriptionEnd
+      subscription_status: subscriptionStatus,
+      subscription_end_date: subscriptionEnd
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -78,25 +79,11 @@ serve(async (req) => {
             redirectToPortal: true
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 200, // Mudando para 200 para evitar erros genéricos no frontend
+            status: 200,
           });
         }
       } else {
         logStep("Cliente não encontrado no Stripe, será criado durante o checkout");
-      }
-      
-      // Verificar se há um produto cadastrado no Stripe
-      logStep("Verificando produtos disponíveis");
-      const products = await stripe.products.list({ active: true, limit: 1 });
-      if (products.data.length === 0) {
-        throw new Error("Nenhum produto disponível no Stripe. Configure um produto antes de continuar.");
-      }
-      
-      // Verificar se há um preço cadastrado
-      logStep("Verificando preços disponíveis");
-      const prices = await stripe.prices.list({ active: true, limit: 1 });
-      if (prices.data.length === 0) {
-        throw new Error("Nenhum preço definido no Stripe. Configure um preço antes de continuar.");
       }
       
       // Criar sessão de checkout do Stripe
@@ -109,8 +96,8 @@ serve(async (req) => {
             price_data: {
               currency: "brl",
               product_data: { 
-                name: "Passei Fácil PRO",
-                description: "Acesso a todas as funcionalidades premium do Passei Fácil"
+                name: "Passei Fácil - Assinatura",
+                description: "Acesso completo à plataforma Passei Fácil"
               },
               unit_amount: 1990, // R$19,90
               recurring: { interval: "month" },
@@ -119,8 +106,8 @@ serve(async (req) => {
           },
         ],
         mode: "subscription",
-        success_url: `${req.headers.get("origin")}/quizzes?subscription=success`,
-        cancel_url: `${req.headers.get("origin")}/quizzes?subscription=canceled`,
+        success_url: `${req.headers.get("origin")}/success?subscription=success`,
+        cancel_url: `${req.headers.get("origin")}/cancel?subscription=canceled`,
       });
       
       if (!session.url) {
@@ -174,7 +161,7 @@ serve(async (req) => {
       details: "Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde ou entre em contato com o suporte."
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400, // Mudando para 400 para ser mais específico
+      status: 400,
     });
   }
 });

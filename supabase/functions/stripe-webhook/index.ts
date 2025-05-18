@@ -81,59 +81,79 @@ serve(async (req) => {
       
       logStep("Customer email retrieved", { email: userEmail });
       
-      // Find the user by email in Supabase
-      const { data: userData, error: userError } = await supabaseClient
-        .from("auth")
-        .select("users.id")
-        .eq("users.email", userEmail)
-        .single();
-        
-      if (userError) {
-        logStep("Error finding user by email", { error: userError.message });
-        
-        // Alternative approach: get users directly from auth.users
-        const { data: authUsers, error: authError } = await supabaseClient.auth.admin.listUsers();
-        
-        if (authError) {
-          throw new Error(`Erro ao listar usuários: ${authError.message}`);
-        }
-        
-        const user = authUsers.users.find(u => u.email === userEmail);
-        
-        if (!user) {
-          throw new Error(`Usuário com email ${userEmail} não encontrado`);
-        }
-        
-        // Update the user's profile with the pro plan
-        const { error: updateError } = await supabaseClient
-          .from("profiles")
-          .update({ plan: "pro" })
-          .eq("id", user.id);
-        
-        if (updateError) {
-          throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
-        }
-        
-        logStep("User profile updated to pro plan", { userId: user.id });
-      } else {
-        // Update the user's profile with the pro plan
-        const { error: updateError } = await supabaseClient
-          .from("profiles")
-          .update({ plan: "pro" })
-          .eq("id", userData.id);
-        
-        if (updateError) {
-          throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
-        }
-        
-        logStep("User profile updated to pro plan", { userId: userData.id });
+      // Get the user in Auth
+      const { data: users, error: authError } = await supabaseClient.auth.admin.listUsers();
+      if (authError) {
+        throw new Error(`Erro ao listar usuários: ${authError.message}`);
       }
+      
+      const user = users.users.find(u => u.email === userEmail);
+      if (!user) {
+        throw new Error(`Usuário com email ${userEmail} não encontrado`);
+      }
+      
+      // Update user profile with subscription details
+      const { error: updateError } = await supabaseClient
+        .from("profiles")
+        .update({ 
+          has_access: true, 
+          plan: "assinante",
+          stripe_customer_id: session.customer,
+          subscription_status: "active"
+        })
+        .eq("id", user.id);
+      
+      if (updateError) {
+        throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
+      }
+      
+      logStep("User profile updated to active subscription", { userId: user.id });
       
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
-    } else if (event.type === 'customer.subscription.updated' || 
+    } 
+    else if (event.type === 'invoice.paid') {
+      const invoice = event.data.object;
+      logStep("Invoice paid", { invoiceId: invoice.id, customerId: invoice.customer });
+      
+      // Get customer details
+      const customer = await stripe.customers.retrieve(invoice.customer as string);
+      const userEmail = customer.email;
+      
+      if (!userEmail) {
+        throw new Error("Email do cliente não encontrado");
+      }
+      
+      // Get the user in Auth
+      const { data: users, error: authError } = await supabaseClient.auth.admin.listUsers();
+      if (authError) {
+        throw new Error(`Erro ao listar usuários: ${authError.message}`);
+      }
+      
+      const user = users.users.find(u => u.email === userEmail);
+      if (!user) {
+        throw new Error(`Usuário com email ${userEmail} não encontrado`);
+      }
+      
+      // Update user profile
+      const { error: updateError } = await supabaseClient
+        .from("profiles")
+        .update({ 
+          has_access: true, 
+          plan: "assinante",
+          subscription_status: "active"
+        })
+        .eq("id", user.id);
+      
+      if (updateError) {
+        throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
+      }
+      
+      logStep("User profile updated after invoice paid", { userId: user.id });
+    }
+    else if (event.type === 'customer.subscription.updated' || 
               event.type === 'customer.subscription.created') {
       const subscription = event.data.object;
       
@@ -162,24 +182,36 @@ serve(async (req) => {
           throw new Error(`Usuário com email ${userEmail} não encontrado`);
         }
         
-        // Update the user's profile with pro plan
+        // Calculate subscription end date
+        const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        
+        // Update user profile
         const { error: updateError } = await supabaseClient
           .from("profiles")
-          .update({ plan: "pro" })
+          .update({ 
+            has_access: true, 
+            plan: "assinante",
+            stripe_customer_id: subscription.customer,
+            subscription_id: subscription.id,
+            subscription_status: subscription.status,
+            subscription_end_date: subscriptionEnd
+          })
           .eq("id", user.id);
         
         if (updateError) {
           throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
         }
         
-        logStep("User profile updated to pro plan", { userId: user.id });
+        logStep("User profile updated to active subscription", { userId: user.id });
+      } else {
+        // Subscription is not active (pending, incomplete, etc.)
+        logStep("Non-active subscription found", { 
+          subscriptionId: subscription.id, 
+          status: subscription.status 
+        });
       }
-      
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    } else if (event.type === 'customer.subscription.deleted') {
+    } 
+    else if (event.type === 'customer.subscription.deleted') {
       // Handle subscription cancellation
       const subscription = event.data.object;
       logStep("Subscription canceled", { subscriptionId: subscription.id });
@@ -203,22 +235,21 @@ serve(async (req) => {
         throw new Error(`Usuário com email ${userEmail} não encontrado`);
       }
       
-      // Update the user's profile back to free plan
+      // Update the user's profile to remove access
       const { error: updateError } = await supabaseClient
         .from("profiles")
-        .update({ plan: "gratuito" })
+        .update({ 
+          has_access: false,
+          plan: "cancelado",
+          subscription_status: "canceled"
+        })
         .eq("id", user.id);
       
       if (updateError) {
         throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
       }
       
-      logStep("User profile updated to free plan", { userId: user.id });
-      
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      logStep("User access revoked due to subscription cancellation", { userId: user.id });
     }
     
     // Return a 200 response for any unhandled events

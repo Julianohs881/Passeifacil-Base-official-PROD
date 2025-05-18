@@ -10,9 +10,10 @@ import Quiz from "./pages/Quiz";
 import Explore from "./pages/Explore";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
+import Subscription from "./pages/Subscription"; // Nova página de assinatura
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
-import CreateQuiz from "./pages/CreateQuiz"; // Add import for the new component
+import CreateQuiz from "./pages/CreateQuiz";
 
 // Redirect to home if authenticated, otherwise show login
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
@@ -51,6 +52,11 @@ function App() {
                   </AuthRedirect>
                 }
               />
+              
+              {/* Subscription route - accessible even without subscription */}
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/success" element={<Subscription />} />
+              <Route path="/cancel" element={<Subscription />} />
 
               {/* Protected routes */}
               <Route 
