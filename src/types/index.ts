@@ -1,3 +1,4 @@
+
 import { Session, User } from "@supabase/supabase-js";
 
 export type ColorOption =
@@ -42,7 +43,7 @@ export const QUIZ_COLORS: ColorOption[] = [
 ];
 
 export type VisibilityOption = "public" | "private";
-export type UserPlan = "gratuito" | "pro";
+export type UserPlan = "gratuito" | "pro" | "assinante" | "cancelado" | "sem assinatura";
 export type QuestionStatus = "unanswered" | "correct" | "incorrect";
 
 export interface Quiz {
@@ -92,6 +93,12 @@ export interface UserProfile {
   created_at: string;
   name?: string;
   avatar_url?: string;
+  // New fields for stripe subscription
+  has_access?: boolean;
+  stripe_customer_id?: string | null;
+  subscription_id?: string | null;
+  subscription_status?: string | null;
+  subscription_end_date?: string | null;
 }
 
 export interface AuthContextType {
