@@ -190,7 +190,7 @@ const NavBar = () => {
               <Link to="/login" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
                 Login
               </Link>
-              <Link to="/register" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
+              <Link to="/register" className="py-2 text-gray-700 hover:text-violet-600 transition-colors my-0 mx-[29px]">
                 Register
               </Link>
             </div>}
