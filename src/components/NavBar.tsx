@@ -92,7 +92,7 @@ const NavBar = () => {
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
-            <img src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" alt="Passei Fácil" className={`h-${logoSize} max-h-[48px] w-auto object-contain`} />
+            <img src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" alt="Passei Fácil" className={`h-${logoSize} max-h-[90px] w-auto object-contain`} />
           </Link>
           
           {user && userProfile?.plan === "pro" && <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
