@@ -134,12 +134,17 @@ export const useStripeSubscription = () => {
       
       // Para debugging - confirmar se os dados foram realmente atualizados
       setTimeout(async () => {
-        const { user } = await supabase.auth.getUser();
-        if (user) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error("Erro ao obter usuário após verificação:", userError);
+          return;
+        }
+        
+        if (userData && userData.user) {
           const { data: profile } = await supabase
             .from("profiles")
             .select("*")
-            .eq("id", user.id)
+            .eq("id", userData.user.id)
             .single();
             
           console.log("Perfil atual após verificação:", profile);
