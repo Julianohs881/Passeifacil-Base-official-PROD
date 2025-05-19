@@ -17,15 +17,19 @@ const Subscription = () => {
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
-      setCheckingStatus(true);
+      // Se não houver usuário logado, não é necessário verificar
+      if (!user) {
+        setCheckingStatus(false);
+        return;
+      }
       
-      // Se o usuário estiver logado, verificar o status da assinatura
-      if (user) {
-        // Verificar se existe um novo assinante pela sessão (retornando do checkout)
-        const isNewSubscriber = sessionStorage.getItem("new_subscriber");
-        
+      // Verificar se existe um novo assinante pela sessão (retornando do checkout)
+      const isNewSubscriber = sessionStorage.getItem("new_subscriber");
+      
+      try {
         // Verificar manualmente o status da assinatura no Stripe
         const result = await verifySubscriptionStatus();
+        console.log("Verificação de assinatura retornou:", result);
         
         // Se o usuário tem acesso após a verificação, atualizar o perfil local
         if (result.success && result.has_access) {
@@ -43,28 +47,37 @@ const Subscription = () => {
             navigate("/quizzes");
             return;
           }
+          
+          // Se já tem acesso, redirecionar para dashboard
+          toast({
+            title: "Assinatura ativa",
+            description: "Você já possui uma assinatura ativa!",
+            duration: 3000,
+          });
+          navigate("/quizzes");
+          return;
         }
+        
+        // Se chegamos até aqui, o usuário não tem assinatura ativa
+        // Vamos parar de verificar e mostrar a página de assinatura
+        setCheckingStatus(false);
+      } catch (error) {
+        console.error("Erro ao verificar status da assinatura:", error);
+        setCheckingStatus(false);
       }
-      
-      // Se tiver um perfil e já tem acesso, redirecionar para dashboard
-      if (userProfile && userProfile.has_access === true) {
-        toast({
-          title: "Assinatura ativa",
-          description: "Você já possui uma assinatura ativa!",
-          duration: 3000,
-        });
-        navigate("/quizzes");
-        return;
-      }
-      
-      setCheckingStatus(false);
     };
     
+    // Executar verificação inicial
     checkSubscriptionStatus();
     
-    // Verificar o status a cada 5 segundos se estiver na página de assinatura
-    const intervalId = setInterval(() => {
-      if (userProfile && !userProfile.has_access) {
+    // Verificar o status a cada 5 segundos SOMENTE se estivermos na página após um checkout
+    // para não ficar em loop infinito para novos usuários
+    const isAfterCheckout = window.location.search.includes('subscription=');
+    
+    let intervalId: number | undefined;
+    if (isAfterCheckout && user) {
+      intervalId = window.setInterval(() => {
+        console.log("Verificando assinatura após checkout");
         verifySubscriptionStatus().then(result => {
           if (result.success && result.has_access) {
             updateUserProfile().then(() => {
@@ -77,10 +90,12 @@ const Subscription = () => {
             });
           }
         });
-      }
-    }, 5000);
+      }, 5000);
+    }
     
-    return () => clearInterval(intervalId);
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus]);
 
   const handleSubscribe = async () => {

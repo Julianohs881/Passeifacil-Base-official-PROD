@@ -10,7 +10,7 @@ import Quiz from "./pages/Quiz";
 import Explore from "./pages/Explore";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile";
-import Subscription from "./pages/Subscription"; // Nova página de assinatura
+import Subscription from "./pages/Subscription"; 
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
 import CreateQuiz from "./pages/CreateQuiz";
@@ -41,6 +41,12 @@ const SubscriptionVerifier = () => {
         console.log("Checking subscription status on app load");
         
         try {
+          // Skip verification if we're already on the subscription page
+          if (window.location.pathname === '/subscription') {
+            console.log("Already on subscription page, skipping verification");
+            return;
+          }
+          
           // Check subscription status with the server
           const result = await verifySubscriptionStatus();
           
@@ -48,6 +54,12 @@ const SubscriptionVerifier = () => {
           if (result.success) {
             await updateUserProfile();
             console.log("Subscription check completed:", result);
+            
+            // If user doesn't have access and not already on subscription page, redirect
+            if (!result.has_access) {
+              console.log("User doesn't have subscription access, redirecting to subscription page");
+              navigate("/subscription");
+            }
           }
         } catch (error) {
           console.error("Error checking subscription on app load:", error);
