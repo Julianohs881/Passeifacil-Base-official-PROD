@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("Fetching user profile for:", userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -35,9 +36,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ai_questions_created: data.ai_questions_created || 0,
           created_at: data.created_at,
           name: data.name || undefined,
-          avatar_url: data.avatar_url || undefined
+          avatar_url: data.avatar_url || undefined,
+          has_access: data.has_access,
+          stripe_customer_id: data.stripe_customer_id,
+          subscription_id: data.subscription_id,
+          subscription_status: data.subscription_status,
+          subscription_end_date: data.subscription_end_date
         };
+        
         setUserProfile(typedProfile);
+        console.log("User profile updated:", {
+          id: typedProfile.id,
+          plan: typedProfile.plan,
+          has_access: typedProfile.has_access,
+          subscription_status: typedProfile.subscription_status
+        });
       }
     } catch (error) {
       console.error("Error in fetchUserProfile:", error);
@@ -48,6 +61,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
+      console.log("Updating user profile for:", user.id);
+      
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -64,9 +79,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ai_questions_created: data.ai_questions_created || 0,
           created_at: data.created_at,
           name: data.name || undefined,
-          avatar_url: data.avatar_url || undefined
+          avatar_url: data.avatar_url || undefined,
+          has_access: data.has_access,
+          stripe_customer_id: data.stripe_customer_id,
+          subscription_id: data.subscription_id,
+          subscription_status: data.subscription_status,
+          subscription_end_date: data.subscription_end_date
         };
+        
         setUserProfile(typedProfile);
+        
+        console.log("User profile updated with has_access:", data.has_access);
+        console.log("User profile updated with plan:", data.plan);
       }
     } catch (error) {
       console.error("Erro ao buscar perfil do usuário:", error);
@@ -280,9 +304,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Atualizar a função isPro para ser mais clara
+  // Atualizar a função isPro para aceitar planos 'pro' ou 'assinante'
   const isPro = () => {
-    return userProfile?.plan === 'pro';
+    console.log("Checking isPro. Current plan:", userProfile?.plan, "has_access:", userProfile?.has_access);
+    // Verify both the plan and has_access flag (if present)
+    return (userProfile?.plan === 'pro' || userProfile?.plan === 'assinante') && (userProfile?.has_access !== false);
   };
   
   // Check if the user has reached their monthly AI question limit

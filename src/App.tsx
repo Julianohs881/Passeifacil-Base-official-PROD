@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import Landing from "./pages/Landing";
@@ -14,6 +14,8 @@ import Subscription from "./pages/Subscription"; // Nova página de assinatura
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
 import CreateQuiz from "./pages/CreateQuiz";
+import { useEffect } from "react";
+import { useStripeSubscription } from "./hooks/useStripeSubscription";
 
 // Redirect to home if authenticated, otherwise show login
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
@@ -26,93 +28,133 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Component to verify subscription status when the app loads
+const SubscriptionVerifier = () => {
+  const { user, updateUserProfile } = useAuth();
+  const { verifySubscriptionStatus } = useStripeSubscription();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const checkSubscription = async () => {
+      // Only check subscription if user is logged in
+      if (user) {
+        console.log("Checking subscription status on app load");
+        
+        try {
+          // Check subscription status with the server
+          const result = await verifySubscriptionStatus();
+          
+          // Update the user profile to reflect any changes
+          if (result.success) {
+            await updateUserProfile();
+            console.log("Subscription check completed:", result);
+          }
+        } catch (error) {
+          console.error("Error checking subscription on app load:", error);
+        }
+      }
+    };
+    
+    checkSubscription();
+  }, [user?.id]);
+  
+  return null; // This component doesn't render anything
+};
+
+function AppContent() {
+  return (
+    <div className="min-h-screen">
+      <NavBar />
+      <SubscriptionVerifier />
+      <main className="pt-16 sm:pt-20">
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Landing />} />
+          <Route 
+            path="/login" 
+            element={
+              <AuthRedirect>
+                <Login />
+              </AuthRedirect>
+            }
+          />
+          <Route 
+            path="/register" 
+            element={
+              <AuthRedirect>
+                <Register />
+              </AuthRedirect>
+            }
+          />
+          
+          {/* Subscription route - accessible even without subscription */}
+          <Route path="/subscription" element={<Subscription />} />
+          <Route path="/success" element={<Subscription />} />
+          <Route path="/cancel" element={<Subscription />} />
+
+          {/* Protected routes */}
+          <Route 
+            path="/quizzes" 
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/quiz/:id" 
+            element={
+              <ProtectedRoute>
+                <Quiz />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Add new route for quiz creation */}
+          <Route 
+            path="/quizzes/new" 
+            element={
+              <ProtectedRoute>
+                <CreateQuiz />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* User Profile route */}
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Explore page - available for all authenticated users */}
+          <Route 
+            path="/explore" 
+            element={
+              <ProtectedRoute>
+                <Explore />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      
+      <Toaster />
+    </div>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen">
-          <NavBar />
-          <main className="pt-16 sm:pt-20">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Landing />} />
-              <Route 
-                path="/login" 
-                element={
-                  <AuthRedirect>
-                    <Login />
-                  </AuthRedirect>
-                }
-              />
-              <Route 
-                path="/register" 
-                element={
-                  <AuthRedirect>
-                    <Register />
-                  </AuthRedirect>
-                }
-              />
-              
-              {/* Subscription route - accessible even without subscription */}
-              <Route path="/subscription" element={<Subscription />} />
-              <Route path="/success" element={<Subscription />} />
-              <Route path="/cancel" element={<Subscription />} />
-
-              {/* Protected routes */}
-              <Route 
-                path="/quizzes" 
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                }
-              />
-              <Route 
-                path="/quiz/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Quiz />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Add new route for quiz creation */}
-              <Route 
-                path="/quizzes/new" 
-                element={
-                  <ProtectedRoute>
-                    <CreateQuiz />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* User Profile route */}
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <UserProfile />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Explore page - available for all authenticated users */}
-              <Route 
-                path="/explore" 
-                element={
-                  <ProtectedRoute>
-                    <Explore />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          
-          <Toaster />
-        </div>
+        <AppContent />
       </Router>
     </AuthProvider>
   );

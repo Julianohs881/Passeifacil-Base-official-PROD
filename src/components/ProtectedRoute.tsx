@@ -21,10 +21,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Verificar se o usuário tem acesso ao sistema
-  // Modificado para verificar explicitamente se has_access é false
-  if (userProfile && userProfile.has_access === false) {
-    return <Navigate to="/subscription" replace />;
+  // Log user profile for debugging purposes
+  console.log("ProtectedRoute checking user access:", {
+    userId: user.id,
+    plan: userProfile?.plan,
+    has_access: userProfile?.has_access,
+    subscription_status: userProfile?.subscription_status
+  });
+  
+  // Explicitly check has_access flag if it exists, otherwise fall back to checking the plan
+  if (userProfile) {
+    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
+      console.log("User does not have subscription access, redirecting to subscription page");
+      return <Navigate to="/subscription" replace />;
+    }
   }
 
   return <>{children}</>;
