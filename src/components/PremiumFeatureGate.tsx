@@ -31,6 +31,15 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   const aiQuestionsLimit = 50;
   const aiQuestionsRemaining = Math.max(0, aiQuestionsLimit - aiQuestionsCreated);
   
+  // Debug log to inspect state
+  console.log("PremiumFeatureGate checking feature access:", {
+    feature,
+    isPro: isPro(),
+    plan: userProfile?.plan,
+    has_access: userProfile?.has_access,
+    ai_limit_reached: hasReachedAILimit()
+  });
+  
   // Check if user is PRO and if it's the AI feature, check if they've reached the limit
   const hasAccess = isPro() && (feature !== 'ai' || !hasReachedAILimit());
   
