@@ -65,10 +65,12 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data) {
-        // Convert database profile to UserProfile with email from user
+        // Convert database profile to UserProfile with email from user and validate plan type
         const profileWithEmail: UserProfile = {
           ...data,
-          email: user?.email || ""
+          email: user?.email || "",
+          // Ensure plan is a valid UserPlan type
+          plan: (data.plan as UserPlan) || "gratuito" 
         };
         setUserProfile(profileWithEmail);
       } else {
