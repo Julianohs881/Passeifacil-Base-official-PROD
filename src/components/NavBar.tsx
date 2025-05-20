@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -8,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+
 const NavBar = () => {
   const {
     user,
@@ -19,23 +21,47 @@ const NavBar = () => {
   const [open, setOpen] = useState(false);
   const [logoSize, setLogoSize] = useState(20); // Default size value
   const [showLogoEditor, setShowLogoEditor] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const { toast } = useToast();
 
   // Add state to track subscription success notification
   const [showedProWelcome, setShowedProWelcome] = useState(false);
+  
+  // Enhanced logout function with fallback
   const handleSignOut = async () => {
+    // Prevent multiple clicks
+    if (isSigningOut) return;
+    
+    setIsSigningOut(true);
     try {
+      // Clear all session storage items related to verification
+      sessionStorage.removeItem("verification_attempts");
+      sessionStorage.removeItem("verification_error_timestamp");
+      sessionStorage.removeItem("new_subscriber");
+      sessionStorage.removeItem("new_pro_user");
+      
+      // Perform logout
       await signOut();
       navigate("/login");
     } catch (error) {
       console.error("Failed to sign out", error);
+      toast({
+        title: "Erro ao sair",
+        description: "Ocorreu um erro ao tentar sair da conta. Redirecionando para login...",
+        variant: "destructive",
+      });
+      
+      // Force navigate to login as fallback
+      navigate("/login");
+    } finally {
+      setIsSigningOut(false);
     }
   };
+  
   const handleLogoSizeChange = (value: number[]) => {
     setLogoSize(value[0]);
   };
+  
   const saveLogoSize = () => {
     localStorage.setItem("logo-size", logoSize.toString());
     setShowLogoEditor(false);
@@ -74,7 +100,7 @@ const NavBar = () => {
     }
   }, [userProfile, toast, showedProWelcome, location]);
 
-  // Verificar se o usuário acabou de assinar
+  // Check if user just subscribed
   useEffect(() => {
     const isNewSubscriber = sessionStorage.getItem("new_subscriber");
     if (isNewSubscriber && userProfile?.has_access) {
@@ -88,14 +114,17 @@ const NavBar = () => {
       });
     }
   }, [userProfile, toast]);
-  return <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
+  
+  return (
+    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
             <img src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" alt="Passei Fácil" className={`h-${logoSize} max-h-[100px] w-auto object-contain`} />
           </Link>
           
-          {user && userProfile?.plan === "pro" && <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
+          {user && userProfile?.plan === "pro" && (
+            <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
               <PopoverTrigger asChild>
                 
               </PopoverTrigger>
@@ -116,7 +145,8 @@ const NavBar = () => {
                   </div>
                 </div>
               </PopoverContent>
-            </Popover>}
+            </Popover>
+          )}
         </div>
 
         {/* Mobile menu */}
@@ -141,21 +171,31 @@ const NavBar = () => {
                 <Link to="/explore" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
                   Explorar
                 </Link>
-                {user ? <>
+                {user ? (
+                  <>
                     <Link to="/profile" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
                       Perfil
                     </Link>
-                    <Button variant="ghost" size="sm" className="justify-start" onClick={handleSignOut}>
-                      Sair
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="justify-start" 
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                    >
+                      {isSigningOut ? "Saindo..." : "Sair"}
                     </Button>
-                  </> : <>
+                  </>
+                ) : (
+                  <>
                     <Link to="/login" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
                       Login
                     </Link>
                     <Link to="/register" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
                       Register
                     </Link>
-                  </>}
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>
@@ -170,32 +210,47 @@ const NavBar = () => {
             Explorar
           </Link>
 
-          {user && <div className="flex items-center gap-4">
+          {user && (
+            <div className="flex items-center gap-4">
               <Link to="/profile" className="flex items-center gap-2 hover:text-violet-600 transition-colors">
                 <Avatar className="h-8 w-8">
-                  {userProfile?.avatar_url ? <AvatarImage src={userProfile.avatar_url} alt={userProfile.name || "User"} /> : <AvatarFallback className="bg-violet-100 text-violet-600">
+                  {userProfile?.avatar_url ? (
+                    <AvatarImage src={userProfile.avatar_url} alt={userProfile.name || "User"} />
+                  ) : (
+                    <AvatarFallback className="bg-violet-100 text-violet-600">
                       {userProfile?.name ? userProfile.name[0].toUpperCase() : "U"}
-                    </AvatarFallback>}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <span className="hidden md:inline">
                   {userProfile?.name || "Perfil"}
                 </span>
               </Link>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                Sair
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+              >
+                {isSigningOut ? "Saindo..." : "Sair"}
               </Button>
-            </div>}
+            </div>
+          )}
 
-          {!user && <div>
+          {!user && (
+            <div>
               <Link to="/login" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
                 Login
               </Link>
               <Link to="/register" className="py-2 text-gray-700 hover:text-violet-600 transition-colors my-0 mx-[29px]">
                 Register
               </Link>
-            </div>}
+            </div>
+          )}
         </div>
       </div>
-    </nav>;
+    </nav>
+  );
 };
+
 export default NavBar;

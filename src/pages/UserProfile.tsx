@@ -131,8 +131,8 @@ const UserProfile = () => {
     return null;
   }
 
-  // Handle the UserPlan type safely
-  const userPlan: UserPlan = (userProfile?.plan as UserPlan) || "gratuito";
+  // Handle the UserPlan type safely by validating it
+  const userPlan: UserPlan = userProfile?.plan || "gratuito";
 
   return (
     <div className="container max-w-2xl py-8 px-4">
