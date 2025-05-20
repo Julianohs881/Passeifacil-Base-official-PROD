@@ -55,6 +55,21 @@ const SubscriptionVerifier = () => {
             return;
           }
           
+          // Skip verification if we experienced recent errors (avoid loops)
+          const lastVerificationError = sessionStorage.getItem("verification_error_timestamp");
+          if (lastVerificationError) {
+            const errorTime = parseInt(lastVerificationError, 10);
+            const currentTime = Date.now();
+            // Se o último erro foi há menos de 1 minuto, pular verificação
+            if ((currentTime - errorTime) < 60000) {
+              console.log("Skipping verification due to recent error");
+              return;
+            } else {
+              // Limpar o registro de erro se já passou tempo suficiente
+              sessionStorage.removeItem("verification_error_timestamp");
+            }
+          }
+          
           // Only check subscription status if the user profile indicates they should have access
           // or if we don't know their status yet
           if (!userProfile || userProfile.has_access === true) {
@@ -77,6 +92,8 @@ const SubscriptionVerifier = () => {
           }
         } catch (error) {
           console.error("Error checking subscription on app load:", error);
+          // Registrar timestamp do erro para evitar loop
+          sessionStorage.setItem("verification_error_timestamp", Date.now().toString());
         }
       }
     };
