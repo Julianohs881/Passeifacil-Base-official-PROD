@@ -2,7 +2,6 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
-import { useToast } from "@/hooks/use-toast"; 
 import Landing from "./pages/Landing";
 import Home from "@/pages/Home";
 import Login from "./pages/Login";
@@ -15,7 +14,7 @@ import Subscription from "./pages/Subscription";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
 import CreateQuiz from "./pages/CreateQuiz";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useStripeSubscription } from "./hooks/useStripeSubscription";
 
 // Redirect to home if authenticated, otherwise show login
@@ -31,97 +30,25 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
 
 // Component to verify subscription status when the app loads
 const SubscriptionVerifier = () => {
-  const { user, updateUserProfile, userProfile, signOut } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const { verifySubscriptionStatus } = useStripeSubscription();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [isVerifying, setIsVerifying] = useState(false);
   
   useEffect(() => {
-    // Maximum allowed verification attempts
-    const MAX_VERIFICATION_ATTEMPTS = 3;
-    // Cooldown period after errors (in milliseconds)
-    const ERROR_COOLDOWN_PERIOD = 60000; // 1 minute
-    
     const checkSubscription = async () => {
       // Only check subscription if user is logged in
-      if (!user) {
-        return;
-      }
-      
-      // Don't start new verification if already verifying
-      if (isVerifying) {
-        return;
-      }
-      
-      console.log("Checking subscription status on app load");
-      setIsVerifying(true);
-      
-      try {
-        // Skip verification if we're already on the subscription page
-        if (window.location.pathname === '/subscription') {
-          console.log("Already on subscription page, skipping verification");
-          setIsVerifying(false);
-          return;
-        }
+      if (user) {
+        console.log("Checking subscription status on app load");
         
-        // Skip verification for users who are known to not have access
-        // This prevents unnecessary API calls and potential rate limiting
-        if (userProfile && typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
-          console.log("User already known to not have access, redirecting to subscription page");
-          navigate("/subscription");
-          setIsVerifying(false);
-          return;
-        }
-        
-        // Check for recent errors to avoid loops
-        const lastVerificationError = sessionStorage.getItem("verification_error_timestamp");
-        if (lastVerificationError) {
-          const errorTime = parseInt(lastVerificationError, 10);
-          const currentTime = Date.now();
-          // Skip verification if error was less than cooldown period ago
-          if ((currentTime - errorTime) < ERROR_COOLDOWN_PERIOD) {
-            console.log("Skipping verification due to recent error");
-            setIsVerifying(false);
+        try {
+          // Skip verification if we're already on the subscription page
+          if (window.location.pathname === '/subscription') {
+            console.log("Already on subscription page, skipping verification");
             return;
-          } else {
-            // Clear error record if enough time has passed
-            sessionStorage.removeItem("verification_error_timestamp");
           }
-        }
-        
-        // Check for verification attempt count to prevent infinite loops
-        const verificationAttempts = parseInt(sessionStorage.getItem("verification_attempts") || "0", 10);
-        if (verificationAttempts >= MAX_VERIFICATION_ATTEMPTS) {
-          console.log(`Maximum verification attempts (${MAX_VERIFICATION_ATTEMPTS}) reached`);
           
-          // Show a message to the user
-          toast({
-            title: "Verificação de assinatura desativada",
-            description: "Muitas tentativas de verificação. Tente fazer logout e login novamente.",
-            variant: "destructive",
-          });
-          
-          setIsVerifying(false);
-          return;
-        }
-        
-        // Increment verification attempts
-        sessionStorage.setItem("verification_attempts", (verificationAttempts + 1).toString());
-        
-        // Only check subscription status if the user profile indicates they should have access
-        // or if we don't know their status yet
-        if (!userProfile || userProfile.has_access === true) {
-          console.log("Checking subscription status for user with potential access");
-          
-          // Add timeout to prevent hanging forever
-          const subscriptionPromise = verifySubscriptionStatus();
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error("Subscription verification timed out")), 10000);
-          });
-          
-          // Race between subscription check and timeout
-          const result = await Promise.race([subscriptionPromise, timeoutPromise]) as any;
+          // Check subscription status with the server
+          const result = await verifySubscriptionStatus();
           
           // Update the user profile to reflect any changes
           if (result.success) {
@@ -133,52 +60,17 @@ const SubscriptionVerifier = () => {
               console.log("User doesn't have subscription access, redirecting to subscription page");
               navigate("/subscription");
             }
-            
-            // Reset verification attempts on success
-            sessionStorage.removeItem("verification_attempts");
           }
+        } catch (error) {
+          console.error("Error checking subscription on app load:", error);
         }
-      } catch (error) {
-        console.error("Error checking subscription on app load:", error);
-        
-        // Record timestamp of error to avoid loop
-        sessionStorage.setItem("verification_error_timestamp", Date.now().toString());
-        
-        // Show error to user
-        toast({
-          title: "Erro ao verificar assinatura",
-          description: "Não foi possível verificar seu status de assinatura. Você ainda pode usar o app.",
-          variant: "destructive",
-        });
-        
-        // If we hit a critical error multiple times in a row, suggest logout
-        const verificationAttempts = parseInt(sessionStorage.getItem("verification_attempts") || "0", 10);
-        if (verificationAttempts >= MAX_VERIFICATION_ATTEMPTS - 1) {
-          toast({
-            title: "Múltiplos erros detectados",
-            description: "Recomendamos fazer logout e login novamente para resolver o problema.",
-            variant: "destructive",
-            duration: 10000,
-          });
-        }
-      } finally {
-        setIsVerifying(false);
       }
     };
     
-    // Execute subscription check
     checkSubscription();
-    
-    // Clear verification attempts on component unmount
-    return () => {
-      // Only clear if the user is logging out to avoid clearing during normal navigation
-      if (!user) {
-        sessionStorage.removeItem("verification_attempts");
-      }
-    };
-  }, [user?.id, userProfile, navigate, verifySubscriptionStatus, updateUserProfile, toast, isVerifying, signOut]);
+  }, [user?.id]);
   
-  return null; // Component doesn't render anything
+  return null; // This component doesn't render anything
 };
 
 function AppContent() {

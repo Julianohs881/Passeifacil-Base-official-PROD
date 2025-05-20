@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -9,118 +9,50 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Check, X, Loader2 } from "lucide-react";
 
 const Subscription = () => {
-  const { user, userProfile, updateUserProfile, signOut, authError } = useAuth();
+  const { user, userProfile, updateUserProfile } = useAuth();
   const { createCheckoutSession, verifySubscriptionStatus, isLoading } = useStripeSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [checkingStatus, setCheckingStatus] = useState(true);
-  const [maxVerificationAttempts] = useState(2); // Maximum verification attempts
+  const [maxVerificationAttempts] = useState(2); // Limite máximo de tentativas de verificação
   const [verificationAttempts, setVerificationAttempts] = useState(0);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
-  const [checkoutTimeoutId, setCheckoutTimeoutId] = useState<NodeJS.Timeout | null>(null);
-
-  // Safely perform logout, ensuring UI state is reset
-  const safeLogout = useCallback(async () => {
-    // Clear any pending timeouts
-    if (checkoutTimeoutId) {
-      clearTimeout(checkoutTimeoutId);
-    }
-    
-    // Reset local state
-    setCheckingStatus(false);
-    setVerificationError(null);
-    setVerificationAttempts(0);
-    
-    // Clear session storage items
-    sessionStorage.removeItem("new_subscriber");
-    sessionStorage.removeItem("verification_error_timestamp");
-    
-    try {
-      // Perform logout
-      await signOut();
-      navigate("/login");
-    } catch (error) {
-      console.error("Error during logout:", error);
-      // Force page refresh as last resort
-      window.location.href = "/login";
-    }
-  }, [signOut, navigate, checkoutTimeoutId]);
-
-  // Effect to handle auth errors
-  useEffect(() => {
-    if (authError) {
-      toast({
-        title: "Erro de autenticação",
-        description: authError,
-        variant: "destructive",
-      });
-      setCheckingStatus(false);
-    }
-  }, [authError, toast]);
 
   useEffect(() => {
-    // Maximum time to wait for subscription verification
-    const VERIFICATION_TIMEOUT = 15000; // 15 seconds
-    let timeoutId: NodeJS.Timeout | null = null;
-    
     const checkSubscriptionStatus = async () => {
-      // If user isn't logged in, no need to verify
+      // Se não houver usuário logado, não é necessário verificar
       if (!user) {
         setCheckingStatus(false);
         return;
       }
       
-      // Start timeout for subscription verification
-      timeoutId = setTimeout(() => {
-        if (checkingStatus) {
-          setVerificationError("Verificação de assinatura excedeu o tempo limite");
-          setCheckingStatus(false);
-          toast({
-            title: "Tempo excedido",
-            description: "A verificação demorou muito tempo. Você pode tentar novamente ou fazer logout.",
-            variant: "destructive",
-          });
-        }
-      }, VERIFICATION_TIMEOUT);
-      setCheckoutTimeoutId(timeoutId);
-      
-      // Check if user is a new subscriber (returning from checkout)
+      // Verificar se existe um novo assinante pela sessão (retornando do checkout)
       const isNewSubscriber = sessionStorage.getItem("new_subscriber");
       
-      // Determine if we should check subscription status
-      // Check only in specific cases:
-      // 1. If returning from checkout
-      // 2. If the user has has_access explicitly set to true
-      // 3. If we have a subscription parameter in the URL
+      // Não verificar para novos usuários que ainda não têm assinatura
+      // Verificamos apenas se estamos retornando do checkout ou se userProfile.has_access for true
       const shouldCheckStatus = isNewSubscriber || 
-                              (userProfile && userProfile.has_access === true) || 
-                              window.location.search.includes('subscription=');
+                               (userProfile && userProfile.has_access === true) || 
+                               window.location.search.includes('subscription=');
       
-      // For new users without subscription, show page directly or
-      // if we've already tried verification several times
+      // Se não estamos retornando de um checkout e o usuário não tem has_access, 
+      // mostrar a página de assinatura diretamente
       if (!shouldCheckStatus && verificationAttempts >= maxVerificationAttempts) {
-        console.log("Showing subscription page for new user or after max attempts");
+        console.log("Pulando verificação de assinatura para usuário sem acesso");
         setCheckingStatus(false);
-        setVerificationError(null);
-        if (timeoutId) clearTimeout(timeoutId);
         return;
       }
       
       try {
-        // Increment attempt counter
+        // Verificar manualmente o status da assinatura no Stripe
         setVerificationAttempts(prev => prev + 1);
-        console.log(`Attempt ${verificationAttempts + 1} to verify subscription status`);
-        setVerificationError(null);
-        
-        // Manually verify subscription status with Stripe
         const result = await verifySubscriptionStatus();
-        console.log("Subscription verification returned:", result);
+        console.log("Verificação de assinatura retornou:", result);
         
-        // If user has access after verification, update local profile
+        // Se o usuário tem acesso após a verificação, atualizar o perfil local
         if (result.success && result.has_access) {
           await updateUserProfile();
           
-          // If this is a new subscriber, show welcome message
+          // Se for um novo assinante, mostrar mensagem de boas-vindas
           if (isNewSubscriber) {
             toast({
               title: "Assinatura ativada com sucesso!",
@@ -133,7 +65,7 @@ const Subscription = () => {
             return;
           }
           
-          // If already has access, redirect to dashboard
+          // Se já tem acesso, redirecionar para dashboard
           toast({
             title: "Assinatura ativa",
             description: "Você já possui uma assinatura ativa!",
@@ -143,48 +75,26 @@ const Subscription = () => {
           return;
         }
         
-        // If we reach here, user doesn't have an active subscription
-        // Stop checking and show subscription page
+        // Se chegamos até aqui, o usuário não tem assinatura ativa
+        // Vamos parar de verificar e mostrar a página de assinatura
         setCheckingStatus(false);
       } catch (error) {
-        console.error("Error verifying subscription status:", error);
-        
-        // Store error message for display
-        let errorMessage = "Erro de comunicação com o servidor";
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else if (typeof error === 'string') {
-          errorMessage = error;
-        } else if (typeof error === 'object' && error !== null && 'message' in error) {
-          errorMessage = String(error.message);
-        }
-        
-        setVerificationError(errorMessage);
-        
-        // On verification error, show subscription page
+        console.error("Erro ao verificar status da assinatura:", error);
         setCheckingStatus(false);
-      } finally {
-        if (timeoutId) clearTimeout(timeoutId);
       }
     };
     
-    // Initial verification
+    // Executar verificação inicial
     checkSubscriptionStatus();
     
-    // Check status every 5 seconds ONLY if we're on the page after checkout
-    // to avoid infinite loop for new users
+    // Verificar o status a cada 5 segundos SOMENTE se estivermos na página após um checkout
+    // para não ficar em loop infinito para novos usuários
     const isAfterCheckout = window.location.search.includes('subscription=');
     
-    let intervalId: NodeJS.Timeout | undefined;
+    let intervalId: number | undefined;
     if (isAfterCheckout && user) {
-      intervalId = setInterval(() => {
-        // Exit early if no longer checking status
-        if (!checkingStatus) {
-          if (intervalId) clearInterval(intervalId);
-          return;
-        }
-        
-        console.log("Checking subscription after checkout");
+      intervalId = window.setInterval(() => {
+        console.log("Verificando assinatura após checkout");
         verifySubscriptionStatus().then(result => {
           if (result.success && result.has_access) {
             updateUserProfile().then(() => {
@@ -196,18 +106,14 @@ const Subscription = () => {
               navigate("/quizzes");
             });
           }
-        }).catch(error => {
-          console.error("Error in periodic verification:", error);
-          // Don't flood user with error messages
         });
       }, 5000);
     }
     
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
       if (intervalId) clearInterval(intervalId);
     };
-  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts, checkingStatus]);
+  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts]);
 
   const handleSubscribe = async () => {
     if (!user) {
@@ -215,6 +121,7 @@ const Subscription = () => {
       return;
     }
 
+    // Indicar que estamos processando
     try {
       const result = await createCheckoutSession();
       
@@ -230,7 +137,7 @@ const Subscription = () => {
         }
       }
     } catch (error) {
-      console.error("Error starting subscription process:", error);
+      console.error("Erro ao iniciar processo de assinatura:", error);
       toast({
         variant: "destructive",
         title: "Erro",
@@ -246,33 +153,6 @@ const Subscription = () => {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-12 w-12 animate-spin text-violet-500" />
           <p className="text-gray-600">Verificando status da assinatura...</p>
-          
-          {verificationError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 max-w-md text-center">
-              <p className="font-medium">Erro ao verificar assinatura</p>
-              <p className="text-sm mt-1">{verificationError}</p>
-            </div>
-          )}
-          
-          <div className="flex gap-2 mt-3">
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => setCheckingStatus(false)}
-              className="mt-3"
-            >
-              Cancelar verificação
-            </Button>
-            
-            <Button 
-              variant="ghost"
-              size="sm"
-              onClick={safeLogout}
-              className="mt-3"
-            >
-              Sair
-            </Button>
-          </div>
         </div>
       </div>
     );
@@ -285,21 +165,6 @@ const Subscription = () => {
         Para acessar a plataforma Passei Fácil, é necessário ser um assinante. 
         Assine agora e tenha acesso completo a todas as funcionalidades!
       </p>
-
-      {verificationError && (
-        <div className="max-w-md mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-center">
-          <p className="font-medium">Erro ao verificar assinatura</p>
-          <p className="text-sm mt-1">{verificationError}</p>
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={safeLogout}
-            className="mt-3"
-          >
-            Sair
-          </Button>
-        </div>
-      )}
 
       <div className="max-w-md mx-auto">
         <Card className="border-2 border-violet-200 shadow-lg">
