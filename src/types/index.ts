@@ -88,12 +88,13 @@ export interface QuizResult {
 
 export interface UserProfile {
   id: string;
+  email: string;
   plan: UserPlan;
-  ai_questions_created?: number;
-  created_at: string;
   name?: string;
   avatar_url?: string;
-  // New fields for stripe subscription
+  ai_questions_created?: number;
+  created_at?: string;
+  // Subscription related fields
   has_access?: boolean;
   stripe_customer_id?: string | null;
   subscription_id?: string | null;
