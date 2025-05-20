@@ -5,5 +5,3 @@ project_id = "hrpchhrykumcdeolvtfs"
 [functions.stripe-webhook]
 verify_jwt = false
 
-# Especificando o método importmap para garantir compatibilidade com os módulos
-import_map = "./import_map.json"
