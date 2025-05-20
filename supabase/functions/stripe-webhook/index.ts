@@ -39,12 +39,29 @@ serve(async (req) => {
     log("STRIPE_SECRET_KEY recuperada com sucesso");
     
     // Determinar qual segredo de webhook usar com base no ambiente
-    let webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    if (!webhookSecret) {
-      log("ERRO: Segredo do webhook não encontrado");
-      throw new Error("STRIPE_WEBHOOK_SECRET não está configurado no ambiente");
+    // Verificar se estamos em desenvolvimento ou produção com base na URL ou outro indicador
+    const isTestMode = stripeKey.startsWith('sk_test_');
+    let webhookSecret;
+    
+    if (isTestMode) {
+      webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET_TEST");
+      log("Ambiente de TESTE detectado - usando STRIPE_WEBHOOK_SECRET_TEST", { 
+        keyExists: !!webhookSecret, 
+        keyLength: webhookSecret ? webhookSecret.length : 0 
+      });
+    } else {
+      webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+      log("Ambiente de PRODUÇÃO detectado - usando STRIPE_WEBHOOK_SECRET", { 
+        keyExists: !!webhookSecret, 
+        keyLength: webhookSecret ? webhookSecret.length : 0 
+      });
     }
-    log("Segredo do webhook recuperado com sucesso");
+    
+    if (!webhookSecret) {
+      log("ERRO: Segredo do webhook não encontrado para o ambiente atual", { isTestMode });
+      throw new Error(`STRIPE_WEBHOOK_SECRET${isTestMode ? '_TEST' : ''} não está configurado no ambiente`);
+    }
+    log("Segredo do webhook recuperado com sucesso para o ambiente", { isTestMode });
     
     // Inicializar Stripe com a chave correta
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
@@ -74,12 +91,14 @@ serve(async (req) => {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
       log("Assinatura do webhook verificada com sucesso", { 
         eventType: event.type,
-        eventId: event.id
+        eventId: event.id,
+        ambiente: isTestMode ? "TESTE" : "PRODUÇÃO"
       });
     } catch (err) {
       log("Falha na verificação da assinatura do webhook", { 
         error: err.message,
-        signature: signature.substring(0, 20) + "..." // Registro parcial para segurança
+        signature: signature.substring(0, 20) + "...", // Registro parcial para segurança
+        ambiente: isTestMode ? "TESTE" : "PRODUÇÃO"
       });
       return new Response(JSON.stringify({ error: `Erro no Webhook: ${err.message}` }), {
         status: 400,
