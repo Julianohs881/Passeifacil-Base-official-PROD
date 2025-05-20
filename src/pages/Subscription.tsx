@@ -28,23 +28,29 @@ const Subscription = () => {
       // Verificar se existe um novo assinante pela sessão (retornando do checkout)
       const isNewSubscriber = sessionStorage.getItem("new_subscriber");
       
-      // Não verificar para novos usuários que ainda não têm assinatura
-      // Verificamos apenas se estamos retornando do checkout ou se userProfile.has_access for true
+      // Determinar se devemos verificar o status da assinatura
+      // Verificamos apenas em casos específicos:
+      // 1. Se estamos retornando do checkout
+      // 2. Se o usuário tem has_access explicitamente definido como true
+      // 3. Se temos um parâmetro de subscription na URL
       const shouldCheckStatus = isNewSubscriber || 
-                               (userProfile && userProfile.has_access === true) || 
-                               window.location.search.includes('subscription=');
+                              (userProfile && userProfile.has_access === true) || 
+                              window.location.search.includes('subscription=');
       
-      // Se não estamos retornando de um checkout e o usuário não tem has_access, 
-      // mostrar a página de assinatura diretamente
+      // Para novos usuários sem assinatura, mostrar a página diretamente sem verificação
+      // ou se já tentamos verificar algumas vezes sem sucesso
       if (!shouldCheckStatus && verificationAttempts >= maxVerificationAttempts) {
-        console.log("Pulando verificação de assinatura para usuário sem acesso");
+        console.log("Mostrando página de assinatura para novo usuário ou após tentativas máximas");
         setCheckingStatus(false);
         return;
       }
       
       try {
-        // Verificar manualmente o status da assinatura no Stripe
+        // Incrementar contador de tentativas
         setVerificationAttempts(prev => prev + 1);
+        console.log(`Tentativa ${verificationAttempts + 1} de verificar status da assinatura`);
+        
+        // Verificar manualmente o status da assinatura no Stripe
         const result = await verifySubscriptionStatus();
         console.log("Verificação de assinatura retornou:", result);
         
@@ -80,6 +86,7 @@ const Subscription = () => {
         setCheckingStatus(false);
       } catch (error) {
         console.error("Erro ao verificar status da assinatura:", error);
+        // Em caso de erro na verificação, mostrar a página de assinatura
         setCheckingStatus(false);
       }
     };
@@ -153,6 +160,14 @@ const Subscription = () => {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-12 w-12 animate-spin text-violet-500" />
           <p className="text-gray-600">Verificando status da assinatura...</p>
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => setCheckingStatus(false)}
+            className="mt-3"
+          >
+            Cancelar verificação
+          </Button>
         </div>
       </div>
     );

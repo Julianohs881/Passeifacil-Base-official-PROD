@@ -30,7 +30,7 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
 
 // Component to verify subscription status when the app loads
 const SubscriptionVerifier = () => {
-  const { user, updateUserProfile } = useAuth();
+  const { user, updateUserProfile, userProfile } = useAuth();
   const { verifySubscriptionStatus } = useStripeSubscription();
   const navigate = useNavigate();
   
@@ -47,18 +47,32 @@ const SubscriptionVerifier = () => {
             return;
           }
           
-          // Check subscription status with the server
-          const result = await verifySubscriptionStatus();
+          // Skip verification for users who are known to not have access
+          // This prevents unnecessary API calls and potential rate limiting
+          if (userProfile && typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
+            console.log("User already known to not have access, redirecting to subscription page");
+            navigate("/subscription");
+            return;
+          }
           
-          // Update the user profile to reflect any changes
-          if (result.success) {
-            await updateUserProfile();
-            console.log("Subscription check completed:", result);
+          // Only check subscription status if the user profile indicates they should have access
+          // or if we don't know their status yet
+          if (!userProfile || userProfile.has_access === true) {
+            console.log("Checking subscription status for user with potential access");
             
-            // If user doesn't have access and not already on subscription page, redirect
-            if (!result.has_access) {
-              console.log("User doesn't have subscription access, redirecting to subscription page");
-              navigate("/subscription");
+            // Check subscription status with the server
+            const result = await verifySubscriptionStatus();
+            
+            // Update the user profile to reflect any changes
+            if (result.success) {
+              await updateUserProfile();
+              console.log("Subscription check completed:", result);
+              
+              // If user doesn't have access and not already on subscription page, redirect
+              if (!result.has_access) {
+                console.log("User doesn't have subscription access, redirecting to subscription page");
+                navigate("/subscription");
+              }
             }
           }
         } catch (error) {
@@ -68,7 +82,7 @@ const SubscriptionVerifier = () => {
     };
     
     checkSubscription();
-  }, [user?.id]);
+  }, [user?.id, userProfile]);
   
   return null; // This component doesn't render anything
 };
