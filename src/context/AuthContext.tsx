@@ -21,6 +21,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const getSession = async () => {
@@ -34,6 +35,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Erro ao obter sessão:", error);
+        setAuthError("Falha ao verificar sessão do usuário");
       } finally {
         setLoading(false);
       }
@@ -41,15 +43,24 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getSession();
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         setUser(session.user);
-        await loadUserProfile(session.user.id);
+        try {
+          await loadUserProfile(session.user.id);
+        } catch (error) {
+          console.error("Erro ao carregar perfil após mudança de estado:", error);
+          setAuthError("Falha ao carregar perfil do usuário");
+        }
       } else {
         setUser(null);
         setUserProfile(null);
       }
     });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadUserProfile = async (userId: string) => {
@@ -62,6 +73,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error("Erro ao carregar perfil do usuário:", error);
+        setAuthError("Falha ao carregar perfil do usuário");
+        return false;
       }
 
       if (data) {
@@ -73,17 +86,22 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           plan: (data.plan as UserPlan) || "gratuito" 
         };
         setUserProfile(profileWithEmail);
+        return true;
       } else {
         setUserProfile(null);
+        return false;
       }
     } catch (error) {
       console.error("Erro ao carregar perfil do usuário:", error);
+      setAuthError("Falha ao carregar perfil do usuário");
+      return false;
     }
   };
 
   // Sign In function
   const signIn = async (email: string, password: string) => {
     try {
+      setAuthError(null);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -98,6 +116,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Sign Up function
   const signUp = async (email: string, password: string, name: string) => {
     try {
+      setAuthError(null);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -115,27 +134,32 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Logout function
+  // Logout function - Made more robust and always works
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      setUser(null);
-      setLoading(false);
-      setUserProfile(null);
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      // In case of error, reset the state locally
+    } finally {
+      // Clear state no matter what happens with the API call
       setUser(null);
       setLoading(false);
       setUserProfile(null);
+      setAuthError(null);
+      
+      // Remove any verification timestamps saved in session
+      sessionStorage.removeItem("verification_error_timestamp");
+      sessionStorage.removeItem("new_subscriber");
+      sessionStorage.removeItem("auth_error_cooldown");
     }
   };
 
   // Update user profile function
   const updateUserProfile = async () => {
     if (user) {
-      await loadUserProfile(user.id);
+      return await loadUserProfile(user.id);
     }
+    return false;
   };
   
   // Check if user is a PRO user
@@ -256,12 +280,19 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Clear authentication error
+  const clearAuthError = () => {
+    setAuthError(null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
         userProfile,
+        authError,
+        clearAuthError,
         updateUserProfile,
         signOut,
         signIn,
