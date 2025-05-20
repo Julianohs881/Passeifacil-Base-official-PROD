@@ -29,16 +29,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     subscription_status: userProfile?.subscription_status
   });
   
-  // Primeiro checar has_access, depois checar o plano para compatibilidade retroativa
+  // Verificar o acesso baseado nos campos do perfil
   if (userProfile) {
-    // Se has_access é false, redirecionar para a página de assinatura
-    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
+    // Verificação principal: se has_access é explicitamente falso
+    // E não estamos na página de assinatura (para evitar loop)
+    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === false &&
+        window.location.pathname !== '/subscription') {
       console.log("User does not have subscription access, redirecting to subscription page");
       return <Navigate to="/subscription" replace />;
     }
     
     // Para compatibilidade retroativa - se não tiver has_access definido, verificar o plano
-    if (userProfile.has_access === undefined && userProfile.plan === 'gratuito') {
+    if (userProfile.has_access === undefined && userProfile.plan === 'gratuito' &&
+        window.location.pathname !== '/subscription') {
       console.log("User has free plan and no has_access field, redirecting to subscription page");
       return <Navigate to="/subscription" replace />;
     }
