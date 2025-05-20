@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { User } from "lucide-react";
 import PlanBadge from "@/components/PlanBadge";
-import { UserPlan } from "@/types";
 
 const UserProfile = () => {
   const { user, userProfile, updateProfile } = useAuth();
@@ -131,9 +130,6 @@ const UserProfile = () => {
     return null;
   }
 
-  // Handle the UserPlan type safely by validating it
-  const userPlan: UserPlan = userProfile?.plan || "gratuito";
-
   return (
     <div className="container max-w-2xl py-8 px-4">
       <Card>
@@ -143,7 +139,7 @@ const UserProfile = () => {
               <CardTitle className="text-2xl">Meu Perfil</CardTitle>
               <CardDescription>Gerencie suas informações de perfil</CardDescription>
             </div>
-            <PlanBadge plan={userPlan} />
+            <PlanBadge plan={userProfile?.plan || "gratuito"} />
           </div>
         </CardHeader>
         

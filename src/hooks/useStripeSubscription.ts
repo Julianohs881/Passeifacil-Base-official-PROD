@@ -127,29 +127,15 @@ export const useStripeSubscription = () => {
         throw new Error(data.error);
       }
       
-      console.log("Resposta da verificação de assinatura:", data);
-      
-      // Sempre atualizar o perfil do usuário, independentemente do retorno
-      await updateUserProfile();
-      
-      // Para debugging - confirmar se os dados foram realmente atualizados
-      setTimeout(async () => {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.error("Erro ao obter usuário após verificação:", userError);
-          return;
-        }
+      // Atualizar o perfil do usuário com o status da assinatura
+      if (data) {
+        await updateUserProfile();
         
-        if (userData && userData.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", userData.user.id)
-            .single();
-            
-          console.log("Perfil atual após verificação:", profile);
+        // Check if user is now subscribed and show toast
+        if (data.has_access) {
+          console.log("Usuário tem acesso após verificação:", data);
         }
-      }, 1000);
+      }
       
       return { 
         success: true, 

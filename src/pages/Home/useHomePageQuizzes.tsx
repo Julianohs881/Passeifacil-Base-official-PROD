@@ -7,15 +7,13 @@ import { useAuth } from "@/context/AuthContext";
 export const useHomePageQuizzes = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
 
   const fetchQuizzes = async () => {
     if (!user) return;
 
     try {
       setIsLoading(true);
-      
-      console.log("Fetching quizzes for user:", user.id, "Profile plan:", userProfile?.plan);
       
       const { data, error } = await supabase
         .from("quizzes")
@@ -35,7 +33,7 @@ export const useHomePageQuizzes = () => {
 
   useEffect(() => {
     fetchQuizzes();
-  }, [user, userProfile?.plan]); // Re-fetch quizzes when the user or their plan changes
+  }, [user]);
 
   const handleToggleVisibility = async (quiz: Quiz, newVisibility: VisibilityOption) => {
     try {
