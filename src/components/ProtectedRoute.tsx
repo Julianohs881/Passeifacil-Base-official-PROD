@@ -29,9 +29,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     subscription_status: userProfile?.subscription_status
   });
   
-  // Primeiro checar has_access, depois checar o plano para compatibilidade retroativa
+  // Verificar o acesso baseado nos campos do perfil
   if (userProfile) {
-    // Se has_access é false, redirecionar para a página de assinatura
+    // Verificação principal: se has_access é explicitamente falso
     if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
       console.log("User does not have subscription access, redirecting to subscription page");
       return <Navigate to="/subscription" replace />;

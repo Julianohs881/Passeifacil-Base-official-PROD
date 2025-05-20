@@ -14,6 +14,8 @@ const Subscription = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [maxVerificationAttempts] = useState(2); // Limite máximo de tentativas de verificação
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -26,8 +28,23 @@ const Subscription = () => {
       // Verificar se existe um novo assinante pela sessão (retornando do checkout)
       const isNewSubscriber = sessionStorage.getItem("new_subscriber");
       
+      // Não verificar para novos usuários que ainda não têm assinatura
+      // Verificamos apenas se estamos retornando do checkout ou se userProfile.has_access for true
+      const shouldCheckStatus = isNewSubscriber || 
+                               (userProfile && userProfile.has_access === true) || 
+                               window.location.search.includes('subscription=');
+      
+      // Se não estamos retornando de um checkout e o usuário não tem has_access, 
+      // mostrar a página de assinatura diretamente
+      if (!shouldCheckStatus && verificationAttempts >= maxVerificationAttempts) {
+        console.log("Pulando verificação de assinatura para usuário sem acesso");
+        setCheckingStatus(false);
+        return;
+      }
+      
       try {
         // Verificar manualmente o status da assinatura no Stripe
+        setVerificationAttempts(prev => prev + 1);
         const result = await verifySubscriptionStatus();
         console.log("Verificação de assinatura retornou:", result);
         
@@ -96,7 +113,7 @@ const Subscription = () => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus]);
+  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts]);
 
   const handleSubscribe = async () => {
     if (!user) {
@@ -104,17 +121,29 @@ const Subscription = () => {
       return;
     }
 
-    const result = await createCheckoutSession();
-    if (result.redirectToPortal) {
-      const portalResult = await useStripeSubscription().openCustomerPortal();
-      if (!portalResult.success) {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Não foi possível abrir o portal de gerenciamento de assinatura.",
-          duration: 5000,
-        });
+    // Indicar que estamos processando
+    try {
+      const result = await createCheckoutSession();
+      
+      if (result.redirectToPortal) {
+        const portalResult = await useStripeSubscription().openCustomerPortal();
+        if (!portalResult.success) {
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: "Não foi possível abrir o portal de gerenciamento de assinatura.",
+            duration: 5000,
+          });
+        }
       }
+    } catch (error) {
+      console.error("Erro ao iniciar processo de assinatura:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível iniciar o processo de assinatura. Por favor, tente novamente.",
+        duration: 5000,
+      });
     }
   };
 
