@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
@@ -65,11 +64,21 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data) {
-        // Convert database profile to UserProfile with email from user
+        // Safely convert the database plan string to UserPlan enum type
+        const planValue = data.plan as string;
+        // Validate plan against allowed UserPlan values or use default
+        const validPlan: UserPlan = 
+          ['gratuito', 'pro', 'assinante', 'cancelado', 'sem assinatura'].includes(planValue)
+            ? planValue as UserPlan
+            : 'gratuito'; // Default fallback
+
+        // Convert database profile to UserProfile with email from user and validated plan
         const profileWithEmail: UserProfile = {
           ...data,
+          plan: validPlan,
           email: user?.email || ""
         };
+        
         setUserProfile(profileWithEmail);
       } else {
         setUserProfile(null);
