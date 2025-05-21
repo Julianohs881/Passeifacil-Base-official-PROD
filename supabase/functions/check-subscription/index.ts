@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -10,7 +9,7 @@ const corsHeaders = {
 };
 
 // Function for structured logging with timestamp
-const logWithTimestamp = (category: string, message: string, details?: any) => {
+const logWithTimestamp = (category, message, details) => {
   const timestamp = new Date().toISOString();
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[${timestamp}][${category}] ${message}${detailsStr}`);
@@ -19,7 +18,7 @@ const logWithTimestamp = (category: string, message: string, details?: any) => {
 serve(async (req) => {
   // Generate a unique ID for this request to track through logs
   const requestId = crypto.randomUUID().substring(0, 8);
-  const log = (message: string, details?: any) => logWithTimestamp(`CHECK-SUBSCRIPTION:${requestId}`, message, details);
+  const log = (message, details) => logWithTimestamp(`CHECK-SUBSCRIPTION:${requestId}`, message, details);
   
   log("Function started");
   
@@ -103,10 +102,19 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       log("No customer found with this email, updating profile with no subscription");
       
+      // Busca manual_access antes de atualizar
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("manual_access")
+        .eq("id", user.id)
+        .single();
+
+      let hasAccessFinal = (profile?.manual_access === true);
+
       const { data: updateData, error: updateError } = await supabaseClient
         .from("profiles")
         .update({
-          has_access: false,
+          has_access: hasAccessFinal,
           plan: "sem assinatura",
           subscription_status: null,
           subscription_id: null,
@@ -123,7 +131,7 @@ serve(async (req) => {
       log("Profile updated successfully with no subscription");
       
       return new Response(JSON.stringify({ 
-        has_access: false,
+        has_access: hasAccessFinal,
         plan: "sem assinatura",
         subscription_status: null
       }), {
@@ -198,10 +206,20 @@ serve(async (req) => {
       }
     }
 
+    // Antes de atualizar o perfil, buscar manual_access
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("manual_access")
+      .eq("id", user.id)
+      .single();
+
+    // Se manual_access for true, mantém acesso, senão segue a lógica normal
+    let hasAccessFinal = (profile?.manual_access === true) ? true : hasAccess;
+
     // Update profile with subscription details
     log("Updating profile with subscription information", {
       userId: user.id,
-      hasAccess,
+      hasAccess: hasAccessFinal,
       plan,
       subscriptionStatus
     });
@@ -209,7 +227,7 @@ serve(async (req) => {
     const { data: updateData, error: updateError } = await supabaseClient
       .from("profiles")
       .update({
-        has_access: hasAccess,
+        has_access: hasAccessFinal,
         plan: plan,
         subscription_status: subscriptionStatus,
         subscription_id: subscriptionId,
@@ -225,13 +243,13 @@ serve(async (req) => {
     
     log("Profile updated successfully", {
       userId: user.id,
-      hasAccess,
+      hasAccess: hasAccessFinal,
       plan
     });
     
     // Return subscription status
     return new Response(JSON.stringify({
-      has_access: hasAccess,
+      has_access: hasAccessFinal,
       plan: plan,
       subscription_status: subscriptionStatus,
       subscription_end_date: subscriptionEnd
