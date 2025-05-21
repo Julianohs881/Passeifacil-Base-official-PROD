@@ -28,6 +28,11 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY não está configurada");
     logStep("Chave do Stripe verificada");
+
+    // Obter o Price ID do ambiente
+    const stripePriceId = Deno.env.get("STRIPE_PRICE_ID");
+    if (!stripePriceId) throw new Error("STRIPE_PRICE_ID não está configurada");
+    logStep("Price ID do Stripe verificado", { priceId: stripePriceId });
     
     // Criar cliente Supabase com chave de serviço para operações de escrita
     const supabaseClient = createClient(
@@ -86,22 +91,14 @@ serve(async (req) => {
         logStep("Cliente não encontrado no Stripe, será criado durante o checkout");
       }
       
-      // Criar sessão de checkout do Stripe
-      logStep("Criando sessão de checkout");
+      // Criar sessão de checkout do Stripe usando o Price ID da variável de ambiente
+      logStep("Criando sessão de checkout com Price ID", { stripePriceId });
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         customer_email: customerId ? undefined : user.email,
         line_items: [
           {
-            price_data: {
-              currency: "brl",
-              product_data: { 
-                name: "Passei Fácil - Assinatura",
-                description: "Acesso completo à plataforma Passei Fácil"
-              },
-              unit_amount: 1990, // R$14,90
-              recurring: { interval: "month" },
-            },
+            price: stripePriceId, // Usando o Price ID da variável de ambiente
             quantity: 1,
           },
         ],
