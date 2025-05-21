@@ -99,7 +99,7 @@ serve(async (req) => {
                 name: "Passei Fácil - Assinatura",
                 description: "Acesso completo à plataforma Passei Fácil"
               },
-              unit_amount: 1990, // R$19,90
+              unit_amount: 1990, // R$14,90
               recurring: { interval: "month" },
             },
             quantity: 1,
