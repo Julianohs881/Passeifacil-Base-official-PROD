@@ -46,10 +46,12 @@ export const useStripeSubscription = () => {
   // Função com timeout para evitar esperas infinitas
   const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
     return new Promise((resolve, reject) => {
+      // Criar um ID para o timeout que poderá ser cancelado
       const timeoutId = setTimeout(() => {
         reject(new Error(`Operação excedeu o tempo limite de ${timeoutMs/1000} segundos`));
       }, timeoutMs);
       
+      // Quando a promise resolver ou rejeitar, limpar o timeout
       promise.then(
         (value) => {
           clearTimeout(timeoutId);
@@ -63,6 +65,23 @@ export const useStripeSubscription = () => {
     });
   };
   
+  // Implementar um cache em memória para evitar chamadas excessivas
+  const cacheTimeoutMs = 15000; // 15 segundos
+  const verificationCache = {
+    lastResult: null as any,
+    timestamp: 0,
+    isValid: function() {
+      return this.lastResult && Date.now() - this.timestamp < cacheTimeoutMs;
+    },
+    set: function(result: any) {
+      this.lastResult = result;
+      this.timestamp = Date.now();
+    },
+    get: function() {
+      return this.lastResult;
+    }
+  };
+  
   const createCheckoutSession = async () => {
     setIsLoading(true);
     
@@ -71,7 +90,8 @@ export const useStripeSubscription = () => {
       console.log("Iniciando criação de sessão de checkout");
       
       const { data, error } = await withTimeout(
-        supabase.functions.invoke('create-checkout')
+        supabase.functions.invoke('create-checkout'),
+        15000 // 15 segundos de timeout
       );
       
       if (error) {
@@ -133,6 +153,22 @@ export const useStripeSubscription = () => {
   };
   
   const verifySubscriptionStatus = async () => {
+    // Se já estamos carregando, não permitir chamadas simultâneas
+    if (isLoading) {
+      console.log("Já existe uma verificação em andamento, ignorando chamada");
+      return { 
+        success: false, 
+        error: { message: "Já existe uma verificação em andamento" },
+        has_access: false
+      };
+    }
+    
+    // Verificar se temos um resultado em cache válido
+    if (verificationCache.isValid()) {
+      console.log("Retornando resultado em cache para verificação de assinatura");
+      return verificationCache.get();
+    }
+    
     setIsLoading(true);
     
     try {
@@ -157,32 +193,19 @@ export const useStripeSubscription = () => {
       // Sempre atualizar o perfil do usuário, independentemente do retorno
       await updateUserProfile();
       
-      // Para debugging - confirmar se os dados foram realmente atualizados
-      setTimeout(async () => {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.error("Erro ao obter usuário após verificação:", userError);
-          return;
-        }
-        
-        if (userData && userData.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", userData.user.id)
-            .single();
-            
-          console.log("Perfil atual após verificação:", profile);
-        }
-      }, 1000);
-      
-      return { 
+      // Criar resultado bem-sucedido
+      const result = { 
         success: true, 
         has_access: data.has_access,
         plan: data.plan,
         subscription_status: data.subscription_status,
         subscription_end: data.subscription_end_date
       };
+      
+      // Armazenar resultado em cache
+      verificationCache.set(result);
+      
+      return result;
     } catch (error: any) {
       console.error("Erro completo ao verificar status da assinatura:", error);
       
@@ -195,7 +218,14 @@ export const useStripeSubscription = () => {
         duration: 5000,
       });
       
-      return { success: false, error };
+      // Criar resultado de erro
+      const errorResult = { 
+        success: false, 
+        error: { message: detailedMessage },
+        has_access: false
+      };
+      
+      return errorResult;
     } finally {
       setIsLoading(false);
     }

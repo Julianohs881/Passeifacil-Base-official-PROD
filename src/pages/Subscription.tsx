@@ -6,18 +6,22 @@ import { useToast } from "@/hooks/use-toast";
 import { useStripeSubscription } from "@/hooks/useStripeSubscription";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X, Loader2, RefreshCw } from "lucide-react";
+import { Check, X, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Subscription = () => {
   const { user, userProfile, updateUserProfile, signOut } = useAuth();
-  const { createCheckoutSession, verifySubscriptionStatus, isLoading } = useStripeSubscription();
+  const { createCheckoutSession, verifySubscriptionStatus, isLoading, openCustomerPortal } = useStripeSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Estados para gerenciar verificações e erros
   const [checkingStatus, setCheckingStatus] = useState(true);
-  const [maxVerificationAttempts] = useState(2); // Limit to 2 verification attempts
+  const [maxVerificationAttempts] = useState(2); // Limite de 2 tentativas de verificação
   const [verificationAttempts, setVerificationAttempts] = useState(0);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [shouldContinueChecking, setShouldContinueChecking] = useState(true);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -31,20 +35,14 @@ const Subscription = () => {
       const isNewSubscriber = sessionStorage.getItem("new_subscriber");
       
       // Determinar se devemos verificar o status da assinatura
-      // Verificamos apenas em casos específicos:
-      // 1. Se estamos retornando do checkout
-      // 2. Se o usuário tem has_access explicitamente definido como true
-      // 3. Se temos um parâmetro de subscription na URL
-      // 4. Se estamos explicitamente solicitando uma nova tentativa
       const shouldCheckStatus = isNewSubscriber || 
                               (userProfile && userProfile.has_access === true) || 
                               window.location.search.includes('subscription=') ||
                               isRetrying;
       
-      // Para novos usuários sem assinatura, mostrar a página diretamente sem verificação
-      // ou se já tentamos verificar algumas vezes sem sucesso
-      if (!shouldCheckStatus && verificationAttempts >= maxVerificationAttempts) {
-        console.log("Mostrando página de assinatura para novo usuário ou após tentativas máximas");
+      // Não verificar se já atingimos o limite de tentativas ou não devemos mais continuar verificando
+      if ((!shouldCheckStatus && verificationAttempts >= maxVerificationAttempts) || !shouldContinueChecking) {
+        console.log("Parando verificações automáticas após tentativas máximas ou cancelamento manual");
         setCheckingStatus(false);
         return;
       }
@@ -109,6 +107,7 @@ const Subscription = () => {
         if (verificationAttempts >= maxVerificationAttempts) {
           setCheckingStatus(false);
           setIsRetrying(false);
+          setShouldContinueChecking(false); // Parar verificações automáticas após tentativas máximas
         }
       }
     };
@@ -120,10 +119,11 @@ const Subscription = () => {
     // 1. Estivermos na página após um checkout
     // 2. Ainda não ultrapassamos o limite de tentativas
     // 3. Não estivermos em modo de retry manual
+    // 4. shouldContinueChecking for true
     const isAfterCheckout = window.location.search.includes('subscription=');
     
     let intervalId: number | undefined;
-    if (isAfterCheckout && user && verificationAttempts < maxVerificationAttempts && !isRetrying && checkingStatus) {
+    if (isAfterCheckout && user && verificationAttempts < maxVerificationAttempts && !isRetrying && checkingStatus && shouldContinueChecking) {
       intervalId = window.setInterval(() => {
         console.log("Verificando assinatura após checkout");
         verifySubscriptionStatus().then(result => {
@@ -138,20 +138,35 @@ const Subscription = () => {
             });
           } else {
             // Incrementar tentativas de verificação automática
-            setVerificationAttempts(prev => prev + 1);
+            setVerificationAttempts(prev => {
+              // Se já atingimos o limite de tentativas, parar verificações automáticas
+              if (prev + 1 >= maxVerificationAttempts) {
+                setShouldContinueChecking(false);
+              }
+              return prev + 1;
+            });
           }
         }).catch(error => {
           console.error("Erro na verificação periódica:", error);
           // Incrementar tentativas em caso de erro
-          setVerificationAttempts(prev => prev + 1);
+          setVerificationAttempts(prev => {
+            // Se já atingimos o limite de tentativas, parar verificações automáticas
+            if (prev + 1 >= maxVerificationAttempts) {
+              setShouldContinueChecking(false);
+            }
+            return prev + 1;
+          });
         });
       }, 5000);
     }
     
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      if (intervalId) {
+        console.log("Limpando intervalo de verificação automática");
+        clearInterval(intervalId);
+      }
     };
-  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts, isRetrying, checkingStatus]);
+  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts, isRetrying, checkingStatus, shouldContinueChecking]);
 
   const handleSubscribe = async () => {
     if (!user) {
@@ -164,7 +179,7 @@ const Subscription = () => {
       const result = await createCheckoutSession();
       
       if (result.redirectToPortal) {
-        const portalResult = await useStripeSubscription().openCustomerPortal();
+        const portalResult = await openCustomerPortal();
         if (!portalResult.success) {
           toast({
             variant: "destructive",
@@ -191,6 +206,13 @@ const Subscription = () => {
     setCheckingStatus(true);
     setVerificationAttempts(0);
     setVerificationError(null);
+    setShouldContinueChecking(true); // Reativar verificações automáticas
+  };
+  
+  // Função para cancelar verificação
+  const handleCancelVerification = () => {
+    setCheckingStatus(false);
+    setShouldContinueChecking(false);
   };
   
   const handleLogout = async () => {
@@ -206,35 +228,51 @@ const Subscription = () => {
 
   if (checkingStatus) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-3">
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="flex flex-col items-center gap-4 max-w-md w-full">
           <Loader2 className="h-12 w-12 animate-spin text-violet-500" />
-          <p className="text-gray-600">Verificando status da assinatura...</p>
+          <p className="text-gray-600 text-center">Verificando status da assinatura...</p>
           
           {verificationError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 max-w-md text-center">
-              <p className="font-medium">Erro ao verificar assinatura</p>
-              <p className="text-sm mt-1">{verificationError}</p>
+            <Alert variant="destructive" className="mt-4 border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro ao verificar assinatura</AlertTitle>
+              <AlertDescription>{verificationError}</AlertDescription>
               
               {verificationAttempts >= maxVerificationAttempts && (
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRetryVerification}
-                  className="mt-3 flex items-center gap-2"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Tentar verificar novamente
-                </Button>
+                <div className="mt-3">
+                  <p className="text-sm mb-2">
+                    Atingimos o número máximo de tentativas automáticas. Você pode:
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center mt-2">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetryVerification}
+                      className="flex items-center gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Tentar verificar novamente
+                    </Button>
+                    
+                    <Button 
+                      variant="default"
+                      size="sm"
+                      onClick={handleCancelVerification}
+                    >
+                      Continuar sem verificar
+                    </Button>
+                  </div>
+                </div>
               )}
-            </div>
+            </Alert>
           )}
           
           <div className="flex gap-2 mt-3">
             <Button 
               variant="outline"
               size="sm"
-              onClick={() => setCheckingStatus(false)}
+              onClick={handleCancelVerification}
               className="mt-3"
             >
               Cancelar verificação
@@ -263,9 +301,10 @@ const Subscription = () => {
       </p>
 
       {verificationError && (
-        <div className="max-w-md mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-center">
-          <p className="font-medium">Erro ao verificar assinatura</p>
-          <p className="text-sm mt-1">{verificationError}</p>
+        <Alert variant="destructive" className="max-w-md mx-auto mb-6 border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erro ao verificar assinatura</AlertTitle>
+          <AlertDescription>{verificationError}</AlertDescription>
           <div className="flex flex-col sm:flex-row justify-center gap-2 mt-3">
             <Button 
               variant="outline"
@@ -285,7 +324,7 @@ const Subscription = () => {
               Sair
             </Button>
           </div>
-        </div>
+        </Alert>
       )}
 
       <div className="max-w-md mx-auto">

@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -38,28 +39,28 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500 mb-4"></div>
         <p className="text-gray-600">Carregando...</p>
         
         {loadingTimeout && (
-          <div className="mt-6 p-4 border border-amber-200 rounded-md bg-amber-50 max-w-md text-center">
-            <div className="flex items-center justify-center gap-2 text-amber-700 mb-2">
-              <AlertCircle className="h-5 w-5" />
-              <p className="font-medium">Está demorando mais que o normal</p>
-            </div>
-            <p className="text-sm text-amber-700 mb-3">
+          <Alert variant="warning" className="mt-6 border-amber-200 bg-amber-50 max-w-md">
+            <AlertCircle className="h-4 w-4 text-amber-700" />
+            <AlertTitle className="text-amber-700">Está demorando mais que o normal</AlertTitle>
+            <AlertDescription className="text-amber-700">
               Parece que estamos tendo dificuldades para carregar seus dados. 
               Você pode tentar novamente ou sair e fazer login novamente.
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={handleEmergencyLogout}
-              className="border-amber-500 text-amber-700 hover:bg-amber-100"
-            >
-              Sair e voltar para login
-            </Button>
-          </div>
+            </AlertDescription>
+            <div className="mt-3 flex justify-center">
+              <Button 
+                variant="outline" 
+                onClick={handleEmergencyLogout}
+                className="border-amber-500 text-amber-700 hover:bg-amber-100"
+              >
+                Sair e voltar para login
+              </Button>
+            </div>
+          </Alert>
         )}
       </div>
     );
