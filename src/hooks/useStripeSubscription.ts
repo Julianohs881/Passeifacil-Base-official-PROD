@@ -43,6 +43,26 @@ export const useStripeSubscription = () => {
     return typeof error === 'string' ? error : JSON.stringify(error);
   };
   
+  // Função com timeout para evitar esperas infinitas
+  const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`Operação excedeu o tempo limite de ${timeoutMs/1000} segundos`));
+      }, timeoutMs);
+      
+      promise.then(
+        (value) => {
+          clearTimeout(timeoutId);
+          resolve(value);
+        },
+        (error) => {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      );
+    });
+  };
+  
   const createCheckoutSession = async () => {
     setIsLoading(true);
     
@@ -50,7 +70,9 @@ export const useStripeSubscription = () => {
       // Registrar início da operação para debugging
       console.log("Iniciando criação de sessão de checkout");
       
-      const { data, error } = await supabase.functions.invoke('create-checkout');
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke('create-checkout')
+      );
       
       if (error) {
         console.error("Erro detalhado ao invocar função create-checkout:", error);
@@ -116,7 +138,10 @@ export const useStripeSubscription = () => {
     try {
       console.log("Verificando status de assinatura");
       
-      const { data, error } = await supabase.functions.invoke('check-subscription');
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke('check-subscription'),
+        15000 // 15 segundos de timeout
+      );
       
       if (error) {
         console.error("Erro detalhado ao invocar função check-subscription:", error);
@@ -182,7 +207,10 @@ export const useStripeSubscription = () => {
     try {
       console.log("Iniciando abertura do portal do cliente");
       
-      const { data, error } = await supabase.functions.invoke('customer-portal');
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke('customer-portal'),
+        15000 // 15 segundos de timeout
+      );
       
       if (error) {
         console.error("Erro detalhado ao invocar função customer-portal:", error);

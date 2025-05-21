@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useStripeSubscription } from "@/hooks/useStripeSubscription";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2, RefreshCw } from "lucide-react";
 
 const Subscription = () => {
   const { user, userProfile, updateUserProfile, signOut } = useAuth();
@@ -14,9 +14,10 @@ const Subscription = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [checkingStatus, setCheckingStatus] = useState(true);
-  const [maxVerificationAttempts] = useState(2); // Limite máximo de tentativas de verificação
+  const [maxVerificationAttempts] = useState(2); // Limit to 2 verification attempts
   const [verificationAttempts, setVerificationAttempts] = useState(0);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -34,16 +35,17 @@ const Subscription = () => {
       // 1. Se estamos retornando do checkout
       // 2. Se o usuário tem has_access explicitamente definido como true
       // 3. Se temos um parâmetro de subscription na URL
+      // 4. Se estamos explicitamente solicitando uma nova tentativa
       const shouldCheckStatus = isNewSubscriber || 
                               (userProfile && userProfile.has_access === true) || 
-                              window.location.search.includes('subscription=');
+                              window.location.search.includes('subscription=') ||
+                              isRetrying;
       
       // Para novos usuários sem assinatura, mostrar a página diretamente sem verificação
       // ou se já tentamos verificar algumas vezes sem sucesso
       if (!shouldCheckStatus && verificationAttempts >= maxVerificationAttempts) {
         console.log("Mostrando página de assinatura para novo usuário ou após tentativas máximas");
         setCheckingStatus(false);
-        setVerificationError(null);
         return;
       }
       
@@ -87,6 +89,7 @@ const Subscription = () => {
         // Se chegamos até aqui, o usuário não tem assinatura ativa
         // Vamos parar de verificar e mostrar a página de assinatura
         setCheckingStatus(false);
+        setIsRetrying(false);
       } catch (error) {
         console.error("Erro ao verificar status da assinatura:", error);
         
@@ -102,20 +105,25 @@ const Subscription = () => {
         
         setVerificationError(errorMessage);
         
-        // Em caso de erro na verificação, mostrar a página de assinatura
-        setCheckingStatus(false);
+        // Em caso de erro na verificação, mostrar a página de assinatura após tentativas máximas
+        if (verificationAttempts >= maxVerificationAttempts) {
+          setCheckingStatus(false);
+          setIsRetrying(false);
+        }
       }
     };
     
     // Executar verificação inicial
     checkSubscriptionStatus();
     
-    // Verificar o status a cada 5 segundos SOMENTE se estivermos na página após um checkout
-    // para não ficar em loop infinito para novos usuários
+    // Verificar o status a cada 5 segundos SOMENTE se:
+    // 1. Estivermos na página após um checkout
+    // 2. Ainda não ultrapassamos o limite de tentativas
+    // 3. Não estivermos em modo de retry manual
     const isAfterCheckout = window.location.search.includes('subscription=');
     
     let intervalId: number | undefined;
-    if (isAfterCheckout && user) {
+    if (isAfterCheckout && user && verificationAttempts < maxVerificationAttempts && !isRetrying && checkingStatus) {
       intervalId = window.setInterval(() => {
         console.log("Verificando assinatura após checkout");
         verifySubscriptionStatus().then(result => {
@@ -128,10 +136,14 @@ const Subscription = () => {
               });
               navigate("/quizzes");
             });
+          } else {
+            // Incrementar tentativas de verificação automática
+            setVerificationAttempts(prev => prev + 1);
           }
         }).catch(error => {
           console.error("Erro na verificação periódica:", error);
-          // Não mostrar mensagem de erro aqui para não inundar o usuário
+          // Incrementar tentativas em caso de erro
+          setVerificationAttempts(prev => prev + 1);
         });
       }, 5000);
     }
@@ -139,7 +151,7 @@ const Subscription = () => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts]);
+  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts, isRetrying, checkingStatus]);
 
   const handleSubscribe = async () => {
     if (!user) {
@@ -173,6 +185,14 @@ const Subscription = () => {
     }
   };
   
+  // Função para retry manual
+  const handleRetryVerification = () => {
+    setIsRetrying(true);
+    setCheckingStatus(true);
+    setVerificationAttempts(0);
+    setVerificationError(null);
+  };
+  
   const handleLogout = async () => {
     try {
       await signOut();
@@ -195,6 +215,18 @@ const Subscription = () => {
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 max-w-md text-center">
               <p className="font-medium">Erro ao verificar assinatura</p>
               <p className="text-sm mt-1">{verificationError}</p>
+              
+              {verificationAttempts >= maxVerificationAttempts && (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetryVerification}
+                  className="mt-3 flex items-center gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Tentar verificar novamente
+                </Button>
+              )}
             </div>
           )}
           
@@ -234,14 +266,25 @@ const Subscription = () => {
         <div className="max-w-md mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-center">
           <p className="font-medium">Erro ao verificar assinatura</p>
           <p className="text-sm mt-1">{verificationError}</p>
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={handleLogout}
-            className="mt-3"
-          >
-            Sair
-          </Button>
+          <div className="flex flex-col sm:flex-row justify-center gap-2 mt-3">
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={handleRetryVerification}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Tentar verificar novamente
+            </Button>
+            
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+            >
+              Sair
+            </Button>
+          </div>
         </div>
       )}
 

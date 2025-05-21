@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
@@ -20,11 +21,13 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileError, setProfileError] = useState<Error | null>(null);
 
   useEffect(() => {
     const getSession = async () => {
       try {
         setLoading(true);
+        setProfileError(null);
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
@@ -33,6 +36,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Erro ao obter sessão:", error);
+        setProfileError(error instanceof Error ? error : new Error(String(error)));
       } finally {
         setLoading(false);
       }
@@ -53,14 +57,29 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loadUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      setProfileError(null);
+      // Add a timeout to the profile loading to prevent infinite waiting
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Tempo esgotado ao carregar perfil")), 10000);
+      });
+
+      // Race between actual request and timeout
+      const { data, error } = await Promise.race([
+        profilePromise,
+        timeoutPromise.then(() => { throw new Error("Tempo esgotado ao carregar perfil"); })
+      ]) as any;
+
       if (error) {
         console.error("Erro ao carregar perfil do usuário:", error);
+        setProfileError(error);
+        return;
       }
 
       if (data) {
@@ -85,6 +104,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error) {
       console.error("Erro ao carregar perfil do usuário:", error);
+      setProfileError(error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -122,19 +142,27 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Logout function
-  const signOut = async () => {
+  // Logout function with force option for emergency logout
+  const signOut = async (force: boolean = false) => {
     try {
       await supabase.auth.signOut();
       setUser(null);
-      setLoading(false);
       setUserProfile(null);
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      // In case of error, reset the state locally
-      setUser(null);
+      // In case of error and force is true, reset the state locally
+      if (force) {
+        console.log("Forçando logout local mesmo com erro");
+        setUser(null);
+        setUserProfile(null);
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.clear();
+        window.location.href = "/login";
+      } else {
+        throw error; // Re-throw to let caller handle
+      }
+    } finally {
       setLoading(false);
-      setUserProfile(null);
     }
   };
 
@@ -269,6 +297,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         loading,
         userProfile,
+        profileError,
         updateUserProfile,
         signOut,
         signIn,
