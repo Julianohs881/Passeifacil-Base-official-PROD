@@ -1,30 +1,27 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Edit2 } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+
 const NavBar = () => {
-  const {
-    user,
-    signOut,
-    userProfile
-  } = useAuth();
+  const { user, signOut, userProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [logoSize, setLogoSize] = useState(20); // Default size value
   const [showLogoEditor, setShowLogoEditor] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   // Add state to track subscription success notification
   const [showedProWelcome, setShowedProWelcome] = useState(false);
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -33,9 +30,11 @@ const NavBar = () => {
       console.error("Failed to sign out", error);
     }
   };
+
   const handleLogoSizeChange = (value: number[]) => {
     setLogoSize(value[0]);
   };
+
   const saveLogoSize = () => {
     localStorage.setItem("logo-size", logoSize.toString());
     setShowLogoEditor(false);
@@ -58,7 +57,7 @@ const NavBar = () => {
     const subscriptionSuccess = new URLSearchParams(location.search).get("subscription") === "success";
     if (userProfile?.plan === "pro" && !showedProWelcome && (subscriptionSuccess || sessionStorage.getItem("new_pro_user") === "true")) {
       toast({
-        title: "Parabéns! Agora você é Pro!",
+        title: "Parabéns! Assinatura ativada com sucesso!",
         description: "Você agora tem acesso a todos os recursos premium do Passei Fácil.",
         duration: 6000
       });
@@ -81,21 +80,28 @@ const NavBar = () => {
       // Remove the flag
       sessionStorage.removeItem("new_subscriber");
       toast({
-        title: "Parabéns! Agora você é assinante do Passei Fácil!",
+        title: "Parabéns! Assinatura ativada com sucesso!",
         description: "Agora você tem acesso a todas as funcionalidades da plataforma.",
         variant: "default",
         duration: 5000
       });
     }
   }, [userProfile, toast]);
-  return <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 w-full z-50">
+
+  return (
+    <nav className="bg-white border-b border-gray-100 fixed top-0 left-0 w-full z-50 shadow-sm">
       <div className="container max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
-            <img src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" alt="Passei Fácil" className={`h-${logoSize} max-h-[100px] w-auto object-contain`} />
+            <img 
+              src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" 
+              alt="Passei Fácil" 
+              className={`h-${logoSize} max-h-[60px] w-auto object-contain`} 
+            />
           </Link>
           
-          {user && userProfile?.plan === "pro" && <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
+          {user && userProfile?.plan === "pro" && (
+            <Popover open={showLogoEditor} onOpenChange={setShowLogoEditor}>
               <PopoverTrigger asChild>
                 
               </PopoverTrigger>
@@ -116,7 +122,8 @@ const NavBar = () => {
                   </div>
                 </div>
               </PopoverContent>
-            </Popover>}
+            </Popover>
+          )}
         </div>
 
         {/* Mobile menu */}
@@ -131,71 +138,121 @@ const NavBar = () => {
               <SheetHeader>
                 <SheetTitle>Menu</SheetTitle>
                 <SheetDescription>
-                  Explore the platform and manage your account.
+                  Explore a plataforma e gerencie sua conta.
                 </SheetDescription>
               </SheetHeader>
               <div className="flex flex-col space-y-2 mt-4">
-                <Link to="/quizzes" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
+                <Link 
+                  to="/quizzes" 
+                  className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors"
+                  onClick={() => setOpen(false)}
+                >
                   Meus Quizzes
                 </Link>
-                <Link to="/explore" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
+                <Link 
+                  to="/explore" 
+                  className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors"
+                  onClick={() => setOpen(false)}
+                >
                   Explorar
                 </Link>
-                {user ? <>
-                    <Link to="/profile" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
+                {user ? (
+                  <>
+                    <Link 
+                      to="/profile" 
+                      className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors"
+                      onClick={() => setOpen(false)}
+                    >
                       Perfil
                     </Link>
-                    <Button variant="ghost" size="sm" className="justify-start" onClick={handleSignOut}>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="justify-start" 
+                      onClick={handleSignOut}
+                    >
                       Sair
                     </Button>
-                  </> : <>
-                    <Link to="/login" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
+                  </>
+                ) : (
+                  <>
+                    <Link 
+                      to="/login" 
+                      className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors"
+                      onClick={() => setOpen(false)}
+                    >
                       Login
                     </Link>
-                    <Link to="/register" className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors">
+                    <Link 
+                      to="/register" 
+                      className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors"
+                      onClick={() => setOpen(false)}
+                    >
                       Register
                     </Link>
-                  </>}
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>
         </div>
 
         {/* Desktop menu */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Link to="/quizzes" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
+        <div className="hidden md:flex items-center space-x-6">
+          <Link to="/quizzes" className="py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors">
             Meus Quizzes
           </Link>
-          <Link to="/explore" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
+          <Link to="/explore" className="py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors">
             Explorar
           </Link>
 
-          {user && <div className="flex items-center gap-4">
-              <Link to="/profile" className="flex items-center gap-2 hover:text-violet-600 transition-colors">
+          {user && (
+            <div className="flex items-center gap-4">
+              <Link to="/profile" className="flex items-center gap-2 hover:text-blue-600 transition-colors">
                 <Avatar className="h-8 w-8">
-                  {userProfile?.avatar_url ? <AvatarImage src={userProfile.avatar_url} alt={userProfile.name || "User"} /> : <AvatarFallback className="bg-violet-100 text-violet-600">
+                  {userProfile?.avatar_url ? (
+                    <AvatarImage src={userProfile.avatar_url} alt={userProfile.name || "User"} />
+                  ) : (
+                    <AvatarFallback className="bg-blue-100 text-blue-600">
                       {userProfile?.name ? userProfile.name[0].toUpperCase() : "U"}
-                    </AvatarFallback>}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
-                <span className="hidden md:inline">
+                <span className="hidden md:inline font-medium">
                   {userProfile?.name || "Perfil"}
                 </span>
               </Link>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+              >
                 Sair
               </Button>
-            </div>}
+            </div>
+          )}
 
-          {!user && <div>
-              <Link to="/login" className="py-2 text-gray-700 hover:text-violet-600 transition-colors">
+          {!user && (
+            <div className="flex items-center gap-4">
+              <Link 
+                to="/login" 
+                className="py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
+              >
                 Login
               </Link>
-              <Link to="/register" className="py-2 text-gray-700 hover:text-violet-600 transition-colors my-0 mx-[29px]">
+              <Link 
+                to="/register" 
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
+              >
                 Register
               </Link>
-            </div>}
+            </div>
+          )}
         </div>
       </div>
-    </nav>;
+    </nav>
+  );
 };
+
 export default NavBar;

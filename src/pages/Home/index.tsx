@@ -124,7 +124,7 @@ const Home = () => {
   };
 
   return (
-    <div className="container py-6">
+    <div className="container py-8">
       <ProfileIncompleteAlert />
       
       <HomePageHeader 
@@ -133,13 +133,13 @@ const Home = () => {
       />
 
       {loading ? (
-        <div className="flex justify-center my-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#0D6EFD]"></div>
+        <div className="flex justify-center my-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       ) : quizzes.length === 0 ? (
-        <Card className="border-2 border-dashed border-gray-200 rounded-md">
+        <Card className="border-2 border-dashed border-gray-200 rounded-lg shadow-sm mt-6">
           <CardHeader>
-            <CardTitle className="text-lg font-medium">
+            <CardTitle className="text-xl font-medium text-gray-800">
               Nenhum Quiz Criado
             </CardTitle>
             <CardDescription>
@@ -151,21 +151,23 @@ const Home = () => {
               Crie quizzes personalizados e compartilhe com seus amigos e
               alunos.
             </p>
-            <Button onClick={handleCreateQuiz} className="bg-violet-500 hover:bg-violet-600">
+            <Button onClick={handleCreateQuiz} className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto">
               <PlusCircle className="mr-2 h-4 w-4" />
               Criar Primeiro Quiz
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <QuizGrid
-          quizzes={quizzes}
-          onOpenCreateQuiz={handleCreateQuiz}
-          onDeleteQuiz={handleDeleteQuiz}
-          onEditQuiz={handleEditQuiz}
-          onChangeColor={handleColorChange}
-          onToggleVisibility={handleToggleVisibility}
-        />
+        <div className="mt-6">
+          <QuizGrid
+            quizzes={quizzes}
+            onOpenCreateQuiz={handleCreateQuiz}
+            onDeleteQuiz={handleDeleteQuiz}
+            onEditQuiz={handleEditQuiz}
+            onChangeColor={handleColorChange}
+            onToggleVisibility={handleToggleVisibility}
+          />
+        </div>
       )}
 
       <ImportCodeDialog 

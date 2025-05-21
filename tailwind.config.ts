@@ -70,6 +70,8 @@ export default {
 			},
 			fontFamily: {
 				inter: ['Inter', 'sans-serif'],
+				// Add more modern fonts for the Apple-inspired design
+				sf: ['SF Pro Display', 'system-ui', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -113,12 +115,35 @@ export default {
                         transform: 'translateY(10px)'
                     }
                 },
+                'scale-up': {
+                    '0%': {
+                        transform: 'scale(0.95)',
+                        opacity: '0'
+                    },
+                    '100%': {
+                        transform: 'scale(1)',
+                        opacity: '1'
+                    }
+                },
+                'slide-in-right': {
+                    '0%': {
+                        transform: 'translateX(100%)'
+                    },
+                    '100%': {
+                        transform: 'translateX(0)'
+                    }
+                }
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
                 'fade-in': 'fade-in 0.3s ease-out',
                 'fade-out': 'fade-out 0.3s ease-out',
+                'scale-up': 'scale-up 0.3s ease-out',
+                'slide-in-right': 'slide-in-right 0.5s ease-out',
+			},
+			boxShadow: {
+				'apple': '0 4px 20px rgba(0, 0, 0, 0.05)',
 			}
 		}
 	},
