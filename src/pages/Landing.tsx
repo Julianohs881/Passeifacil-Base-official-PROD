@@ -395,7 +395,8 @@ const Landing = () => {
       </footer>
 
       {/* CSS for animations */}
-      <style jsx>{`
+      <style>
+        {`
         .fade-in-element {
           opacity: 0;
           transform: translateY(20px);
@@ -405,7 +406,8 @@ const Landing = () => {
           opacity: 1;
           transform: translateY(0);
         }
-      `}</style>
+        `}
+      </style>
 
       {/* Plan Upgrade Dialog */}
       <PlanUpgradeDialog isOpen={isUpgradeDialogOpen} onClose={() => setIsUpgradeDialogOpen(false)} />
@@ -414,3 +416,4 @@ const Landing = () => {
 };
 
 export default Landing;
+

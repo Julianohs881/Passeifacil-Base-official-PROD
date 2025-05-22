@@ -11,8 +11,9 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading, userProfile, signOut } = useAuth();
+  const { user, loading, userProfile, signOut, updateUserProfile } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
 
   // Set timeout to show emergency logout if loading takes too long
   useEffect(() => {
@@ -25,6 +26,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       return () => clearTimeout(timer);
     }
   }, [loading]);
+
+  // Ensure profile is refreshed when route is accessed
+  useEffect(() => {
+    const refreshProfile = async () => {
+      if (user && !loading && !isRefreshingProfile) {
+        setIsRefreshingProfile(true);
+        try {
+          console.log("ProtectedRoute: Refreshing user profile");
+          await updateUserProfile();
+          console.log("ProtectedRoute: Profile refresh complete");
+        } catch (error) {
+          console.error("ProtectedRoute: Error refreshing profile:", error);
+        } finally {
+          setIsRefreshingProfile(false);
+        }
+      }
+    };
+    
+    refreshProfile();
+  }, [user, loading]);
 
   const handleEmergencyLogout = async () => {
     try {
@@ -75,23 +96,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     userId: user.id,
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
+    manual_access: userProfile?.manual_access,
     subscription_status: userProfile?.subscription_status
   });
   
-  // Verificar o acesso baseado nos campos do perfil
+  // Check if user has access based on profile fields
   if (userProfile) {
-    // Verificação principal: se has_access é explicitamente falso
-    // E não estamos na página de assinatura (para evitar loop)
-    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === false &&
-        window.location.pathname !== '/subscription') {
+    // Primary check: if has_access is explicitly false, redirect to subscription page
+    // But only if we're not already on the subscription page (to avoid loops)
+    if (userProfile.has_access === false && window.location.pathname !== '/subscription') {
       console.log("User does not have subscription access, redirecting to subscription page");
       return <Navigate to="/subscription" replace />;
     }
     
-    // Para compatibilidade retroativa - se não tiver has_access definido, verificar o plano
-    if (userProfile.has_access === undefined && userProfile.plan === 'gratuito' &&
+    // Secondary check: if manual_access is explicitly false and no has_access,
+    // AND the plan is not pro or assinante, redirect to subscription
+    if (userProfile.has_access !== true &&
+        userProfile.manual_access !== true &&
+        userProfile.plan !== 'pro' && 
+        userProfile.plan !== 'assinante' &&
         window.location.pathname !== '/subscription') {
-      console.log("User has free plan and no has_access field, redirecting to subscription page");
+      console.log("User has no subscription access rights, redirecting to subscription page");
       return <Navigate to="/subscription" replace />;
     }
   }

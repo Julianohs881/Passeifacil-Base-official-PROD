@@ -15,9 +15,9 @@ const QuizExploreCard = ({ quiz }: QuizExploreCardProps) => {
     <Link
       key={quiz.id}
       to={`/quiz/${quiz.id}`}
-      className="block"
+      className="block hover:scale-105 transition-transform duration-200"
     >
-      <div className={`quiz-card ${quiz.color} p-5 flex flex-col justify-between h-52 relative rounded-lg shadow-md transition-transform hover:scale-105 hover:shadow-lg`}>
+      <div className={`quiz-card ${quiz.color} p-5 flex flex-col justify-between h-52 relative rounded-lg shadow-md hover:shadow-lg`}>
         <div className="absolute top-3 left-3">
           <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
             <Eye className="h-3 w-3 mr-1" />
