@@ -11,7 +11,7 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading, userProfile, signOut, updateUserProfile } = useAuth();
+  const { user, loading, userProfile, signOut, updateUserProfile, isPro } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
 
@@ -97,28 +97,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
-    subscription_status: userProfile?.subscription_status
+    subscription_status: userProfile?.subscription_status,
+    isPro: isPro()
   });
   
-  // Check if user has access based on profile fields
-  if (userProfile) {
-    // Primary check: if has_access is explicitly false, redirect to subscription page
-    // But only if we're not already on the subscription page (to avoid loops)
-    if (userProfile.has_access === false && window.location.pathname !== '/subscription') {
-      console.log("User does not have subscription access, redirecting to subscription page");
-      return <Navigate to="/subscription" replace />;
-    }
-    
-    // Secondary check: if manual_access is explicitly false and no has_access,
-    // AND the plan is not pro or assinante, redirect to subscription
-    if (userProfile.has_access !== true &&
-        userProfile.manual_access !== true &&
-        userProfile.plan !== 'pro' && 
-        userProfile.plan !== 'assinante' &&
-        window.location.pathname !== '/subscription') {
-      console.log("User has no subscription access rights, redirecting to subscription page");
-      return <Navigate to="/subscription" replace />;
-    }
+  // Updated logic: redirect to subscription page if user doesn't have PRO access
+  // Regardless of their plan, if they don't have access, they go to subscription
+  if (!isPro() && window.location.pathname !== '/subscription') {
+    console.log("User does not have subscription access, redirecting to subscription page");
+    return <Navigate to="/subscription" replace />;
   }
 
   return <>{children}</>;
