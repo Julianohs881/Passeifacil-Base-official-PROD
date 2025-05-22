@@ -51,6 +51,7 @@ export type Database = {
           created_at: string
           has_access: boolean | null
           id: string
+          manual_access: boolean | null
           name: string | null
           plan: string
           stripe_customer_id: string | null
@@ -64,6 +65,7 @@ export type Database = {
           created_at?: string
           has_access?: boolean | null
           id: string
+          manual_access?: boolean | null
           name?: string | null
           plan?: string
           stripe_customer_id?: string | null
@@ -77,6 +79,7 @@ export type Database = {
           created_at?: string
           has_access?: boolean | null
           id?: string
+          manual_access?: boolean | null
           name?: string | null
           plan?: string
           stripe_customer_id?: string | null
@@ -172,7 +175,7 @@ export type Database = {
     }
     Functions: {
       generate_random_code: {
-        Args: { length: number }
+        Args: Record<PropertyKey, never> | { length: number }
         Returns: string
       }
     }

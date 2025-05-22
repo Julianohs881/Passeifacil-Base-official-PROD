@@ -1,4 +1,3 @@
-
 import { Session, User } from "@supabase/supabase-js";
 
 export type ColorOption =
@@ -96,6 +95,7 @@ export interface UserProfile {
   created_at?: string;
   // Subscription related fields
   has_access?: boolean;
+  manual_access?: boolean;
   stripe_customer_id?: string | null;
   subscription_id?: string | null;
   subscription_status?: string | null;

@@ -14,17 +14,22 @@ import {
 } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import QuizCard from "@/components/QuizCard";
+import ChangeColorPopover from "@/components/ChangeColorPopover";
 import ProfileIncompleteAlert from "@/components/ProfileIncompleteAlert";
 import { HomePageHeader } from "./HomePageHeader";
 import { ImportCodeDialog } from "@/components/Share/ImportCodeDialog";
 import { QuizGrid } from "./QuizGrid";
+import { useToast } from "@/hooks/use-toast";
 
 const Home = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [isColorPopoverOpen, setIsColorPopoverOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) {
@@ -78,19 +83,57 @@ const Home = () => {
       
       // Update local state by filtering out the deleted quiz
       setQuizzes(quizzes.filter(quiz => quiz.id !== id));
+      toast({
+        title: "Quiz excluído",
+        description: "Quiz excluído com sucesso!",
+      });
     } catch (error) {
       console.error("Error deleting quiz:", error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir este quiz.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleEditQuiz = (quiz: Quiz) => {
     // Navigate to edit page or open edit modal
-    console.log("Edit quiz:", quiz);
+    navigate(`/quizzes/${quiz.id}/edit`);
   };
 
   const handleColorChange = (quiz: Quiz) => {
     // Open color change popover or modal
-    console.log("Change color for quiz:", quiz);
+    setSelectedQuiz(quiz);
+    setIsColorPopoverOpen(true);
+  };
+
+  const handleSaveQuizColor = async (quiz: Quiz, newColor: ColorOption) => {
+    try {
+      const { error } = await supabase
+        .from("quizzes")
+        .update({ color: newColor })
+        .eq("id", quiz.id);
+
+      if (error) throw error;
+      
+      // Update the local state with the new color
+      setQuizzes(
+        quizzes.map((q) => (q.id === quiz.id ? { ...q, color: newColor } : q))
+      );
+      
+      toast({
+        title: "Cor alterada",
+        description: "Cor do quiz alterada com sucesso!",
+      });
+    } catch (error) {
+      console.error("Error changing quiz color:", error);
+      toast({
+        title: "Erro ao alterar cor",
+        description: "Não foi possível alterar a cor deste quiz.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleToggleVisibility = async (quiz: Quiz, newVisibility: VisibilityOption) => {
@@ -106,8 +149,18 @@ const Home = () => {
       setQuizzes(quizzes.map(q => 
         q.id === quiz.id ? { ...q, visibility: newVisibility } : q
       ));
+      
+      toast({
+        title: "Visibilidade alterada",
+        description: `Quiz agora é ${newVisibility === 'public' ? 'público' : 'privado'}.`,
+      });
     } catch (error) {
       console.error("Error toggling visibility:", error);
+      toast({
+        title: "Erro ao alterar visibilidade",
+        description: "Não foi possível alterar a visibilidade deste quiz.",
+        variant: "destructive",
+      });
     }
   };
 
