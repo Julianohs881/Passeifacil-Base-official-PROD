@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
@@ -17,91 +16,61 @@ import CreateQuiz from "./pages/CreateQuiz";
 import { useEffect } from "react";
 import { useStripeSubscription } from "./hooks/useStripeSubscription";
 
-// Redirect to home if authenticated, otherwise show login
+// Redireciona para quizzes se já estiver logado
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) return <div>Loading...</div>;
-  
   if (user) return <Navigate to="/quizzes" />;
-  
   return <>{children}</>;
 };
 
-// Component to verify subscription status when the app loads
+// Verifica assinatura ao carregar o app
 const SubscriptionVerifier = () => {
   const { user, updateUserProfile, userProfile } = useAuth();
   const { verifySubscriptionStatus } = useStripeSubscription();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     const checkSubscription = async () => {
-      // Only check subscription if user is logged in
       if (user) {
-        console.log("Checking subscription status on app load");
-        
         try {
-          // Skip verification if we're already on the subscription page
-          if (window.location.pathname === '/subscription') {
-            console.log("Already on subscription page, skipping verification");
-            return;
-          }
-          
-          // Skip verification for users who are known to not have access
-          // This prevents unnecessary API calls and potential rate limiting
+          if (window.location.pathname === '/subscription') return;
+
           if (userProfile && typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
-            console.log("User already known to not have access, redirecting to subscription page");
             navigate("/subscription");
             return;
           }
-          
-          // Skip verification if we experienced recent errors (avoid loops)
+
           const lastVerificationError = sessionStorage.getItem("verification_error_timestamp");
           if (lastVerificationError) {
             const errorTime = parseInt(lastVerificationError, 10);
             const currentTime = Date.now();
-            // Se o último erro foi há menos de 1 minuto, pular verificação
             if ((currentTime - errorTime) < 60000) {
-              console.log("Skipping verification due to recent error");
               return;
             } else {
-              // Limpar o registro de erro se já passou tempo suficiente
               sessionStorage.removeItem("verification_error_timestamp");
             }
           }
-          
-          // Only check subscription status if the user profile indicates they should have access
-          // or if we don't know their status yet
+
           if (!userProfile || userProfile.has_access === true) {
-            console.log("Checking subscription status for user with potential access");
-            
-            // Check subscription status with the server
             const result = await verifySubscriptionStatus();
-            
-            // Update the user profile to reflect any changes
             if (result.success) {
               await updateUserProfile();
-              console.log("Subscription check completed:", result);
-              
-              // If user doesn't have access and not already on subscription page, redirect
               if (!result.has_access) {
-                console.log("User doesn't have subscription access, redirecting to subscription page");
                 navigate("/subscription");
               }
             }
           }
         } catch (error) {
-          console.error("Error checking subscription on app load:", error);
-          // Registrar timestamp do erro para evitar loop
           sessionStorage.setItem("verification_error_timestamp", Date.now().toString());
         }
       }
     };
-    
     checkSubscription();
-  }, [user?.id, userProfile]);
-  
-  return null; // This component doesn't render anything
+  }, [user?.id, userProfile, navigate, updateUserProfile, verifySubscriptionStatus]);
+
+  return null;
 };
 
 function AppContent() {
@@ -111,7 +80,7 @@ function AppContent() {
       <SubscriptionVerifier />
       <main className="pt-16 sm:pt-20">
         <Routes>
-          {/* Public routes */}
+          {/* Rotas públicas */}
           <Route path="/" element={<Landing />} />
           <Route 
             path="/login" 
@@ -130,12 +99,12 @@ function AppContent() {
             }
           />
           
-          {/* Subscription route - accessible even without subscription */}
+          {/* Página de assinatura - aberta */}
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/success" element={<Subscription />} />
           <Route path="/cancel" element={<Subscription />} />
 
-          {/* Protected routes */}
+          {/* Rotas protegidas */}
           <Route 
             path="/quizzes" 
             element={
@@ -152,8 +121,6 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          
-          {/* Add new route for quiz creation */}
           <Route 
             path="/quizzes/new" 
             element={
@@ -162,8 +129,6 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          
-          {/* User Profile route */}
           <Route 
             path="/profile" 
             element={
@@ -172,8 +137,6 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          
-          {/* Explore page - available for all authenticated users */}
           <Route 
             path="/explore" 
             element={
@@ -182,12 +145,10 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-
-          {/* 404 route */}
+          {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      
       <Toaster />
     </div>
   );
