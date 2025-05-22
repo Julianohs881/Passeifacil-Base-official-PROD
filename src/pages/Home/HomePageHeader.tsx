@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import PremiumFeatureGate from "@/components/PremiumFeatureGate";
 import { useAuth } from "@/context/AuthContext";
 
 interface HomePageHeaderProps {
@@ -16,6 +15,7 @@ export const HomePageHeader = ({
 }: HomePageHeaderProps) => {
   const navigate = useNavigate();
   const { isPro } = useAuth();
+  const hasPremiumAccess = isPro();
   
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
@@ -26,8 +26,8 @@ export const HomePageHeader = ({
           <span className="whitespace-nowrap">Novo Quiz</span>
         </Button>
         
-        {/* Only show these buttons for PRO users */}
-        {isPro() && (
+        {/* Only show these buttons for premium users */}
+        {hasPremiumAccess && (
           <>
             <Button 
               onClick={() => navigate("/explore")} 
