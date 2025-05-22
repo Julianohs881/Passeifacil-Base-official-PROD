@@ -37,7 +37,6 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
     isPro: isPro(),
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
-    manual_access: userProfile?.manual_access,
     ai_limit_reached: hasReachedAILimit()
   });
   

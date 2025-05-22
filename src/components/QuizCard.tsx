@@ -7,7 +7,6 @@ import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { ShareCodeDialog } from "./Share/ShareCodeDialog";
-import ChangeColorPopover from "./ChangeColorPopover";
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -20,7 +19,6 @@ interface QuizCardProps {
 const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }: QuizCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user, isPro } = useAuth();
 
@@ -56,7 +54,7 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
   const handleColorChange = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsColorDialogOpen(true);
+    onColorChange(quiz);
   };
 
   const handleToggleVisibility = (e: React.MouseEvent) => {
@@ -182,17 +180,6 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
           type="quiz"
         />
       )}
-
-      {/* Color Change Dialog */}
-      <ChangeColorPopover
-        isOpen={isColorDialogOpen}
-        onClose={() => setIsColorDialogOpen(false)}
-        onSave={async (q, color) => {
-          await onColorChange({...q, color});
-          setIsColorDialogOpen(false);
-        }}
-        quiz={quiz}
-      />
     </>
   );
 };

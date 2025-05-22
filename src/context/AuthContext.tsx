@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
@@ -56,7 +57,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loadUserProfile = async (userId: string) => {
     try {
-      console.log("Loading user profile for ID:", userId);
       setProfileError(null);
       // Add a timeout to the profile loading to prevent infinite waiting
       const profilePromise = supabase
@@ -98,10 +98,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: user?.email || ""
         };
         
-        console.log("User profile loaded successfully:", profileWithEmail);
         setUserProfile(profileWithEmail);
       } else {
-        console.log("No user profile data found");
         setUserProfile(null);
       }
     } catch (error) {
@@ -170,37 +168,21 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Update user profile function
   const updateUserProfile = async () => {
-    console.log("Manually refreshing user profile");
     if (user) {
       await loadUserProfile(user.id);
     }
   };
   
-  // Check if user is a PRO user - UPDATED FUNCTION FOR NEW ACCESS LOGIC
+  // Check if user is a PRO user
   const isPro = () => {
     if (!userProfile) return false;
     
-    console.log("Checking PRO access:", {
-      uid: user?.id,
-      has_access: userProfile.has_access,
-      manual_access: userProfile.manual_access,
-      plan: userProfile.plan,
-    });
-    
-    // Access is now ONLY granted if has_access is explicitly true
-    // or manual_access is explicitly true
-    // The 'gratuito' plan no longer gets access
-    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === true) {
-      return true;
+    // Check if the user has explicit access via subscription
+    if (typeof userProfile.has_access === 'boolean') {
+      return userProfile.has_access === true;
     }
     
-    // Check if the user has manual access granted
-    if (typeof userProfile.manual_access === 'boolean' && userProfile.manual_access === true) {
-      return true;
-    }
-    
-    // Legacy plan-based access is now restricted - ONLY 'assinante' or 'pro' plans get access
-    // 'gratuito' plan no longer gets access
+    // Legacy check based on plan
     return userProfile.plan === 'pro' || userProfile.plan === 'assinante';
   };
   
