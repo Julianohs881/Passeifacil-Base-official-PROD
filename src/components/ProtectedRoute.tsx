@@ -11,7 +11,7 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading, userProfile, signOut, updateUserProfile } = useAuth();
+  const { user, loading, userProfile, signOut, updateUserProfile, isPro } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
 
@@ -97,25 +97,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
-    subscription_status: userProfile?.subscription_status
+    subscription_status: userProfile?.subscription_status,
+    isPro: isPro()
   });
   
-  // Verificar o acesso baseado nos campos do perfil
-  if (userProfile) {
-    // Verificação principal: se has_access é explicitamente falso
-    // E não estamos na página de assinatura (para evitar loop)
-    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === false &&
-        window.location.pathname !== '/subscription') {
-      console.log("User does not have subscription access, redirecting to subscription page");
-      return <Navigate to="/subscription" replace />;
-    }
-    
-    // Para compatibilidade retroativa - se não tiver has_access definido, verificar o plano
-    if (userProfile.has_access === undefined && userProfile.plan === 'gratuito' &&
-        window.location.pathname !== '/subscription') {
-      console.log("User has free plan and no has_access field, redirecting to subscription page");
-      return <Navigate to="/subscription" replace />;
-    }
+  // Updated logic: redirect to subscription page if user doesn't have PRO access
+  // Regardless of their plan, if they don't have access, they go to subscription
+  if (!isPro() && window.location.pathname !== '/subscription') {
+    console.log("User does not have subscription access, redirecting to subscription page");
+    return <Navigate to="/subscription" replace />;
   }
 
   return <>{children}</>;

@@ -176,7 +176,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Check if user is a PRO user - UPDATED FUNCTION
+  // Check if user is a PRO user - UPDATED FUNCTION FOR NEW ACCESS LOGIC
   const isPro = () => {
     if (!userProfile) return false;
     
@@ -187,7 +187,9 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       plan: userProfile.plan,
     });
     
-    // Check if the user has explicit access via has_access field
+    // Access is now ONLY granted if has_access is explicitly true
+    // or manual_access is explicitly true
+    // The 'gratuito' plan no longer gets access
     if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === true) {
       return true;
     }
@@ -197,7 +199,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return true;
     }
     
-    // Legacy check based on plan
+    // Legacy plan-based access is now restricted - ONLY 'assinante' or 'pro' plans get access
+    // 'gratuito' plan no longer gets access
     return userProfile.plan === 'pro' || userProfile.plan === 'assinante';
   };
   
