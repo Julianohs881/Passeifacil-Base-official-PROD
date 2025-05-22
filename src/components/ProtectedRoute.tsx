@@ -11,8 +11,9 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading, userProfile, signOut } = useAuth();
+  const { user, loading, userProfile, signOut, updateUserProfile } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
 
   // Set timeout to show emergency logout if loading takes too long
   useEffect(() => {
@@ -25,6 +26,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       return () => clearTimeout(timer);
     }
   }, [loading]);
+
+  // Ensure profile is refreshed when route is accessed
+  useEffect(() => {
+    const refreshProfile = async () => {
+      if (user && !loading && !isRefreshingProfile) {
+        setIsRefreshingProfile(true);
+        try {
+          console.log("ProtectedRoute: Refreshing user profile");
+          await updateUserProfile();
+          console.log("ProtectedRoute: Profile refresh complete");
+        } catch (error) {
+          console.error("ProtectedRoute: Error refreshing profile:", error);
+        } finally {
+          setIsRefreshingProfile(false);
+        }
+      }
+    };
+    
+    refreshProfile();
+  }, [user, loading]);
 
   const handleEmergencyLogout = async () => {
     try {
@@ -75,6 +96,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     userId: user.id,
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
+    manual_access: userProfile?.manual_access,
     subscription_status: userProfile?.subscription_status
   });
   
