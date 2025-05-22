@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
@@ -176,7 +177,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Check if user is a PRO user - UPDATED FUNCTION
+  // Check if user is a PRO user - FIXED FUNCTION
   const isPro = () => {
     if (!userProfile) return false;
     
@@ -187,17 +188,17 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       plan: userProfile.plan,
     });
     
-    // Check if the user has explicit access via has_access field
+    // Primary check: if has_access is true, user has subscription access
     if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === true) {
       return true;
     }
     
-    // Check if the user has manual access granted
+    // Secondary check: manual access override (for admin/test users)
     if (typeof userProfile.manual_access === 'boolean' && userProfile.manual_access === true) {
       return true;
     }
     
-    // Legacy check based on plan
+    // Legacy check based on plan (should match with has_access in most cases)
     return userProfile.plan === 'pro' || userProfile.plan === 'assinante';
   };
   

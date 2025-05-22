@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -102,18 +103,20 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       log("No customer found with this email, updating profile with no subscription");
       
-      // Busca manual_access antes de atualizar
+      // Get manual_access before updating
       const { data: profile } = await supabaseClient
         .from("profiles")
         .select("manual_access")
         .eq("id", user.id)
         .single();
 
-      // ---- CONTROLE DE ACESSO DE TESTE/ADMIN ----
-      // Coloque seus e-mails de teste/admin nesta lista:
+      // ---- TEST/ADMIN ACCESS CONTROL ----
+      // Add your test/admin emails to this list:
       const adminEmails = ["seuemail@dominio.com"];
+      // Set has_access only if it's an admin email AND manual_access is true
       let hasAccessFinal = (adminEmails.includes(user.email) && profile?.manual_access === true);
 
+      // Update the profile with subscription status
       const { data: updateData, error: updateError } = await supabaseClient
         .from("profiles")
         .update({
@@ -209,16 +212,17 @@ serve(async (req) => {
       }
     }
 
-    // Antes de atualizar o perfil, buscar manual_access
+    // Get manual_access before updating profile
     const { data: profile } = await supabaseClient
       .from("profiles")
       .select("manual_access")
       .eq("id", user.id)
       .single();
 
-    // ---- CONTROLE DE ACESSO DE TESTE/ADMIN ----
-    // Coloque seus e-mails de teste/admin nesta lista:
+    // ---- TEST/ADMIN ACCESS CONTROL ----
+    // Add your test/admin emails to this list:
     const adminEmails = ["seuemail@dominio.com"];
+    // Set has_access to true if it's an admin email AND manual_access is true, OR if the user has a valid subscription
     let hasAccessFinal = (adminEmails.includes(user.email) && profile?.manual_access === true) ? true : hasAccess;
 
     // Update profile with subscription details
@@ -232,7 +236,7 @@ serve(async (req) => {
       .from("profiles")
       .update({
         has_access: hasAccessFinal,
-        plan: hasAccessFinal ? "assinante (manual)" : plan,
+        plan: hasAccessFinal && adminEmails.includes(user.email) && profile?.manual_access === true ? "assinante (manual)" : plan,
         subscription_status: subscriptionStatus,
         subscription_id: subscriptionId,
         stripe_customer_id: customerId,
@@ -248,13 +252,13 @@ serve(async (req) => {
     log("Profile updated successfully", {
       userId: user.id,
       hasAccess: hasAccessFinal,
-      plan: hasAccessFinal ? "assinante (manual)" : plan
+      plan: hasAccessFinal && adminEmails.includes(user.email) && profile?.manual_access === true ? "assinante (manual)" : plan
     });
     
     // Return subscription status
     return new Response(JSON.stringify({
       has_access: hasAccessFinal,
-      plan: hasAccessFinal ? "assinante (manual)" : plan,
+      plan: hasAccessFinal && adminEmails.includes(user.email) && profile?.manual_access === true ? "assinante (manual)" : plan,
       subscription_status: subscriptionStatus,
       subscription_end_date: subscriptionEnd
     }), {

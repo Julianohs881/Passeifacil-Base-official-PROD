@@ -3,6 +3,7 @@ import React from "react";
 import { Lock } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface PremiumFeatureGateProps {
   feature: 'ai' | 'share' | 'import' | 'explore';
@@ -25,6 +26,7 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   hideCompletely = true // Default to completely hiding the feature for free users
 }) => {
   const { isPro, hasReachedAILimit, userProfile } = useAuth();
+  const navigate = useNavigate();
   
   // Calculate AI usage metrics for Pro users
   const aiQuestionsCreated = userProfile?.ai_questions_created || 0;
@@ -57,7 +59,11 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   // Otherwise, show the disabled version with upgrade message (for cases where we explicitly want to show it)
   const message = feature === 'ai' && isPro()
     ? `Você atingiu o limite de ${aiQuestionsLimit} questões criadas com IA neste mês.`
-    : `Recurso exclusivo para assinantes PRO.`;
+    : `Recurso exclusivo para assinantes.`;
+
+  const handleUpgradeClick = () => {
+    navigate('/subscription');
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -78,6 +84,7 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
           variant="default" 
           size="sm"
           className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600"
+          onClick={handleUpgradeClick}
         >
           {feature === 'ai' && isPro() ? "Aguarde o próximo mês" : "Fazer Upgrade"}
         </Button>
