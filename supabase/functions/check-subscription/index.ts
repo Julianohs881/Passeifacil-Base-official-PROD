@@ -109,13 +109,16 @@ serve(async (req) => {
         .eq("id", user.id)
         .single();
 
-      let hasAccessFinal = (profile?.manual_access === true);
+      // ---- CONTROLE DE ACESSO DE TESTE/ADMIN ----
+      // Coloque seus e-mails de teste/admin nesta lista:
+      const adminEmails = ["seuemail@dominio.com"];
+      let hasAccessFinal = (adminEmails.includes(user.email) && profile?.manual_access === true);
 
       const { data: updateData, error: updateError } = await supabaseClient
         .from("profiles")
         .update({
           has_access: hasAccessFinal,
-          plan: "sem assinatura",
+          plan: hasAccessFinal ? "assinante (manual)" : "sem assinatura",
           subscription_status: null,
           subscription_id: null,
           stripe_customer_id: null,
@@ -132,7 +135,7 @@ serve(async (req) => {
       
       return new Response(JSON.stringify({ 
         has_access: hasAccessFinal,
-        plan: "sem assinatura",
+        plan: hasAccessFinal ? "assinante (manual)" : "sem assinatura",
         subscription_status: null
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -213,22 +216,23 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    // Se manual_access for true, mantém acesso, senão segue a lógica normal
-    let hasAccessFinal = (profile?.manual_access === true) ? true : hasAccess;
+    // ---- CONTROLE DE ACESSO DE TESTE/ADMIN ----
+    // Coloque seus e-mails de teste/admin nesta lista:
+    const adminEmails = ["seuemail@dominio.com"];
+    let hasAccessFinal = (adminEmails.includes(user.email) && profile?.manual_access === true) ? true : hasAccess;
 
     // Update profile with subscription details
     log("Updating profile with subscription information", {
       userId: user.id,
       hasAccess: hasAccessFinal,
-      plan,
-      subscriptionStatus
+      plan
     });
     
     const { data: updateData, error: updateError } = await supabaseClient
       .from("profiles")
       .update({
         has_access: hasAccessFinal,
-        plan: plan,
+        plan: hasAccessFinal ? "assinante (manual)" : plan,
         subscription_status: subscriptionStatus,
         subscription_id: subscriptionId,
         stripe_customer_id: customerId,
@@ -244,13 +248,13 @@ serve(async (req) => {
     log("Profile updated successfully", {
       userId: user.id,
       hasAccess: hasAccessFinal,
-      plan
+      plan: hasAccessFinal ? "assinante (manual)" : plan
     });
     
     // Return subscription status
     return new Response(JSON.stringify({
       has_access: hasAccessFinal,
-      plan: plan,
+      plan: hasAccessFinal ? "assinante (manual)" : plan,
       subscription_status: subscriptionStatus,
       subscription_end_date: subscriptionEnd
     }), {
