@@ -47,7 +47,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremiu
     };
     
     refreshProfile();
-  }, [user, loading]);
+  }, [user, loading, updateUserProfile]);
 
   const handleEmergencyLogout = async () => {
     try {

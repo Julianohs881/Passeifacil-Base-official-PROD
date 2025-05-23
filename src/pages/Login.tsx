@@ -28,19 +28,24 @@ const Login = () => {
     setError("");
     
     try {
+      console.log("Login: Iniciando login com email:", email);
+      
       // Sign in the user
       await signIn(email, password);
+      console.log("Login: Login bem-sucedido, atualizando perfil");
       
       // Immediately update user profile after sign-in
       try {
-        console.log("Login: Updating user profile after login");
+        console.log("Login: Atualizando perfil de usuário após login");
         await updateUserProfile();
-      } catch (profileError) {
-        console.error("Login: Error updating profile after login:", profileError);
+        console.log("Login: Perfil atualizado com sucesso");
+      } catch (profileError: any) {
+        console.error("Login: Erro ao atualizar perfil após login:", profileError);
         // Continue anyway, as the user is logged in
       }
       
       // Redirect to quizzes page
+      console.log("Login: Redirecionando para página de quizzes");
       navigate("/quizzes");
     } catch (error: any) {
       console.error("Login error:", error);
