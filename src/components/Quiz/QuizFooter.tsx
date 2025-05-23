@@ -29,7 +29,7 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
   onImportQuestion,
 }) => {
   const { isPro } = useAuth();
-  const isPROUser = isPro();
+  const hasPremiumAccess = isPro();
   const isMobile = useMediaQuery("(max-width: 640px)");
 
   return (
@@ -43,8 +43,8 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
           Adicionar Questão
         </Button>
         
-        {/* Import Question Button - only show for PRO users */}
-        {onImportQuestion && isPROUser && (
+        {/* Import Question Button - only show for premium users */}
+        {onImportQuestion && hasPremiumAccess && (
           <Button
             onClick={onImportQuestion}
             size="sm"
@@ -56,8 +56,8 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
           </Button>
         )}
         
-        {/* Only render the CreateWithAIButton for PRO users */}
-        {isPROUser && (
+        {/* Only render the CreateWithAIButton for premium users */}
+        {hasPremiumAccess && (
           <CreateWithAIButton 
             quizId={quizId}
             onSuccess={onQuestionCreated}

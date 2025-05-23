@@ -7,6 +7,7 @@ import AIQuestionModal from "./AIQuestionModal";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNavigate } from "react-router-dom";
 
 interface CreateWithAIButtonProps {
   quizId: string;
@@ -16,15 +17,30 @@ interface CreateWithAIButtonProps {
 const CreateWithAIButton: React.FC<CreateWithAIButtonProps> = ({ quizId, onSuccess }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { isLoading, processingStep, createQuestionWithAI } = useAIQuestion({ quizId, onSuccess });
-  const { updateAIQuestionsCreated, userProfile, hasReachedAILimit } = useAuth();
+  const { updateAIQuestionsCreated, userProfile, hasReachedAILimit, isPro } = useAuth();
+  const navigate = useNavigate();
 
-  // Calculate AI usage metrics
+  // First, check if user has premium access
+  const hasPremiumAccess = isPro();
+
+  // If user doesn't have premium access, don't render the component at all
+  if (!hasPremiumAccess) {
+    return null;
+  }
+
+  // Calculate AI usage metrics for premium users
   const aiQuestionsCreated = userProfile?.ai_questions_created || 0;
   const aiQuestionsLimit = 50;
   const aiQuestionsRemaining = Math.max(0, aiQuestionsLimit - aiQuestionsCreated);
   const limitReached = hasReachedAILimit();
 
   const handleSubmit = async (content: string, contentType: "text" | "image") => {
+    // Double-check premium access before allowing submission
+    if (!isPro()) {
+      navigate('/subscription');
+      return false;
+    }
+    
     const success = await createQuestionWithAI(content, contentType);
     if (success) {
       await updateAIQuestionsCreated();
@@ -33,7 +49,13 @@ const CreateWithAIButton: React.FC<CreateWithAIButtonProps> = ({ quizId, onSucce
     return success;
   };
 
-  const openModal = () => setIsModalOpen(true);
+  const openModal = () => {
+    if (limitReached) {
+      return;
+    }
+    setIsModalOpen(true);
+  };
+  
   const closeModal = () => {
     if (!isLoading) {
       setIsModalOpen(false);

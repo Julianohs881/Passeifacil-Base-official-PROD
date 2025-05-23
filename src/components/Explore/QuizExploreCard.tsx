@@ -9,7 +9,14 @@ interface QuizExploreCardProps {
 }
 
 const QuizExploreCard = ({ quiz }: QuizExploreCardProps) => {
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
+  // Only show Explore component for premium users - component-level protection
+  const hasPremiumAccess = isPro();
+
+  // If user doesn't have premium access, don't render the component at all
+  if (!hasPremiumAccess) {
+    return null;
+  }
 
   return (
     <Link

@@ -177,29 +177,30 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Check if user is a PRO user - FIXED FUNCTION
+  // Check if user has premium access - UPDATED WITH NEW LOGIC
   const isPro = () => {
     if (!userProfile) return false;
     
-    console.log("Checking PRO access:", {
+    console.log("Checking premium access:", {
       uid: user?.id,
       has_access: userProfile.has_access,
       manual_access: userProfile.manual_access,
       plan: userProfile.plan,
     });
     
-    // Primary check: if has_access is true, user has subscription access
-    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === true) {
-      return true;
-    }
+    // New premium access logic:
+    // 1. User must have has_access = true AND plan = "assinante" 
+    // OR 
+    // 2. User must have manual_access = true
     
-    // Secondary check: manual access override (for admin/test users)
-    if (typeof userProfile.manual_access === 'boolean' && userProfile.manual_access === true) {
-      return true;
-    }
+    const hasPlanAccess = typeof userProfile.has_access === 'boolean' && 
+                         userProfile.has_access === true && 
+                         userProfile.plan === 'assinante';
+                         
+    const hasManualAccess = typeof userProfile.manual_access === 'boolean' && 
+                           userProfile.manual_access === true;
     
-    // Legacy check based on plan (should match with has_access in most cases)
-    return userProfile.plan === 'pro' || userProfile.plan === 'assinante';
+    return hasPlanAccess || hasManualAccess;
   };
   
   // Check if user has reached AI generation limit

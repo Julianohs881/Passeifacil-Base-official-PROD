@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
@@ -27,7 +28,7 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
 
 // Verifica assinatura ao carregar o app
 const SubscriptionVerifier = () => {
-  const { user, updateUserProfile, userProfile } = useAuth();
+  const { user, updateUserProfile, userProfile, isPro } = useAuth();
   const { verifySubscriptionStatus } = useStripeSubscription();
   const navigate = useNavigate();
 
@@ -37,7 +38,10 @@ const SubscriptionVerifier = () => {
         try {
           if (window.location.pathname === '/subscription') return;
 
-          if (userProfile && typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
+          // If user profile is loaded and we can determine they don't have premium access,
+          // redirect to subscription page immediately
+          if (userProfile && !isPro()) {
+            console.log("User does not have premium access, redirecting to subscription");
             navigate("/subscription");
             return;
           }
@@ -53,13 +57,14 @@ const SubscriptionVerifier = () => {
             }
           }
 
-          if (!userProfile || userProfile.has_access === true) {
-            const result = await verifySubscriptionStatus();
-            if (result.success) {
-              await updateUserProfile();
-              if (!result.has_access) {
-                navigate("/subscription");
-              }
+          // Always verify subscription status when app loads to ensure database is in sync
+          const result = await verifySubscriptionStatus();
+          if (result.success) {
+            await updateUserProfile();
+            // After refreshing the profile, check premium access again
+            if (!isPro()) {
+              console.log("After verification, user still doesn't have premium access");
+              navigate("/subscription");
             }
           }
         } catch (error) {
@@ -68,7 +73,7 @@ const SubscriptionVerifier = () => {
       }
     };
     checkSubscription();
-  }, [user?.id, userProfile, navigate, updateUserProfile, verifySubscriptionStatus]);
+  }, [user?.id, userProfile, navigate, updateUserProfile, verifySubscriptionStatus, isPro]);
 
   return null;
 };
@@ -104,19 +109,21 @@ function AppContent() {
           <Route path="/success" element={<Subscription />} />
           <Route path="/cancel" element={<Subscription />} />
 
-          {/* Rotas protegidas */}
+          {/* Rotas protegidas básicas */}
           <Route 
             path="/quizzes" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requirePremium={false}>
                 <Home />
               </ProtectedRoute>
             }
           />
+
+          {/* Rotas protegidas que exigem acesso premium */}
           <Route 
             path="/quiz/:id" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requirePremium={true}>
                 <Quiz />
               </ProtectedRoute>
             }
@@ -124,7 +131,7 @@ function AppContent() {
           <Route 
             path="/quizzes/new" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requirePremium={true}>
                 <CreateQuiz />
               </ProtectedRoute>
             }
@@ -132,7 +139,7 @@ function AppContent() {
           <Route 
             path="/profile" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requirePremium={false}>
                 <UserProfile />
               </ProtectedRoute>
             }
@@ -140,7 +147,7 @@ function AppContent() {
           <Route 
             path="/explore" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requirePremium={true}>
                 <Explore />
               </ProtectedRoute>
             }

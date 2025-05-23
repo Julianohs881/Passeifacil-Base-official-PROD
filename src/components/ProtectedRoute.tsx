@@ -8,10 +8,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
+  requirePremium?: boolean; // New prop to specify if the route requires premium access
 };
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading, userProfile, signOut, updateUserProfile } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremium = true }) => {
+  const { user, loading, userProfile, signOut, updateUserProfile, isPro } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
 
@@ -92,33 +93,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
   
   // Log user profile for debugging purposes
-  console.log("ProtectedRoute checking user access:", {
+  console.log("ProtectedRoute checking user premium access:", {
     userId: user.id,
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
-    subscription_status: userProfile?.subscription_status
+    isPremium: isPro()
   });
   
-  // Check if user has access based on profile fields
-  if (userProfile) {
-    // Primary check: if has_access is explicitly false, redirect to subscription page
-    // But only if we're not already on the subscription page (to avoid loops)
-    if (userProfile.has_access === false && window.location.pathname !== '/subscription') {
-      console.log("User does not have subscription access, redirecting to subscription page");
-      return <Navigate to="/subscription" replace />;
-    }
-    
-    // Secondary check: if manual_access is explicitly false and no has_access,
-    // AND the plan is not pro or assinante, redirect to subscription
-    if (userProfile.has_access !== true &&
-        userProfile.manual_access !== true &&
-        userProfile.plan !== 'pro' && 
-        userProfile.plan !== 'assinante' &&
-        window.location.pathname !== '/subscription') {
-      console.log("User has no subscription access rights, redirecting to subscription page");
-      return <Navigate to="/subscription" replace />;
-    }
+  // Check if user has premium access when required
+  if (requirePremium && !isPro()) {
+    console.log("User does not have premium access, redirecting to subscription page");
+    return <Navigate to="/subscription" replace />;
   }
 
   return <>{children}</>;
