@@ -14,8 +14,9 @@ import Subscription from "./pages/Subscription";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
 import CreateQuiz from "./pages/CreateQuiz";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStripeSubscription } from "./hooks/useStripeSubscription";
+import { useToast } from "@/hooks/use-toast";
 
 // Redireciona para quizzes se já estiver logado
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
@@ -26,52 +27,97 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Verifica assinatura ao carregar o app
+// Componente melhorado para verificar assinatura ao carregar o app
 const SubscriptionVerifier = () => {
   const { user, updateUserProfile, userProfile, isPro } = useAuth();
   const { verifySubscriptionStatus } = useStripeSubscription();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Add state to prevent multiple concurrent checks
+  const [isVerifying, setIsVerifying] = useState(false);
+  // Track if the current page is already subscription page to prevent loops
+  const [isOnSubscriptionPage, setIsOnSubscriptionPage] = useState(false);
+
+  useEffect(() => {
+    // Update the isOnSubscriptionPage flag when pathname changes
+    setIsOnSubscriptionPage(window.location.pathname === '/subscription');
+  }, [window.location.pathname]);
 
   useEffect(() => {
     const checkSubscription = async () => {
-      if (user) {
-        try {
-          if (window.location.pathname === '/subscription') return;
+      if (!user || isVerifying) return;
 
-          // If user profile is loaded and we can determine they don't have premium access,
-          // redirect to subscription page immediately
-          if (userProfile && !isPro()) {
-            console.log("User does not have premium access, redirecting to subscription");
-            navigate("/subscription");
-            return;
-          }
+      try {
+        // Don't verify if we're already on the subscription page - helps prevent loops
+        if (window.location.pathname === '/subscription') {
+          console.log("Already on subscription page, skipping verification to avoid loops");
+          return;
+        }
 
+        setIsVerifying(true);
+        
+        // Check if we're coming back from a checkout session
+        const isAfterCheckout = sessionStorage.getItem("new_subscriber") === "true";
+        const isSubscriptionParam = window.location.search.includes('subscription=');
+        
+        // Only do verification if we need to
+        if (isAfterCheckout || isSubscriptionParam || !isPro()) {
+          console.log("Subscription verification needed:", { 
+            isAfterCheckout, 
+            isSubscriptionParam,
+            hasPremiumAccess: isPro() 
+          });
+          
+          // Last verification error throttling
           const lastVerificationError = sessionStorage.getItem("verification_error_timestamp");
           if (lastVerificationError) {
             const errorTime = parseInt(lastVerificationError, 10);
             const currentTime = Date.now();
             if ((currentTime - errorTime) < 60000) {
+              setIsVerifying(false);
               return;
             } else {
               sessionStorage.removeItem("verification_error_timestamp");
             }
           }
 
-          // Always verify subscription status when app loads to ensure database is in sync
+          // Verify subscription status
           const result = await verifySubscriptionStatus();
+          
           if (result.success) {
+            // Force profile refresh to ensure we have latest data
             await updateUserProfile();
-            // After refreshing the profile, check premium access again
-            if (!isPro()) {
-              console.log("After verification, user still doesn't have premium access");
+            
+            // If we're coming back from checkout, clear the flag and show success toast
+            if (isAfterCheckout) {
+              sessionStorage.removeItem("new_subscriber");
+              toast({
+                title: "Assinatura ativada com sucesso!",
+                description: "Seu acesso foi liberado.",
+                duration: 3000,
+              });
+            }
+            
+            // Only redirect if not subscribed after verification and not already on subscription page
+            if (!isPro() && window.location.pathname !== '/subscription') {
+              console.log("User doesn't have premium access, redirecting to subscription");
               navigate("/subscription");
+            } else if (isPro() && window.location.pathname === '/subscription') {
+              // If user has access and is on subscription page, send them to quizzes
+              console.log("User has premium access but is on subscription page, redirecting to quizzes");
+              navigate("/quizzes");
             }
           }
-        } catch (error) {
-          sessionStorage.setItem("verification_error_timestamp", Date.now().toString());
         }
+      } catch (error) {
+        console.error("Error in subscription verification:", error);
+        sessionStorage.setItem("verification_error_timestamp", Date.now().toString());
+      } finally {
+        setIsVerifying(false);
       }
     };
+    
     checkSubscription();
   }, [user?.id, userProfile, navigate, updateUserProfile, verifySubscriptionStatus, isPro]);
 

@@ -6,11 +6,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useStripeSubscription } from "@/hooks/useStripeSubscription";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Check, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Subscription = () => {
-  const { user, userProfile, updateUserProfile, signOut } = useAuth();
+  const { user, userProfile, updateUserProfile, signOut, isPro } = useAuth();
   const { createCheckoutSession, verifySubscriptionStatus, isLoading, openCustomerPortal } = useStripeSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -24,6 +24,14 @@ const Subscription = () => {
   const [shouldContinueChecking, setShouldContinueChecking] = useState(true);
 
   useEffect(() => {
+    // If user already has premium access and we're not in the middle of a checkout flow,
+    // redirect them to quizzes immediately
+    if (isPro() && !sessionStorage.getItem("new_subscriber") && !window.location.search.includes('subscription=')) {
+      console.log("User already has premium access, redirecting to quizzes");
+      navigate("/quizzes");
+      return;
+    }
+
     const checkSubscriptionStatus = async () => {
       // Se não houver usuário logado, não é necessário verificar
       if (!user) {
@@ -36,7 +44,6 @@ const Subscription = () => {
       
       // Determinar se devemos verificar o status da assinatura
       const shouldCheckStatus = isNewSubscriber || 
-                              (userProfile && userProfile.has_access === true) || 
                               window.location.search.includes('subscription=') ||
                               isRetrying;
       
@@ -61,7 +68,7 @@ const Subscription = () => {
         if (result.success && result.has_access) {
           await updateUserProfile();
           
-          // Se for um novo assinante, mostrar mensagem de boas-vindas
+          // Se for um novo assinante, mostrar mensagem de boas-vindas e redirecionar
           if (isNewSubscriber) {
             toast({
               title: "Assinatura ativada com sucesso!",
@@ -69,23 +76,30 @@ const Subscription = () => {
               duration: 5000,
             });
             
+            // Remove the new subscriber flag
             sessionStorage.removeItem("new_subscriber");
+            
+            // Check if premium access was granted
+            if (isPro()) {
+              console.log("Premium access granted after subscription, redirecting to quizzes");
+              navigate("/quizzes");
+              return;
+            }
+          }
+          
+          // If already has premium access, redirect to quizzes
+          if (isPro()) {
+            toast({
+              title: "Assinatura ativa",
+              description: "Você já possui uma assinatura ativa!",
+              duration: 3000,
+            });
             navigate("/quizzes");
             return;
           }
-          
-          // Se já tem acesso, redirecionar para dashboard
-          toast({
-            title: "Assinatura ativa",
-            description: "Você já possui uma assinatura ativa!",
-            duration: 3000,
-          });
-          navigate("/quizzes");
-          return;
         }
         
-        // Se chegamos até aqui, o usuário não tem assinatura ativa
-        // Vamos parar de verificar e mostrar a página de assinatura
+        // Se chegamos até aqui, vamos parar de verificar
         setCheckingStatus(false);
         setIsRetrying(false);
       } catch (error) {
@@ -124,18 +138,28 @@ const Subscription = () => {
     
     let intervalId: number | undefined;
     if (isAfterCheckout && user && verificationAttempts < maxVerificationAttempts && !isRetrying && checkingStatus && shouldContinueChecking) {
-      intervalId = window.setInterval(() => {
-        console.log("Verificando assinatura após checkout");
-        verifySubscriptionStatus().then(result => {
+      intervalId = window.setInterval(async () => {
+        console.log("Verificação periódica de assinatura após checkout");
+        try {
+          const result = await verifySubscriptionStatus();
           if (result.success && result.has_access) {
-            updateUserProfile().then(() => {
+            // Important: Force profile refresh to get latest data
+            await updateUserProfile();
+            
+            // Check if premium access is now granted
+            if (isPro()) {
               toast({
                 title: "Assinatura ativada!",
                 description: "Seu acesso foi liberado com sucesso.",
                 duration: 3000,
               });
+              // Clear session storage flag
+              sessionStorage.removeItem("new_subscriber");
+              // Redirect to quizzes
               navigate("/quizzes");
-            });
+              // Clear the interval
+              if (intervalId) clearInterval(intervalId);
+            }
           } else {
             // Incrementar tentativas de verificação automática
             setVerificationAttempts(prev => {
@@ -146,7 +170,7 @@ const Subscription = () => {
               return prev + 1;
             });
           }
-        }).catch(error => {
+        } catch (error) {
           console.error("Erro na verificação periódica:", error);
           // Incrementar tentativas em caso de erro
           setVerificationAttempts(prev => {
@@ -156,7 +180,7 @@ const Subscription = () => {
             }
             return prev + 1;
           });
-        });
+        }
       }, 5000);
     }
     
@@ -166,7 +190,7 @@ const Subscription = () => {
         clearInterval(intervalId);
       }
     };
-  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts, isRetrying, checkingStatus, shouldContinueChecking]);
+  }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts, isRetrying, checkingStatus, shouldContinueChecking, isPro]);
 
   const handleSubscribe = async () => {
     if (!user) {

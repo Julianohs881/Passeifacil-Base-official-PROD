@@ -92,17 +92,25 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremiu
     return <Navigate to="/login" replace />;
   }
   
+  // Enhanced premium access check with detailed logging
+  const hasPremiumAccess = isPro();
+  
   // Log user profile for debugging purposes
   console.log("ProtectedRoute checking user premium access:", {
     userId: user.id,
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
-    isPremium: isPro()
+    isPremium: hasPremiumAccess
   });
   
-  // Check if user has premium access when required
-  if (requirePremium && !isPro()) {
+  // Check if user has premium access when required - improved logic
+  if (requirePremium && !hasPremiumAccess) {
+    // If this is the subscription page itself, don't redirect (prevents loops)
+    if (window.location.pathname === "/subscription") {
+      return <>{children}</>;
+    }
+    
     console.log("User does not have premium access, redirecting to subscription page");
     return <Navigate to="/subscription" replace />;
   }
