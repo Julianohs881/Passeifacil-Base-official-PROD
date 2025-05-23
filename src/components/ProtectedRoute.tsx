@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
@@ -15,6 +15,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremiu
   const { user, loading, userProfile, signOut, updateUserProfile, isPro } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
+  const location = useLocation();
 
   // Set timeout to show emergency logout if loading takes too long
   useEffect(() => {
@@ -98,6 +99,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremiu
   // Log user profile for debugging purposes
   console.log("ProtectedRoute checking user premium access:", {
     userId: user.id,
+    path: location.pathname,
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
@@ -107,7 +109,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremiu
   // Check if user has premium access when required - improved logic
   if (requirePremium && !hasPremiumAccess) {
     // If this is the subscription page itself, don't redirect (prevents loops)
-    if (window.location.pathname === "/subscription") {
+    if (location.pathname === "/subscription") {
       return <>{children}</>;
     }
     

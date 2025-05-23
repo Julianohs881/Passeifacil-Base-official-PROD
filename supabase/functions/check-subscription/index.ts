@@ -3,13 +3,13 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Configuração de CORS para a função
+// CORS headers configuration
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Função auxiliar para logs detalhados com carimbo de data/hora
+// Helper function for detailed logging with timestamp
 const logStep = (requestId: string, message: string, details?: any) => {
   const timestamp = new Date().toISOString();
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -17,34 +17,34 @@ const logStep = (requestId: string, message: string, details?: any) => {
 };
 
 serve(async (req) => {
-  // Identificador único para rastrear cada solicitação através dos logs
+  // Generate unique ID for request tracing through logs
   const requestId = crypto.randomUUID().substring(0, 8);
   const log = (message: string, details?: any) => logStep(requestId, message, details);
   
   log("Function started");
   
-  // Lidar com requisições OPTIONS para CORS
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     log("Responding to CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
   
   try {
-    // Etapa 1: Configurar variáveis de ambiente e Stripe
+    // Step 1: Set up environment variables and Stripe
     let stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
-      log("ERRO: STRIPE_SECRET_KEY não encontrada");
-      throw new Error("STRIPE_SECRET_KEY não está configurada no ambiente");
+      log("ERROR: STRIPE_SECRET_KEY not found");
+      throw new Error("STRIPE_SECRET_KEY is not configured in the environment");
     }
     log("STRIPE_SECRET_KEY retrieved successfully");
     
-    // Inicializar Supabase client
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!supabaseUrl || !supabaseServiceRoleKey) {
-      log("ERRO: Variáveis do Supabase não estão configuradas");
-      throw new Error("Variáveis do Supabase não estão configuradas");
+      log("ERROR: Supabase variables not configured");
+      throw new Error("Supabase variables are not configured");
     }
     
     const supabaseClient = createClient(
@@ -54,11 +54,11 @@ serve(async (req) => {
     );
     log("Supabase client created with service role key");
     
-    // Autenticar usuário
+    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      log("ERRO: Header de autenticação não fornecido");
-      throw new Error("Header de autorização não fornecido");
+      log("ERROR: Authorization header not provided");
+      throw new Error("Authorization header not provided");
     }
     log("Authorization header found");
     
@@ -67,29 +67,29 @@ serve(async (req) => {
     
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) {
-      log("ERRO: Falha na autenticação", { error: userError.message });
-      throw new Error(`Erro de autenticação: ${userError.message}`);
+      log("ERROR: Authentication failed", { error: userError.message });
+      throw new Error(`Authentication error: ${userError.message}`);
     }
     
     const user = userData.user;
     if (!user || !user.email) {
-      log("ERRO: Usuário não autenticado ou email não disponível");
-      throw new Error("Usuário não autenticado ou email não disponível");
+      log("ERROR: User not authenticated or email not available");
+      throw new Error("User not authenticated or email not available");
     }
     log("User authenticated successfully", { userId: user.id, email: user.email });
     
-    // Inicializar Stripe
+    // Initialize Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
-    // Procurar cliente do Stripe pelo email
+    // Search for Stripe customer by email
     log("Searching for Stripe customer with email", { email: user.email });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
-    // Se não encontrar cliente no Stripe
+    // If no customer found in Stripe
     if (customers.data.length === 0) {
       log("No customer found with this email, updating profile with no subscription");
       
-      // Atualizar perfil para indicar que não possui assinatura
+      // Update profile to indicate no subscription
       const { error: updateError } = await supabaseClient
         .from("profiles")
         .update({
@@ -99,13 +99,12 @@ serve(async (req) => {
           stripe_customer_id: null,
           subscription_id: null,
           subscription_end_date: null
-          // Removida a referência à coluna updated_at que não existe
         })
         .eq("id", user.id);
       
       if (updateError) {
-        log("ERRO: Falha ao atualizar perfil", { error: updateError.message });
-        throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
+        log("ERROR: Failed to update profile", { error: updateError.message });
+        throw new Error(`Error updating profile: ${updateError.message}`);
       }
       
       log("Profile updated successfully with no subscription");
@@ -113,7 +112,9 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           has_access: false,
-          message: "Nenhuma assinatura encontrada para este usuário"
+          plan: "gratuito",
+          manual_access: false,
+          message: "No subscription found for this user"
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -122,18 +123,18 @@ serve(async (req) => {
       );
     }
     
-    // Cliente encontrado no Stripe
+    // Customer found in Stripe
     const customerId = customers.data[0].id;
     log("Customer found in Stripe", { customerId });
     
-    // Procurar assinaturas ativas
+    // Search for active subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 1
     });
     
-    // Verificar se possui assinatura ativa
+    // Verify if there's an active subscription
     const hasActiveSubscription = subscriptions.data.length > 0;
     let subscriptionId = null;
     let subscriptionStatus = null;
@@ -151,7 +152,7 @@ serve(async (req) => {
         endDate: subscriptionEndDate 
       });
       
-      // Atualizar perfil com informações da assinatura ativa
+      // Update profile with active subscription information
       const { error: updateError } = await supabaseClient
         .from("profiles")
         .update({
@@ -161,24 +162,39 @@ serve(async (req) => {
           stripe_customer_id: customerId,
           subscription_id: subscriptionId,
           subscription_end_date: subscriptionEndDate
-          // Removida a referência à coluna updated_at que não existe
         })
         .eq("id", user.id);
       
       if (updateError) {
-        log("ERRO: Falha ao atualizar perfil", { error: updateError.message });
-        throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
+        log("ERROR: Failed to update profile", { error: updateError.message });
+        throw new Error(`Error updating profile: ${updateError.message}`);
       }
+      
+      // Get the updated profile to return the correct manual_access value
+      const { data: profileData, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("manual_access")
+        .eq("id", user.id)
+        .single();
+        
+      if (profileError) {
+        log("ERROR: Failed to fetch profile after update", { error: profileError.message });
+        // Even if there's an error fetching the profile, we'll continue with the default manual_access value
+      }
+      
+      const manualAccess = profileData?.manual_access || false;
       
       log("Profile updated successfully with active subscription");
       return new Response(
         JSON.stringify({ 
           success: true, 
           has_access: true,
+          plan: "assinante",
+          manual_access: manualAccess,
           subscription_id: subscriptionId,
           subscription_status: subscriptionStatus,
           subscription_end_date: subscriptionEndDate,
-          message: "Assinatura ativa encontrada e perfil atualizado"
+          message: "Active subscription found and profile updated"
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -186,10 +202,10 @@ serve(async (req) => {
         }
       );
     } else {
-      // Não possui assinatura ativa
+      // No active subscription
       log("No active subscription found");
       
-      // Atualizar perfil para indicar que não possui assinatura
+      // Update profile to indicate no active subscription
       const { error: updateError } = await supabaseClient
         .from("profiles")
         .update({
@@ -199,21 +215,36 @@ serve(async (req) => {
           stripe_customer_id: customerId,
           subscription_id: null,
           subscription_end_date: null
-          // Removida a referência à coluna updated_at que não existe
         })
         .eq("id", user.id);
       
       if (updateError) {
-        log("ERRO: Falha ao atualizar perfil", { error: updateError.message });
-        throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
+        log("ERROR: Failed to update profile", { error: updateError.message });
+        throw new Error(`Error updating profile: ${updateError.message}`);
       }
+      
+      // Get the updated profile to return the correct manual_access value
+      const { data: profileData, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("manual_access")
+        .eq("id", user.id)
+        .single();
+        
+      if (profileError) {
+        log("ERROR: Failed to fetch profile after update", { error: profileError.message });
+        // Even if there's an error fetching the profile, we'll continue with the default manual_access value
+      }
+      
+      const manualAccess = profileData?.manual_access || false;
       
       log("Profile updated with no active subscription");
       return new Response(
         JSON.stringify({ 
           success: true, 
           has_access: false,
-          message: "Cliente encontrado, mas sem assinatura ativa"
+          plan: "cancelado",
+          manual_access: manualAccess,
+          message: "Customer found, but no active subscription"
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
