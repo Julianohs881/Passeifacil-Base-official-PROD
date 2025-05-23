@@ -98,8 +98,8 @@ serve(async (req) => {
           subscription_status: null,
           stripe_customer_id: null,
           subscription_id: null,
-          subscription_end_date: null,
-          updated_at: new Date().toISOString()
+          subscription_end_date: null
+          // Removida a referência à coluna updated_at que não existe
         })
         .eq("id", user.id);
       
@@ -160,8 +160,8 @@ serve(async (req) => {
           subscription_status: subscriptionStatus,
           stripe_customer_id: customerId,
           subscription_id: subscriptionId,
-          subscription_end_date: subscriptionEndDate,
-          updated_at: new Date().toISOString()
+          subscription_end_date: subscriptionEndDate
+          // Removida a referência à coluna updated_at que não existe
         })
         .eq("id", user.id);
       
@@ -198,8 +198,8 @@ serve(async (req) => {
           subscription_status: "canceled",
           stripe_customer_id: customerId,
           subscription_id: null,
-          subscription_end_date: null,
-          updated_at: new Date().toISOString()
+          subscription_end_date: null
+          // Removida a referência à coluna updated_at que não existe
         })
         .eq("id", user.id);
       
