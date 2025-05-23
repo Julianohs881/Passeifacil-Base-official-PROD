@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
@@ -6,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 export const useStripeSubscription = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { updateUserProfile, userProfile } = useAuth();
+  const { updateUserProfile } = useAuth();
   
   // Função para extrair mensagem de erro detalhada
   const extractDetailedErrorMessage = (error: any): string => {
@@ -120,13 +121,12 @@ export const useStripeSubscription = () => {
       // Flag to know this is a new subscriber
       sessionStorage.setItem("new_subscriber", "true");
       
-      // Improved: Add a verification check right after checkout starts
+      // Atualizar o perfil do usuário imediatamente para refletir a mudança
       setTimeout(async () => {
-        console.log("Verificando status da assinatura após checkout");
         await verifySubscriptionStatus();
       }, 1000);
       
-      // Open checkout URL in new tab
+      // Abrir a URL de checkout do Stripe em uma nova aba
       window.open(data.url, '_blank');
       
       return { success: true };
@@ -190,15 +190,8 @@ export const useStripeSubscription = () => {
       
       console.log("Resposta da verificação de assinatura:", data);
       
-      // IMPROVED: Update user profile and invalidate cache immediately
-      if (data.has_access) {
-        console.log("Assinatura ativa detectada, atualizando perfil de usuário");
-        // Force profile refresh to get the updated data
-        await updateUserProfile();
-        
-        // Clear any session storage flags that might interfere with navigation
-        sessionStorage.removeItem("verification_error_timestamp");
-      }
+      // Sempre atualizar o perfil do usuário, independentemente do retorno
+      await updateUserProfile();
       
       // Criar resultado bem-sucedido
       const result = { 

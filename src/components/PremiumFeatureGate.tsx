@@ -23,7 +23,7 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   feature, 
   children, 
   className,
-  hideCompletely = true // Default to completely hiding the feature for non-premium users
+  hideCompletely = true // Default to completely hiding the feature for free users
 }) => {
   const { isPro, hasReachedAILimit, userProfile } = useAuth();
   const navigate = useNavigate();
@@ -36,14 +36,14 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   // Debug log to inspect state
   console.log("PremiumFeatureGate checking feature access:", {
     feature,
-    isPremium: isPro(),
+    isPro: isPro(),
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
     ai_limit_reached: hasReachedAILimit()
   });
   
-  // Check if user has premium access and for AI feature, check if they've reached the limit
+  // Check if user is PRO and if it's the AI feature, check if they've reached the limit
   const hasAccess = isPro() && (feature !== 'ai' || !hasReachedAILimit());
   
   // If user has access, show the feature
@@ -51,7 +51,7 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
     return <>{children}</>;
   }
   
-  // If hideCompletely is true, don't render anything for non-premium users
+  // If hideCompletely is true, don't render anything for free users
   if (hideCompletely) {
     return null;
   }

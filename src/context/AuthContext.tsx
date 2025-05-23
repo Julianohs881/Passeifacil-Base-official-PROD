@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
@@ -21,8 +22,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState<Error | null>(null);
-  // New state to track if profile is being loaded to prevent race conditions
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   useEffect(() => {
     const getSession = async () => {
@@ -34,9 +33,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session) {
           setUser(session.user);
           await loadUserProfile(session.user.id);
-        } else {
-          setUser(null);
-          setUserProfile(null);
         }
       } catch (error) {
         console.error("Erro ao obter sessão:", error);
@@ -48,8 +44,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getSession();
 
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         setUser(session.user);
         await loadUserProfile(session.user.id);
@@ -58,22 +53,10 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserProfile(null);
       }
     });
-
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const loadUserProfile = async (userId: string) => {
-    // Prevent multiple simultaneous profile loads
-    if (isLoadingProfile) {
-      console.log("Profile load already in progress, skipping duplicate request");
-      return;
-    }
-    
     try {
-      setIsLoadingProfile(true);
       console.log("Loading user profile for ID:", userId);
       setProfileError(null);
       // Add a timeout to the profile loading to prevent infinite waiting
@@ -118,14 +101,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         console.log("User profile loaded successfully:", profileWithEmail);
         setUserProfile(profileWithEmail);
-        
-        // Log subscription status for debugging
-        console.log("Subscription status:", {
-          has_access: profileWithEmail.has_access,
-          plan: profileWithEmail.plan,
-          manual_access: profileWithEmail.manual_access,
-          isPremium: (profileWithEmail.has_access === true && profileWithEmail.plan === "assinante") || profileWithEmail.manual_access === true
-        });
       } else {
         console.log("No user profile data found");
         setUserProfile(null);
@@ -133,8 +108,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Erro ao carregar perfil do usuário:", error);
       setProfileError(error instanceof Error ? error : new Error(String(error)));
-    } finally {
-      setIsLoadingProfile(false);
     }
   };
 
@@ -196,47 +169,37 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Update user profile function - improved with proper logging and error handling
+  // Update user profile function
   const updateUserProfile = async () => {
     console.log("Manually refreshing user profile");
     if (user) {
-      try {
-        await loadUserProfile(user.id);
-        return true;
-      } catch (error) {
-        console.error("Error updating user profile:", error);
-        return false;
-      }
+      await loadUserProfile(user.id);
     }
-    return false;
   };
   
-  // Check if user has premium access - UPDATED WITH NEW LOGIC
+  // Check if user is a PRO user - FIXED FUNCTION
   const isPro = () => {
     if (!userProfile) return false;
     
-    console.log("Checking premium access:", {
+    console.log("Checking PRO access:", {
       uid: user?.id,
       has_access: userProfile.has_access,
       manual_access: userProfile.manual_access,
       plan: userProfile.plan,
     });
     
-    // New premium access logic:
-    // 1. User must have has_access = true AND plan = "assinante" 
-    // OR 
-    // 2. User must have manual_access = true
+    // Primary check: if has_access is true, user has subscription access
+    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === true) {
+      return true;
+    }
     
-    const hasPlanAccess = typeof userProfile.has_access === 'boolean' && 
-                         userProfile.has_access === true && 
-                         userProfile.plan === 'assinante';
-                         
-    const hasManualAccess = typeof userProfile.manual_access === 'boolean' && 
-                           userProfile.manual_access === true;
+    // Secondary check: manual access override (for admin/test users)
+    if (typeof userProfile.manual_access === 'boolean' && userProfile.manual_access === true) {
+      return true;
+    }
     
-    const hasAccess = hasPlanAccess || hasManualAccess;
-    console.log(`Premium access result: ${hasAccess ? 'GRANTED' : 'DENIED'}`);
-    return hasAccess;
+    // Legacy check based on plan (should match with has_access in most cases)
+    return userProfile.plan === 'pro' || userProfile.plan === 'assinante';
   };
   
   // Check if user has reached AI generation limit

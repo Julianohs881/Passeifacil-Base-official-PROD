@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,9 +13,8 @@ import Subscription from "./pages/Subscription";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
 import CreateQuiz from "./pages/CreateQuiz";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useStripeSubscription } from "./hooks/useStripeSubscription";
-import { useToast } from "@/hooks/use-toast";
 
 // Redireciona para quizzes se já estiver logado
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
@@ -27,99 +25,50 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Componente melhorado para verificar assinatura ao carregar o app
+// Verifica assinatura ao carregar o app
 const SubscriptionVerifier = () => {
-  const { user, updateUserProfile, userProfile, isPro } = useAuth();
+  const { user, updateUserProfile, userProfile } = useAuth();
   const { verifySubscriptionStatus } = useStripeSubscription();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  // Add state to prevent multiple concurrent checks
-  const [isVerifying, setIsVerifying] = useState(false);
-  // Track if the current page is already subscription page to prevent loops
-  const [isOnSubscriptionPage, setIsOnSubscriptionPage] = useState(false);
-
-  useEffect(() => {
-    // Update the isOnSubscriptionPage flag when pathname changes
-    setIsOnSubscriptionPage(window.location.pathname === '/subscription');
-  }, [window.location.pathname]);
 
   useEffect(() => {
     const checkSubscription = async () => {
-      if (!user || isVerifying) return;
+      if (user) {
+        try {
+          if (window.location.pathname === '/subscription') return;
 
-      try {
-        // Don't verify if we're already on the subscription page - helps prevent loops
-        if (window.location.pathname === '/subscription') {
-          console.log("Already on subscription page, skipping verification to avoid loops");
-          return;
-        }
+          if (userProfile && typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
+            navigate("/subscription");
+            return;
+          }
 
-        setIsVerifying(true);
-        
-        // Check if we're coming back from a checkout session
-        const isAfterCheckout = sessionStorage.getItem("new_subscriber") === "true";
-        const isSubscriptionParam = window.location.search.includes('subscription=');
-        
-        // Only do verification if we need to
-        if (isAfterCheckout || isSubscriptionParam || !isPro()) {
-          console.log("Subscription verification needed:", { 
-            isAfterCheckout, 
-            isSubscriptionParam,
-            hasPremiumAccess: isPro() 
-          });
-          
-          // Last verification error throttling
           const lastVerificationError = sessionStorage.getItem("verification_error_timestamp");
           if (lastVerificationError) {
             const errorTime = parseInt(lastVerificationError, 10);
             const currentTime = Date.now();
             if ((currentTime - errorTime) < 60000) {
-              setIsVerifying(false);
               return;
             } else {
               sessionStorage.removeItem("verification_error_timestamp");
             }
           }
 
-          // Verify subscription status
-          const result = await verifySubscriptionStatus();
-          
-          if (result.success) {
-            // Force profile refresh to ensure we have latest data
-            await updateUserProfile();
-            
-            // If we're coming back from checkout, clear the flag and show success toast
-            if (isAfterCheckout) {
-              sessionStorage.removeItem("new_subscriber");
-              toast({
-                title: "Assinatura ativada com sucesso!",
-                description: "Seu acesso foi liberado.",
-                duration: 3000,
-              });
-            }
-            
-            // Only redirect if not subscribed after verification and not already on subscription page
-            if (!isPro() && window.location.pathname !== '/subscription') {
-              console.log("User doesn't have premium access, redirecting to subscription");
-              navigate("/subscription");
-            } else if (isPro() && window.location.pathname === '/subscription') {
-              // If user has access and is on subscription page, send them to quizzes
-              console.log("User has premium access but is on subscription page, redirecting to quizzes");
-              navigate("/quizzes");
+          if (!userProfile || userProfile.has_access === true) {
+            const result = await verifySubscriptionStatus();
+            if (result.success) {
+              await updateUserProfile();
+              if (!result.has_access) {
+                navigate("/subscription");
+              }
             }
           }
+        } catch (error) {
+          sessionStorage.setItem("verification_error_timestamp", Date.now().toString());
         }
-      } catch (error) {
-        console.error("Error in subscription verification:", error);
-        sessionStorage.setItem("verification_error_timestamp", Date.now().toString());
-      } finally {
-        setIsVerifying(false);
       }
     };
-    
     checkSubscription();
-  }, [user?.id, userProfile, navigate, updateUserProfile, verifySubscriptionStatus, isPro]);
+  }, [user?.id, userProfile, navigate, updateUserProfile, verifySubscriptionStatus]);
 
   return null;
 };
@@ -155,21 +104,19 @@ function AppContent() {
           <Route path="/success" element={<Subscription />} />
           <Route path="/cancel" element={<Subscription />} />
 
-          {/* Rotas protegidas básicas */}
+          {/* Rotas protegidas */}
           <Route 
             path="/quizzes" 
             element={
-              <ProtectedRoute requirePremium={false}>
+              <ProtectedRoute>
                 <Home />
               </ProtectedRoute>
             }
           />
-
-          {/* Rotas protegidas que exigem acesso premium */}
           <Route 
             path="/quiz/:id" 
             element={
-              <ProtectedRoute requirePremium={true}>
+              <ProtectedRoute>
                 <Quiz />
               </ProtectedRoute>
             }
@@ -177,7 +124,7 @@ function AppContent() {
           <Route 
             path="/quizzes/new" 
             element={
-              <ProtectedRoute requirePremium={true}>
+              <ProtectedRoute>
                 <CreateQuiz />
               </ProtectedRoute>
             }
@@ -185,7 +132,7 @@ function AppContent() {
           <Route 
             path="/profile" 
             element={
-              <ProtectedRoute requirePremium={false}>
+              <ProtectedRoute>
                 <UserProfile />
               </ProtectedRoute>
             }
@@ -193,7 +140,7 @@ function AppContent() {
           <Route 
             path="/explore" 
             element={
-              <ProtectedRoute requirePremium={true}>
+              <ProtectedRoute>
                 <Explore />
               </ProtectedRoute>
             }

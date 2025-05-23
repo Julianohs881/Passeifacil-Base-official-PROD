@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
@@ -8,14 +8,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
-  requirePremium?: boolean; // New prop to specify if the route requires premium access
 };
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremium = false }) => {
-  const { user, loading, userProfile, signOut, updateUserProfile, isPro } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { user, loading, userProfile, signOut, updateUserProfile } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
-  const location = useLocation();
 
   // Set timeout to show emergency logout if loading takes too long
   useEffect(() => {
@@ -47,7 +45,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremiu
     };
     
     refreshProfile();
-  }, [user, loading, updateUserProfile]);
+  }, [user, loading]);
 
   const handleEmergencyLogout = async () => {
     try {
@@ -93,29 +91,34 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremiu
     return <Navigate to="/login" replace />;
   }
   
-  // Enhanced premium access check with detailed logging
-  const hasPremiumAccess = isPro();
-  
   // Log user profile for debugging purposes
-  console.log("ProtectedRoute checking user premium access:", {
+  console.log("ProtectedRoute checking user access:", {
     userId: user.id,
-    path: location.pathname,
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
-    isPremium: hasPremiumAccess,
-    requirePremium
+    subscription_status: userProfile?.subscription_status
   });
   
-  // Check if user has premium access when required - improved logic
-  if (requirePremium && !hasPremiumAccess) {
-    // If this is the subscription page itself, don't redirect (prevents loops)
-    if (location.pathname === "/subscription") {
-      return <>{children}</>;
+  // Check if user has access based on profile fields
+  if (userProfile) {
+    // Primary check: if has_access is explicitly false, redirect to subscription page
+    // But only if we're not already on the subscription page (to avoid loops)
+    if (userProfile.has_access === false && window.location.pathname !== '/subscription') {
+      console.log("User does not have subscription access, redirecting to subscription page");
+      return <Navigate to="/subscription" replace />;
     }
     
-    console.log("User does not have premium access, redirecting to subscription page");
-    return <Navigate to="/subscription" replace />;
+    // Secondary check: if manual_access is explicitly false and no has_access,
+    // AND the plan is not pro or assinante, redirect to subscription
+    if (userProfile.has_access !== true &&
+        userProfile.manual_access !== true &&
+        userProfile.plan !== 'pro' && 
+        userProfile.plan !== 'assinante' &&
+        window.location.pathname !== '/subscription') {
+      console.log("User has no subscription access rights, redirecting to subscription page");
+      return <Navigate to="/subscription" replace />;
+    }
   }
 
   return <>{children}</>;

@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
 
 interface UseAIQuestionProps {
   quizId: string;
@@ -15,21 +14,17 @@ export const useAIQuestion = ({ quizId, onSuccess }: UseAIQuestionProps) => {
   const [processingStep, setProcessingStep] = useState<string | null>(null);
   const { toast } = useToast();
   const { hasReachedAILimit, isPro, userProfile } = useAuth();
-  const navigate = useNavigate();
 
   const createQuestionWithAI = async (content: string, contentType: "text" | "image") => {
-    // Check premium access first
     if (!isPro()) {
       toast({
-        title: "Recurso exclusivo para assinantes",
-        description: "Faça upgrade para acessar a criação de questões com IA.",
+        title: "Recurso exclusivo PRO",
+        description: "Faça upgrade para o plano PRO para utilizar a criação de questões com IA.",
         variant: "destructive",
       });
-      navigate('/subscription');
       return false;
     }
 
-    // Then check AI limit for premium users
     if (hasReachedAILimit()) {
       // Calculate remaining questions (should be 0 if limit is reached)
       const aiQuestionsCreated = userProfile?.ai_questions_created || 0;

@@ -1,26 +1,17 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { signIn, user, updateUserProfile } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
-
-  // If user is already logged in, redirect to quizzes
-  useEffect(() => {
-    if (user) {
-      navigate("/quizzes");
-    }
-  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,27 +19,9 @@ const Login = () => {
     setError("");
     
     try {
-      console.log("Login: Iniciando login com email:", email);
-      
-      // Sign in the user
       await signIn(email, password);
-      console.log("Login: Login bem-sucedido, atualizando perfil");
-      
-      // Immediately update user profile after sign-in
-      try {
-        console.log("Login: Atualizando perfil de usuário após login");
-        await updateUserProfile();
-        console.log("Login: Perfil atualizado com sucesso");
-      } catch (profileError: any) {
-        console.error("Login: Erro ao atualizar perfil após login:", profileError);
-        // Continue anyway, as the user is logged in
-      }
-      
-      // Redirect to quizzes page
-      console.log("Login: Redirecionando para página de quizzes");
       navigate("/quizzes");
     } catch (error: any) {
-      console.error("Login error:", error);
       setError(error.message || "Falha ao fazer login");
     } finally {
       setLoading(false);
@@ -84,7 +57,6 @@ const Login = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
                 />
               </div>
               
@@ -99,7 +71,6 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
                 />
               </div>
             </div>
@@ -109,11 +80,7 @@ const Login = () => {
               className="w-full mt-6 bg-violet-500 hover:bg-violet-600" 
               disabled={loading}
             >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Entrando...
-                </span>
-              ) : "Entrar"}
+              {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
         </CardContent>
