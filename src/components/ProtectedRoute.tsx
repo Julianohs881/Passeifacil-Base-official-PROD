@@ -11,7 +11,7 @@ type ProtectedRouteProps = {
   requirePremium?: boolean; // New prop to specify if the route requires premium access
 };
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremium = true }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremium = false }) => {
   const { user, loading, userProfile, signOut, updateUserProfile, isPro } = useAuth();
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [isRefreshingProfile, setIsRefreshingProfile] = useState(false);
@@ -103,7 +103,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requirePremiu
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
-    isPremium: hasPremiumAccess
+    isPremium: hasPremiumAccess,
+    requirePremium
   });
   
   // Check if user has premium access when required - improved logic
