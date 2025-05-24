@@ -1,4 +1,4 @@
-apareceu esse codigo pra mim: 
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
