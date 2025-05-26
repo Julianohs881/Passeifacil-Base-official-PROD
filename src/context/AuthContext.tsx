@@ -340,15 +340,128 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isProfileLoaded,
         updateUserProfile,
         signOut,
-        signIn,
-        signUp,
+        signIn: async (email: string, password: string) => {
+          try {
+            const { error } = await supabase.auth.signInWithPassword({
+              email,
+              password
+            });
+            
+            if (error) throw error;
+          } catch (error) {
+            throw error;
+          }
+        },
+        signUp: async (email: string, password: string, name: string) => {
+          try {
+            const { data, error } = await supabase.auth.signUp({
+              email,
+              password,
+              options: {
+                data: {
+                  full_name: name
+                }
+              }
+            });
+            
+            if (error) throw error;
+            return data;
+          } catch (error) {
+            throw error;
+          }
+        },
         isPro,
         shouldShowUpgradeUI,
-        hasReachedAILimit,
-        updateAIQuestionsCreated,
-        updateProfile,
-        getAIUsageStats,
-        resetAIQuestionsCount
+        hasReachedAILimit: () => {
+          if (!userProfile) return true;
+          
+          const questionsCreated = userProfile.ai_questions_created || 0;
+          const limit = 50;
+          
+          return questionsCreated >= limit;
+        },
+        updateAIQuestionsCreated: async () => {
+          if (!user) return;
+          
+          try {
+            const currentCount = userProfile?.ai_questions_created || 0;
+            
+            const { error } = await supabase
+              .from('profiles')
+              .update({
+                ai_questions_created: currentCount + 1
+              })
+              .eq('id', user.id);
+              
+            if (error) throw error;
+            
+            await updateUserProfile();
+            
+          } catch (error) {
+            console.error("Error updating AI questions count:", error);
+          }
+        },
+        updateProfile: async (data: { name?: string, avatarUrl?: string }) => {
+          if (!user) return false;
+          
+          try {
+            const updates: any = {};
+            
+            if (data.name !== undefined) {
+              updates.name = data.name;
+            }
+            
+            if (data.avatarUrl !== undefined) {
+              updates.avatar_url = data.avatarUrl;
+            }
+            
+            const { error } = await supabase
+              .from('profiles')
+              .update(updates)
+              .eq('id', user.id);
+              
+            if (error) throw error;
+            
+            await updateUserProfile();
+            return true;
+            
+          } catch (error) {
+            console.error("Error updating profile:", error);
+            return false;
+          }
+        },
+        getAIUsageStats: () => {
+          const used = userProfile?.ai_questions_created || 0;
+          const limit = 50;
+          const remaining = Math.max(0, limit - used);
+          const percentUsed = Math.min(100, (used / limit) * 100);
+          
+          return {
+            used,
+            limit,
+            remaining,
+            percentUsed
+          };
+        },
+        resetAIQuestionsCount: async () => {
+          if (!user) return;
+          
+          try {
+            const { error } = await supabase
+              .from('profiles')
+              .update({
+                ai_questions_created: 0
+              })
+              .eq('id', user.id);
+              
+            if (error) throw error;
+            
+            await updateUserProfile();
+            
+          } catch (error) {
+            console.error("Error resetting AI questions count:", error);
+          }
+        }
       }}
     >
       {children}

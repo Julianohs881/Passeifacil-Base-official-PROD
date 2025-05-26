@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
@@ -9,8 +8,8 @@ export const useStripeSubscription = () => {
   const { toast } = useToast();
   const { updateUserProfile } = useAuth();
   
-  // Implementar um cache mais inteligente com TTL maior
-  const cacheTimeoutMs = 30000; // 30 segundos
+  // Cache mais inteligente com TTL maior
+  const cacheTimeoutMs = 60000; // 1 minuto
   const verificationCache = {
     lastResult: null as any,
     timestamp: 0,
@@ -277,4 +276,53 @@ export const useStripeSubscription = () => {
     verifySubscriptionStatus,
     openCustomerPortal
   };
+
+  // Helper functions
+  function extractDetailedErrorMessage(error: any): string {
+    if (!error) return "Erro desconhecido";
+    
+    if (error.message?.includes("Edge Function returned")) {
+      console.log("Erro completo da Edge Function:", error);
+      
+      try {
+        if (error.body) {
+          const errorBody = JSON.parse(error.body);
+          if (errorBody.error) return errorBody.error;
+          if (errorBody.details) return errorBody.details;
+          if (errorBody.message) return errorBody.message;
+        }
+      } catch (parseError) {
+        console.log("Erro ao parsear corpo do erro:", parseError);
+      }
+      
+      return "Erro de comunicação com o servidor. Verifique se você tem uma conexão estável com a internet e tente novamente.";
+    }
+    
+    if (typeof error === 'object') {
+      if (error.error) return error.error;
+      if (error.message) return error.message;
+      if (error.details) return error.details;
+    }
+    
+    return typeof error === 'string' ? error : JSON.stringify(error);
+  }
+  
+  function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 15000): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`Operação excedeu o tempo limite de ${timeoutMs/1000} segundos`));
+      }, timeoutMs);
+      
+      promise.then(
+        (value) => {
+          clearTimeout(timeoutId);
+          resolve(value);
+        },
+        (error) => {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      );
+    });
+  }
 };

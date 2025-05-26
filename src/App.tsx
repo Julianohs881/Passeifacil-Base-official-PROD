@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
@@ -25,7 +26,7 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Verifica assinatura ao carregar o app
+// Verifica assinatura ao carregar o app - OTIMIZADO
 const SubscriptionVerifier = () => {
   const { user, updateUserProfile, userProfile } = useAuth();
   const { verifySubscriptionStatus } = useStripeSubscription();
@@ -35,25 +36,30 @@ const SubscriptionVerifier = () => {
     const checkSubscription = async () => {
       if (user) {
         try {
+          // Só redireciona se já sabemos que não tem acesso
           if (window.location.pathname === '/subscription') return;
 
+          // Só verifica se tem certeza que não tem acesso
           if (userProfile && typeof userProfile.has_access === 'boolean' && userProfile.has_access === false) {
             navigate("/subscription");
             return;
           }
 
+          // Reduzir verificações automáticas - só verifica se não temos dados ou em casos específicos
           const lastVerificationError = sessionStorage.getItem("verification_error_timestamp");
           if (lastVerificationError) {
             const errorTime = parseInt(lastVerificationError, 10);
             const currentTime = Date.now();
-            if ((currentTime - errorTime) < 60000) {
+            // Aumentar tempo entre tentativas para 2 minutos
+            if ((currentTime - errorTime) < 120000) {
               return;
             } else {
               sessionStorage.removeItem("verification_error_timestamp");
             }
           }
 
-          if (!userProfile || userProfile.has_access === true) {
+          // Só verificar se realmente não temos dados de assinatura ou se explicitamente não tem acesso
+          if (!userProfile || userProfile.has_access === false) {
             const result = await verifySubscriptionStatus();
             if (result.success) {
               await updateUserProfile();
@@ -67,8 +73,10 @@ const SubscriptionVerifier = () => {
         }
       }
     };
+    
+    // Só executa uma vez quando o usuário muda, não toda vez que userProfile muda
     checkSubscription();
-  }, [user?.id, userProfile, navigate, updateUserProfile, verifySubscriptionStatus]);
+  }, [user?.id, navigate, updateUserProfile, verifySubscriptionStatus]); // Removido userProfile das dependências
 
   return null;
 };

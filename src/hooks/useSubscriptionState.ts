@@ -1,6 +1,5 @@
 
 import { useState, useCallback, useRef } from 'react';
-import { UserProfile } from '../types';
 
 interface SubscriptionState {
   isVerifying: boolean;
@@ -16,8 +15,8 @@ export const useSubscriptionState = () => {
   });
   
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-  const DEBOUNCE_DELAY = 1000; // 1 segundo
-  const MIN_VERIFICATION_INTERVAL = 5000; // 5 segundos mínimo entre verificações
+  const DEBOUNCE_DELAY = 2000; // 2 segundos
+  const MIN_VERIFICATION_INTERVAL = 10000; // 10 segundos mínimo entre verificações
 
   const canVerify = useCallback(() => {
     const now = Date.now();
