@@ -9,16 +9,35 @@ export const useStripeSubscription = () => {
   const { toast } = useToast();
   const { updateUserProfile } = useAuth();
   
+  // Implementar um cache mais inteligente com TTL maior
+  const cacheTimeoutMs = 30000; // 30 segundos
+  const verificationCache = {
+    lastResult: null as any,
+    timestamp: 0,
+    isValid: function() {
+      return this.lastResult && Date.now() - this.timestamp < cacheTimeoutMs;
+    },
+    set: function(result: any) {
+      this.lastResult = result;
+      this.timestamp = Date.now();
+    },
+    get: function() {
+      return this.lastResult;
+    },
+    clear: function() {
+      this.lastResult = null;
+      this.timestamp = 0;
+    }
+  };
+  
   // Função para extrair mensagem de erro detalhada
   const extractDetailedErrorMessage = (error: any): string => {
     if (!error) return "Erro desconhecido";
     
-    // Se o erro vier diretamente da função Edge
     if (error.message?.includes("Edge Function returned")) {
       console.log("Erro completo da Edge Function:", error);
       
       try {
-        // Tentar extrair o corpo da resposta como JSON
         if (error.body) {
           const errorBody = JSON.parse(error.body);
           if (errorBody.error) return errorBody.error;
@@ -32,26 +51,22 @@ export const useStripeSubscription = () => {
       return "Erro de comunicação com o servidor. Verifique se você tem uma conexão estável com a internet e tente novamente.";
     }
     
-    // Se for um erro com estrutura detalhada
     if (typeof error === 'object') {
       if (error.error) return error.error;
       if (error.message) return error.message;
       if (error.details) return error.details;
     }
     
-    // Se for um erro com mensagem simples
     return typeof error === 'string' ? error : JSON.stringify(error);
   };
   
-  // Função com timeout para evitar esperas infinitas
-  const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
+  // Função com timeout
+  const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 15000): Promise<T> => {
     return new Promise((resolve, reject) => {
-      // Criar um ID para o timeout que poderá ser cancelado
       const timeoutId = setTimeout(() => {
         reject(new Error(`Operação excedeu o tempo limite de ${timeoutMs/1000} segundos`));
       }, timeoutMs);
       
-      // Quando a promise resolver ou rejeitar, limpar o timeout
       promise.then(
         (value) => {
           clearTimeout(timeoutId);
@@ -65,33 +80,15 @@ export const useStripeSubscription = () => {
     });
   };
   
-  // Implementar um cache em memória para evitar chamadas excessivas
-  const cacheTimeoutMs = 15000; // 15 segundos
-  const verificationCache = {
-    lastResult: null as any,
-    timestamp: 0,
-    isValid: function() {
-      return this.lastResult && Date.now() - this.timestamp < cacheTimeoutMs;
-    },
-    set: function(result: any) {
-      this.lastResult = result;
-      this.timestamp = Date.now();
-    },
-    get: function() {
-      return this.lastResult;
-    }
-  };
-  
   const createCheckoutSession = async () => {
     setIsLoading(true);
     
     try {
-      // Registrar início da operação para debugging
       console.log("Iniciando criação de sessão de checkout");
       
       const { data, error } = await withTimeout(
         supabase.functions.invoke('create-checkout'),
-        15000 // 15 segundos de timeout
+        15000
       );
       
       if (error) {
@@ -100,7 +97,6 @@ export const useStripeSubscription = () => {
       }
       
       if (data.error) {
-        // Se o erro indicar que o usuário já tem uma assinatura ativa
         if (data.redirectToPortal) {
           toast({
             title: "Você já possui uma assinatura ativa",
@@ -118,15 +114,16 @@ export const useStripeSubscription = () => {
         throw new Error(data.error);
       }
       
-      // Flag to know this is a new subscriber
       sessionStorage.setItem("new_subscriber", "true");
       
-      // Atualizar o perfil do usuário imediatamente para refletir a mudança
+      // Clear cache when starting new subscription
+      verificationCache.clear();
+      
+      // Update profile after a brief delay
       setTimeout(async () => {
         await verifySubscriptionStatus();
-      }, 1000);
+      }, 2000);
       
-      // Abrir a URL de checkout do Stripe em uma nova aba
       window.open(data.url, '_blank');
       
       return { success: true };
@@ -153,7 +150,6 @@ export const useStripeSubscription = () => {
   };
   
   const verifySubscriptionStatus = async () => {
-    // Se já estamos carregando, não permitir chamadas simultâneas
     if (isLoading) {
       console.log("Já existe uma verificação em andamento, ignorando chamada");
       return { 
@@ -163,7 +159,6 @@ export const useStripeSubscription = () => {
       };
     }
     
-    // Verificar se temos um resultado em cache válido
     if (verificationCache.isValid()) {
       console.log("Retornando resultado em cache para verificação de assinatura");
       return verificationCache.get();
@@ -176,7 +171,7 @@ export const useStripeSubscription = () => {
       
       const { data, error } = await withTimeout(
         supabase.functions.invoke('check-subscription'),
-        15000 // 15 segundos de timeout
+        15000
       );
       
       if (error) {
@@ -190,10 +185,9 @@ export const useStripeSubscription = () => {
       
       console.log("Resposta da verificação de assinatura:", data);
       
-      // Sempre atualizar o perfil do usuário, independentemente do retorno
+      // Always update the profile
       await updateUserProfile();
       
-      // Criar resultado bem-sucedido
       const result = { 
         success: true, 
         has_access: data.has_access,
@@ -202,7 +196,6 @@ export const useStripeSubscription = () => {
         subscription_end: data.subscription_end_date
       };
       
-      // Armazenar resultado em cache
       verificationCache.set(result);
       
       return result;
@@ -218,7 +211,6 @@ export const useStripeSubscription = () => {
         duration: 5000,
       });
       
-      // Criar resultado de erro
       const errorResult = { 
         success: false, 
         error: { message: detailedMessage },
@@ -239,7 +231,7 @@ export const useStripeSubscription = () => {
       
       const { data, error } = await withTimeout(
         supabase.functions.invoke('customer-portal'),
-        15000 // 15 segundos de timeout
+        15000
       );
       
       if (error) {
@@ -248,7 +240,6 @@ export const useStripeSubscription = () => {
       }
       
       if (data.error) {
-        // Verifica se é o erro específico de configuração do portal não encontrada
         if (data.error.includes("Portal do cliente do Stripe não está configurado")) {
           throw new Error("O Portal do Cliente do Stripe não está configurado. Acesse o Dashboard do Stripe para configurá-lo em: Configurações > Portal do Cliente.");
         }
@@ -256,7 +247,6 @@ export const useStripeSubscription = () => {
         throw new Error(data.error);
       }
       
-      // Abrir o portal de clientes do Stripe em uma nova aba
       if (data.url) {
         window.open(data.url, '_blank');
         return { success: true };

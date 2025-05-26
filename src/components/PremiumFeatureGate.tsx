@@ -23,10 +23,15 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   feature, 
   children, 
   className,
-  hideCompletely = true // Default to completely hiding the feature for free users
+  hideCompletely = true
 }) => {
-  const { isPro, hasReachedAILimit, userProfile } = useAuth();
+  const { isPro, hasReachedAILimit, userProfile, isProfileLoaded } = useAuth();
   const navigate = useNavigate();
+  
+  // Wait for profile to load before making decisions
+  if (!isProfileLoaded) {
+    return <div className="opacity-50">{children}</div>;
+  }
   
   // Calculate AI usage metrics for Pro users
   const aiQuestionsCreated = userProfile?.ai_questions_created || 0;
@@ -40,7 +45,8 @@ const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
     plan: userProfile?.plan,
     has_access: userProfile?.has_access,
     manual_access: userProfile?.manual_access,
-    ai_limit_reached: hasReachedAILimit()
+    ai_limit_reached: hasReachedAILimit(),
+    isProfileLoaded
   });
   
   // Check if user is PRO and if it's the AI feature, check if they've reached the limit

@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import { UserProfile, UserPlan } from '../types';
+import { useSubscriptionState } from '../hooks/useSubscriptionState';
 
 // Create the AuthContext
 const AuthContext = createContext<any | undefined>(undefined);
@@ -22,6 +23,9 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState<Error | null>(null);
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
+  
+  const { subscriptionState, canVerify, debouncedAction, resetState } = useSubscriptionState();
 
   useEffect(() => {
     const getSession = async () => {
@@ -32,11 +36,15 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (session) {
           setUser(session.user);
-          await loadUserProfile(session.user.id);
+          // Use debounced action to prevent multiple simultaneous calls
+          debouncedAction(() => loadUserProfile(session.user.id));
+        } else {
+          setIsProfileLoaded(true);
         }
       } catch (error) {
         console.error("Erro ao obter sessão:", error);
         setProfileError(error instanceof Error ? error : new Error(String(error)));
+        setIsProfileLoaded(true);
       } finally {
         setLoading(false);
       }
@@ -44,34 +52,40 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getSession();
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, !!session);
+      
       if (session) {
         setUser(session.user);
-        await loadUserProfile(session.user.id);
+        // Only load profile if it's a new session or significant change
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          debouncedAction(() => loadUserProfile(session.user.id));
+        }
       } else {
         setUser(null);
         setUserProfile(null);
+        setIsProfileLoaded(true);
+        resetState();
       }
     });
-  }, []);
+  }, [debouncedAction, resetState]);
 
   const loadUserProfile = async (userId: string) => {
     try {
       console.log("Loading user profile for ID:", userId);
       setProfileError(null);
-      // Add a timeout to the profile loading to prevent infinite waiting
+      
+      // Simple profile fetch with timeout
       const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      // Create a timeout promise
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado ao carregar perfil")), 10000);
+        setTimeout(() => reject(new Error("Tempo esgotado ao carregar perfil")), 15000);
       });
 
-      // Race between actual request and timeout
       const { data, error } = await Promise.race([
         profilePromise,
         timeoutPromise.then(() => { throw new Error("Tempo esgotado ao carregar perfil"); })
@@ -80,19 +94,17 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         console.error("Erro ao carregar perfil do usuário:", error);
         setProfileError(error);
+        setIsProfileLoaded(true);
         return;
       }
 
       if (data) {
-        // Safely convert the database plan string to UserPlan enum type
         const planValue = data.plan as string;
-        // Validate plan against allowed UserPlan values or use default
         const validPlan: UserPlan = 
           ['gratuito', 'pro', 'assinante', 'cancelado', 'sem assinatura'].includes(planValue)
             ? planValue as UserPlan
-            : 'gratuito'; // Default fallback
+            : 'gratuito';
 
-        // Convert database profile to UserProfile with email from user and validated plan
         const profileWithEmail: UserProfile = {
           ...data,
           plan: validPlan,
@@ -108,6 +120,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Erro ao carregar perfil do usuário:", error);
       setProfileError(error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      setIsProfileLoaded(true);
     }
   };
 
@@ -151,41 +165,50 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
       setUser(null);
       setUserProfile(null);
+      setIsProfileLoaded(false);
+      resetState();
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      // In case of error and force is true, reset the state locally
       if (force) {
         console.log("Forçando logout local mesmo com erro");
         setUser(null);
         setUserProfile(null);
+        setIsProfileLoaded(false);
+        resetState();
         localStorage.removeItem('supabase.auth.token');
         sessionStorage.clear();
         window.location.href = "/login";
       } else {
-        throw error; // Re-throw to let caller handle
+        throw error;
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Update user profile function
+  // Update user profile function - now with better control
   const updateUserProfile = async () => {
     console.log("Manually refreshing user profile");
-    if (user) {
-      await loadUserProfile(user.id);
+    if (user && canVerify()) {
+      debouncedAction(() => loadUserProfile(user.id));
+    } else if (subscriptionState.isVerifying) {
+      console.log("Profile update skipped - verification already in progress");
     }
   };
   
-  // Check if user is a PRO user - FIXED FUNCTION
+  // Check if user is a PRO user - IMPROVED FUNCTION
   const isPro = () => {
-    if (!userProfile) return false;
+    // If profile is not loaded yet, return false but don't show upgrade UI
+    if (!isProfileLoaded || !userProfile) {
+      return false;
+    }
     
     console.log("Checking PRO access:", {
       uid: user?.id,
       has_access: userProfile.has_access,
       manual_access: userProfile.manual_access,
       plan: userProfile.plan,
+      isProfileLoaded
     });
     
     // Primary check: if has_access is true, user has subscription access
@@ -207,7 +230,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!userProfile) return true;
     
     const questionsCreated = userProfile.ai_questions_created || 0;
-    const limit = 50; // Monthly limit
+    const limit = 50;
     
     return questionsCreated >= limit;
   };
@@ -217,10 +240,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     
     try {
-      // Get current count
       const currentCount = userProfile?.ai_questions_created || 0;
       
-      // Update count in database
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -230,7 +251,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       if (error) throw error;
       
-      // Update local state
       await updateUserProfile();
       
     } catch (error) {
@@ -238,7 +258,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  // Reset AI questions counter (e.g., on the 1st of each month)
+  // Reset AI questions counter
   const resetAIQuestionsCount = async () => {
     if (!user) return;
     
@@ -252,7 +272,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       if (error) throw error;
       
-      // Update local state
       await updateUserProfile();
       
     } catch (error) {
@@ -297,7 +316,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       if (error) throw error;
       
-      // Update local state
       await updateUserProfile();
       return true;
       
@@ -307,6 +325,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Helper function to determine if upgrade UI should be shown
+  const shouldShowUpgradeUI = () => {
+    return isProfileLoaded && !isPro();
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -314,11 +337,13 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         userProfile,
         profileError,
+        isProfileLoaded,
         updateUserProfile,
         signOut,
         signIn,
         signUp,
         isPro,
+        shouldShowUpgradeUI,
         hasReachedAILimit,
         updateAIQuestionsCreated,
         updateProfile,

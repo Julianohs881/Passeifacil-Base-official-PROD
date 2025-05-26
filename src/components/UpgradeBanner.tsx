@@ -17,7 +17,7 @@ interface UpgradeBannerProps {
 }
 
 const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
-  const { isPro } = useAuth();
+  const { shouldShowUpgradeUI, isProfileLoaded } = useAuth();
   const { createCheckoutSession, isLoading, openCustomerPortal } = useStripeSubscription();
   const { toast } = useToast();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,7 +33,6 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
       const result = await createCheckoutSession();
       
       if (!result.success && result.error) {
-        // Se há redirecionamento para o portal
         if ('redirectToPortal' in result && result.redirectToPortal) {
           toast({
             title: "Redirecionando para o portal",
@@ -41,18 +40,15 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
             duration: 3000,
           });
           
-          // Chama a função para abrir o portal do cliente
           await openCustomerPortal();
           return;
         }
         
-        // Armazenar a mensagem de erro para exibição
         setErrorMessage(
           result.error.message || 
           "Ocorreu um erro ao processar sua solicitação. Verifique os logs para mais detalhes."
         );
         
-        // Log detalhado do erro
         console.error("Detalhes do erro de checkout:", result.error);
       }
     } catch (error: any) {
@@ -67,8 +63,8 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
     }
   };
   
-  // Don't show banner for PRO users
-  if (isPro()) {
+  // Don't show banner if profile is not loaded yet or user is PRO
+  if (!isProfileLoaded || !shouldShowUpgradeUI()) {
     return null;
   }
   
