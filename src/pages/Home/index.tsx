@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -16,10 +15,12 @@ import { PlusCircle } from "lucide-react";
 import QuizCard from "@/components/QuizCard";
 import ChangeColorPopover from "@/components/ChangeColorPopover";
 import ProfileIncompleteAlert from "@/components/ProfileIncompleteAlert";
+import FreePlanLimits from "@/components/FreePlanLimits";
 import { HomePageHeader } from "./HomePageHeader";
 import { ImportCodeDialog } from "@/components/Share/ImportCodeDialog";
 import { QuizGrid } from "./QuizGrid";
 import { useToast } from "@/hooks/use-toast";
+import { useFreePlanLimits } from "@/hooks/useFreePlanLimits";
 
 const Home = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -27,9 +28,17 @@ const Home = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isColorPopoverOpen, setIsColorPopoverOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const {
+    createdQuizzesCount,
+    canCreateQuiz,
+    getRemainingCreatedQuizzes,
+    showUpgradeToast,
+    refreshCounts,
+    limits
+  } = useFreePlanLimits();
 
   useEffect(() => {
     if (!user) {
@@ -63,12 +72,18 @@ const Home = () => {
       }));
       
       setQuizzes(parsedQuizzes);
+      refreshCounts();
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreateQuiz = () => {
+    if (!canCreateQuiz()) {
+      showUpgradeToast("create");
+      navigate("/subscription");
+      return;
+    }
     navigate("/quizzes/new");
   };
 
@@ -83,6 +98,7 @@ const Home = () => {
       
       // Update local state by filtering out the deleted quiz
       setQuizzes(quizzes.filter(quiz => quiz.id !== id));
+      refreshCounts();
       toast({
         title: "Quiz excluído",
         description: "Quiz excluído com sucesso!",
@@ -180,6 +196,18 @@ const Home = () => {
     <div className="container py-8">
       <ProfileIncompleteAlert />
       
+      {/* Mostrar limitações para usuários gratuitos */}
+      {!isPro() && (
+        <div className="mb-6">
+          <FreePlanLimits
+            currentCount={createdQuizzesCount}
+            limit={limits.CREATED_QUIZZES}
+            feature="quizzes"
+            onUpgrade={() => navigate("/subscription")}
+          />
+        </div>
+      )}
+      
       <HomePageHeader 
         onOpenCreateQuiz={handleCreateQuiz}
         onOpenImportDialog={handleOpenImportDialog}
@@ -204,7 +232,11 @@ const Home = () => {
               Crie quizzes personalizados e compartilhe com seus amigos e
               alunos.
             </p>
-            <Button onClick={handleCreateQuiz} className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto">
+            <Button 
+              onClick={handleCreateQuiz} 
+              className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto"
+              disabled={!canCreateQuiz()}
+            >
               <PlusCircle className="mr-2 h-4 w-4" />
               Criar Primeiro Quiz
             </Button>

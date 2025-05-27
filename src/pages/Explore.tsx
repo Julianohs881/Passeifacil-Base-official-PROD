@@ -1,20 +1,27 @@
 
-import { useEffect } from "react";
+import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import NavBar from "@/components/NavBar";
-
-// Extracted components
-import ExploreFilters, { formSchema, FilterValues } from "@/components/Explore/ExploreFilters";
+import ExploreFilters, { FilterValues } from "@/components/Explore/ExploreFilters";
 import QuizzesGrid from "@/components/Explore/QuizzesGrid";
+import FreePlanLimits from "@/components/FreePlanLimits";
 import { useExploreQuizzes } from "@/components/Explore/useExploreQuizzes";
+import { useFreePlanLimits } from "@/hooks/useFreePlanLimits";
+import { useToast } from "@/hooks/use-toast";
 
 const Explore = () => {
+  const { isPro } = useAuth();
   const navigate = useNavigate();
-  
+  const { toast } = useToast();
+  const [filters, setFilters] = useState<FilterValues>({
+    search: "",
+    faculty: "",
+    courseYear: "",
+    course: "",
+  });
+
   const {
+    quizzes,
     filteredQuizzes,
     loading,
     faculties,
@@ -22,72 +29,83 @@ const Explore = () => {
     courses,
     applyFilters,
     clearFilters,
-    setFilteredQuizzes,
-    quizzes
+    setFilteredQuizzes
   } = useExploreQuizzes();
-  
-  const form = useForm<FilterValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      search: "",
-      faculty: "",
-      courseYear: "",
-      course: "",
-    },
-  });
-  
-  const activeFilters = Object.entries(form.watch()).filter(
-    ([_, value]) => value && value.trim() !== ""
-  ).length;
+
+  const {
+    exploredQuizzesCount,
+    canExploreMore,
+    getRemainingExploredQuizzes,
+    showUpgradeToast,
+    limits
+  } = useFreePlanLimits();
+
+  const handleFilterChange = (newFilters: FilterValues) => {
+    setFilters(newFilters);
+    applyFilters(newFilters);
+  };
 
   const handleClearFilters = () => {
-    form.reset(clearFilters());
+    const clearedFilters = clearFilters();
+    setFilters(clearedFilters);
     setFilteredQuizzes(quizzes);
   };
-  
-  const onSubmit = (values: FilterValues) => {
-    applyFilters(values);
+
+  const handleQuizClick = (quizId: string) => {
+    if (!isPro() && !canExploreMore()) {
+      showUpgradeToast("explore");
+      navigate("/subscription");
+      return;
+    }
+    navigate(`/quiz/${quizId}`);
   };
 
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      form.handleSubmit(onSubmit)();
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form.watch, quizzes]);
+  // Limitar quizzes exibidos para usuários gratuitos
+  const displayedQuizzes = isPro() 
+    ? filteredQuizzes 
+    : filteredQuizzes.slice(0, limits.EXPLORED_QUIZZES);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavBar />
-      <main className="container mx-auto py-8 px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h1 className="text-2xl font-bold mb-4 md:mb-0">Explore Quizzes</h1>
-          <div className="flex items-center space-x-2 w-full md:w-auto">
-            <Button 
-              onClick={() => navigate("/quizzes")}
-              variant="outline"
-              className="border-blue-500 text-blue-900"
-            >
-              Meus Quizzes
-            </Button>
-          </div>
+    <div className="container py-8">
+      <h1 className="text-2xl font-bold mb-6">Explorar Quizzes Públicos</h1>
+      
+      {/* Mostrar limitações para usuários gratuitos */}
+      {!isPro() && (
+        <div className="mb-6">
+          <FreePlanLimits
+            currentCount={exploredQuizzesCount}
+            limit={limits.EXPLORED_QUIZZES}
+            feature="explore"
+            onUpgrade={() => navigate("/subscription")}
+          />
         </div>
-        
-        <ExploreFilters 
-          form={form}
+      )}
+
+      <div className="space-y-6">
+        <ExploreFilters
+          filters={filters}
           faculties={faculties}
           courseYears={courseYears}
           courses={courses}
-          clearFilters={handleClearFilters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
         />
         
         <QuizzesGrid 
-          quizzes={filteredQuizzes} 
+          quizzes={displayedQuizzes}
           loading={loading}
-          activeFilters={activeFilters}
+          onQuizClick={handleQuizClick}
         />
-      </main>
+        
+        {!isPro() && filteredQuizzes.length > limits.EXPLORED_QUIZZES && (
+          <div className="text-center mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <p className="text-amber-700">
+              Mostrando apenas {limits.EXPLORED_QUIZZES} quizzes do plano gratuito. 
+              Faça upgrade para ver todos os {filteredQuizzes.length} quizzes disponíveis.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

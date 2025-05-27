@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -295,42 +294,65 @@ const Subscription = () => {
   return (
     <div className="container max-w-5xl py-8 px-4">
       <h1 className="text-3xl font-bold text-center mb-8">Assinatura Passei Fácil</h1>
-      <p className="text-gray-600 text-center max-w-2xl mx-auto mb-12">
-        Para acessar a plataforma Passei Fácil, é necessário ser um assinante. 
-        Assine agora e tenha acesso completo a todas as funcionalidades!
-      </p>
-
-      {verificationError && (
-        <Alert variant="destructive" className="max-w-md mx-auto mb-6 border-red-200 bg-red-50">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erro ao verificar assinatura</AlertTitle>
-          <AlertDescription>{verificationError}</AlertDescription>
-          <div className="flex flex-col sm:flex-row justify-center gap-2 mt-3">
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={handleRetryVerification}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Tentar verificar novamente
-            </Button>
+      
+      <div className="grid md:grid-cols-2 gap-6 mb-12">
+        {/* Plano Gratuito */}
+        <Card className="border-2 border-gray-200 shadow-lg">
+          <CardHeader className="bg-gray-100">
+            <CardTitle className="text-xl text-center">Plano Gratuito</CardTitle>
+            <CardDescription className="text-gray-600 text-center">
+              Limitado mas funcional
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="pt-6">
+            <div className="text-center mb-4">
+              <p className="text-2xl font-bold">R$0<span className="text-base font-normal text-gray-500">/mês</span></p>
+            </div>
             
-            <Button 
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-            >
-              Sair
+            <ul className="space-y-3">
+              {[
+                "Criar até 5 quizzes",
+                "Explorar até 5 quizzes públicos",
+                "Quizzes apenas privados",
+                "Suporte básico"
+              ].map((feature, index) => (
+                <li key={index} className="flex items-center">
+                  <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                  <span className="text-sm">{feature}</span>
+                </li>
+              ))}
+              
+              {[
+                "Sem criação com IA",
+                "Sem compartilhamento",
+                "Sem importação"
+              ].map((feature, index) => (
+                <li key={index} className="flex items-center">
+                  <X className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
+                  <span className="text-sm text-gray-500">{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+          
+          <CardFooter>
+            <Button variant="outline" className="w-full" disabled>
+              Plano Atual
             </Button>
-          </div>
-        </Alert>
-      )}
+          </CardFooter>
+        </Card>
 
-      <div className="max-w-md mx-auto">
-        <Card className="border-2 border-violet-200 shadow-lg">
+        {/* Plano PRO */}
+        <Card className="border-2 border-violet-200 shadow-lg relative">
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <span className="bg-gradient-to-r from-amber-400 to-yellow-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+              Recomendado
+            </span>
+          </div>
+          
           <CardHeader className="bg-violet-500 text-white">
-            <CardTitle className="text-2xl text-center">Assinatura Passei Fácil</CardTitle>
+            <CardTitle className="text-2xl text-center">Assinatura PRO</CardTitle>
             <CardDescription className="text-violet-100 text-center">
               Acesso completo a todas as funcionalidades
             </CardDescription>
@@ -338,15 +360,17 @@ const Subscription = () => {
           
           <CardContent className="pt-6">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">R$19,90<span className="text-base font-normal text-gray-500">/mês</span></p>
+              <p className="text-3xl font-bold">R$14,90<span className="text-base font-normal text-gray-500">/mês</span></p>
             </div>
             
             <ul className="space-y-3 mt-6">
               {[
-                "Acesso ilimitado a todos os quizzes",
                 "Criação ilimitada de quizzes",
+                "Acesso ilimitado a quizzes públicos",
                 "Compartilhamento de quizzes",
-                "Geração de questões com IA",
+                "Geração de questões com IA (50/mês)",
+                "Importação de quizzes",
+                "Quizzes públicos e privados",
                 "Suporte prioritário"
               ].map((feature, index) => (
                 <li key={index} className="flex items-center">
@@ -375,6 +399,33 @@ const Subscription = () => {
           </CardFooter>
         </Card>
       </div>
+
+      {verificationError && (
+        <Alert variant="destructive" className="max-w-md mx-auto mb-6 border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erro ao verificar assinatura</AlertTitle>
+          <AlertDescription>{verificationError}</AlertDescription>
+          <div className="flex flex-col sm:flex-row justify-center gap-2 mt-3">
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={handleRetryVerification}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Tentar verificar novamente
+            </Button>
+            
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+            >
+              Sair
+            </Button>
+          </div>
+        </Alert>
+      )}
     </div>
   );
 };
