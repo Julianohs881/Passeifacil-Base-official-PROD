@@ -3,6 +3,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Crown } from "lucide-react";
 import { UserPlan } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 
 interface PlanBadgeProps {
   plan: UserPlan;
@@ -10,7 +11,10 @@ interface PlanBadgeProps {
 }
 
 const PlanBadge: React.FC<PlanBadgeProps> = ({ plan, className }) => {
-  if (plan === "pro") {
+  const { isPro } = useAuth();
+  
+  // Use isPro() function to determine if user is actually PRO
+  if (isPro()) {
     return (
       <Badge 
         variant="outline" 
