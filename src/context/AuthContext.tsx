@@ -1,5 +1,4 @@
-
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../integrations/supabase/client';
 import { UserProfile, UserPlan } from '../types';
@@ -24,6 +23,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState<Error | null>(null);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
+  const hasInitialized = useRef(false);
   
   const { subscriptionState, canVerify, debouncedAction, resetState } = useSubscriptionState();
 
@@ -47,18 +47,27 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsProfileLoaded(true);
       } finally {
         setLoading(false);
+        hasInitialized.current = true;
       }
     };
 
-    getSession();
+    // Só executa se não foi inicializado ainda
+    if (!hasInitialized.current) {
+      getSession();
+    }
 
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, !!session);
+      
+      // Previne loops infinitos
+      if (!hasInitialized.current && event === 'INITIAL_SESSION') {
+        return;
+      }
       
       if (session) {
         setUser(session.user);
         // Only load profile if it's a new session or significant change
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && !userProfile)) {
           debouncedAction(() => loadUserProfile(session.user.id));
         }
       } else {
@@ -68,7 +77,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         resetState();
       }
     });
-  }, [debouncedAction, resetState]);
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []); // Remove dependencies to prevent re-initialization
 
   const loadUserProfile = async (userId: string) => {
     try {
@@ -340,128 +353,15 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isProfileLoaded,
         updateUserProfile,
         signOut,
-        signIn: async (email: string, password: string) => {
-          try {
-            const { error } = await supabase.auth.signInWithPassword({
-              email,
-              password
-            });
-            
-            if (error) throw error;
-          } catch (error) {
-            throw error;
-          }
-        },
-        signUp: async (email: string, password: string, name: string) => {
-          try {
-            const { data, error } = await supabase.auth.signUp({
-              email,
-              password,
-              options: {
-                data: {
-                  full_name: name
-                }
-              }
-            });
-            
-            if (error) throw error;
-            return data;
-          } catch (error) {
-            throw error;
-          }
-        },
+        signIn,
+        signUp,
         isPro,
         shouldShowUpgradeUI,
-        hasReachedAILimit: () => {
-          if (!userProfile) return true;
-          
-          const questionsCreated = userProfile.ai_questions_created || 0;
-          const limit = 50;
-          
-          return questionsCreated >= limit;
-        },
-        updateAIQuestionsCreated: async () => {
-          if (!user) return;
-          
-          try {
-            const currentCount = userProfile?.ai_questions_created || 0;
-            
-            const { error } = await supabase
-              .from('profiles')
-              .update({
-                ai_questions_created: currentCount + 1
-              })
-              .eq('id', user.id);
-              
-            if (error) throw error;
-            
-            await updateUserProfile();
-            
-          } catch (error) {
-            console.error("Error updating AI questions count:", error);
-          }
-        },
-        updateProfile: async (data: { name?: string, avatarUrl?: string }) => {
-          if (!user) return false;
-          
-          try {
-            const updates: any = {};
-            
-            if (data.name !== undefined) {
-              updates.name = data.name;
-            }
-            
-            if (data.avatarUrl !== undefined) {
-              updates.avatar_url = data.avatarUrl;
-            }
-            
-            const { error } = await supabase
-              .from('profiles')
-              .update(updates)
-              .eq('id', user.id);
-              
-            if (error) throw error;
-            
-            await updateUserProfile();
-            return true;
-            
-          } catch (error) {
-            console.error("Error updating profile:", error);
-            return false;
-          }
-        },
-        getAIUsageStats: () => {
-          const used = userProfile?.ai_questions_created || 0;
-          const limit = 50;
-          const remaining = Math.max(0, limit - used);
-          const percentUsed = Math.min(100, (used / limit) * 100);
-          
-          return {
-            used,
-            limit,
-            remaining,
-            percentUsed
-          };
-        },
-        resetAIQuestionsCount: async () => {
-          if (!user) return;
-          
-          try {
-            const { error } = await supabase
-              .from('profiles')
-              .update({
-                ai_questions_created: 0
-              })
-              .eq('id', user.id);
-              
-            if (error) throw error;
-            
-            await updateUserProfile();
-            
-          } catch (error) {
-            console.error("Error resetting AI questions count:", error);
-          }
-        }
+        hasReachedAILimit,
+        updateAIQuestionsCreated,
+        updateProfile,
+        getAIUsageStats,
+        resetAIQuestionsCount
       }}
     >
       {children}

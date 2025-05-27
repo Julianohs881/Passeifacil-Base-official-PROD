@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import Landing from "./pages/Landing";
@@ -21,18 +21,32 @@ import { useStripeSubscription } from "./hooks/useStripeSubscription";
 const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
 
-  if (loading) return <div>Loading...</div>;
-  if (user) return <Navigate to="/quizzes" />;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500"></div>
+      </div>
+    );
+  }
+  
+  if (user) return <Navigate to="/quizzes" replace />;
   return <>{children}</>;
 };
 
-// Verifica assinatura ao carregar o app - OTIMIZADO
+// Verifica assinatura ao carregar o app - OTIMIZADO - só roda em páginas protegidas
 const SubscriptionVerifier = () => {
   const { user, updateUserProfile, userProfile } = useAuth();
   const { verifySubscriptionStatus } = useStripeSubscription();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    // Não executa em páginas de auth ou públicas
+    const authPages = ['/login', '/register', '/', '/subscription', '/success', '/cancel'];
+    if (authPages.includes(location.pathname)) {
+      return;
+    }
+
     const checkSubscription = async () => {
       if (user) {
         try {
@@ -76,7 +90,7 @@ const SubscriptionVerifier = () => {
     
     // Só executa uma vez quando o usuário muda, não toda vez que userProfile muda
     checkSubscription();
-  }, [user?.id, navigate, updateUserProfile, verifySubscriptionStatus]); // Removido userProfile das dependências
+  }, [user?.id, location.pathname, navigate, updateUserProfile, verifySubscriptionStatus]); // Removido userProfile das dependências
 
   return null;
 };
