@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -8,12 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { User } from "lucide-react";
+import { User, Calendar, Clock } from "lucide-react";
 import PlanBadge from "@/components/PlanBadge";
 import { UserPlan } from "@/types";
 
 const UserProfile = () => {
-  const { user, userProfile, updateProfile } = useAuth();
+  const { user, userProfile, updateProfile, isPro } = useAuth();
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -30,6 +29,20 @@ const UserProfile = () => {
       setAvatarPreview(userProfile.avatar_url);
     }
   }, [userProfile]);
+
+  // Calculate days until subscription expires
+  const getSubscriptionDaysLeft = () => {
+    if (!userProfile?.subscription_end_date) return null;
+    
+    const endDate = new Date(userProfile.subscription_end_date);
+    const today = new Date();
+    const diffTime = endDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  };
+
+  const subscriptionDaysLeft = getSubscriptionDaysLeft();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -135,7 +148,7 @@ const UserProfile = () => {
   const userPlan: UserPlan = (userProfile?.plan as UserPlan) || "gratuito";
 
   return (
-    <div className="container max-w-2xl py-8 px-4">
+    <div className="container max-w-2xl py-8 px-4 space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -233,6 +246,55 @@ const UserProfile = () => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Subscription Status Card */}
+      {isPro() && userProfile?.subscription_end_date && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-violet-500" />
+              <CardTitle className="text-lg">Status da Assinatura</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-violet-100 rounded-full">
+                  <Clock className="h-4 w-4 text-violet-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {subscriptionDaysLeft !== null && subscriptionDaysLeft > 0
+                      ? `${subscriptionDaysLeft} ${subscriptionDaysLeft === 1 ? 'dia restante' : 'dias restantes'}`
+                      : subscriptionDaysLeft === 0
+                      ? 'Expira hoje'
+                      : 'Assinatura expirada'
+                    }
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Vence em: {new Date(userProfile.subscription_end_date).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="text-right">
+                <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  subscriptionDaysLeft !== null && subscriptionDaysLeft > 30
+                    ? 'bg-green-100 text-green-800'
+                    : subscriptionDaysLeft !== null && subscriptionDaysLeft > 7
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {subscriptionDaysLeft !== null && subscriptionDaysLeft > 0
+                    ? 'Ativa'
+                    : 'Expirada'
+                  }
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
