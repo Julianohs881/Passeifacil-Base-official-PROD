@@ -1,24 +1,36 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface ExploreFiltersProps {
-  filters: {
-    search: string;
-    faculty: string;
-    course: string;
-    year: string;
-  };
-  onFiltersChange: (filters: any) => void;
+export interface FilterValues {
+  search: string;
+  faculty: string;
+  course: string;
+  courseYear: string;
 }
 
-const ExploreFilters = ({ filters, onFiltersChange }: ExploreFiltersProps) => {
-  const handleFilterChange = (key: string, value: string) => {
-    onFiltersChange({
+interface ExploreFiltersProps {
+  filters: FilterValues;
+  faculties: string[];
+  courseYears: string[];
+  courses: string[];
+  onFilterChange: (filters: FilterValues) => void;
+  onClearFilters: () => void;
+}
+
+const ExploreFilters = ({ 
+  filters, 
+  faculties, 
+  courseYears, 
+  courses, 
+  onFilterChange, 
+  onClearFilters 
+}: ExploreFiltersProps) => {
+  const handleFilterChange = (key: keyof FilterValues, value: string) => {
+    onFilterChange({
       ...filters,
       [key]: value
     });
@@ -48,39 +60,46 @@ const ExploreFilters = ({ filters, onFiltersChange }: ExploreFiltersProps) => {
                 <SelectValue placeholder="Selecione uma faculdade" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
-                <SelectItem value="Engenharia">Engenharia</SelectItem>
-                <SelectItem value="Medicina">Medicina</SelectItem>
-                <SelectItem value="Direito">Direito</SelectItem>
-                <SelectItem value="Administração">Administração</SelectItem>
-                <SelectItem value="Psicologia">Psicologia</SelectItem>
+                <SelectItem value="all-faculties">Todas</SelectItem>
+                {faculties.map((faculty) => (
+                  <SelectItem key={faculty} value={faculty}>
+                    {faculty}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="course">Curso</Label>
-            <Input
-              id="course"
-              placeholder="Nome do curso..."
-              value={filters.course}
-              onChange={(e) => handleFilterChange('course', e.target.value)}
-            />
+            <Select value={filters.course} onValueChange={(value) => handleFilterChange('course', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um curso" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all-courses">Todos</SelectItem>
+                {courses.map((course) => (
+                  <SelectItem key={course} value={course}>
+                    {course}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="year">Ano</Label>
-            <Select value={filters.year} onValueChange={(value) => handleFilterChange('year', value)}>
+            <Label htmlFor="courseYear">Ano</Label>
+            <Select value={filters.courseYear} onValueChange={(value) => handleFilterChange('courseYear', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o ano" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
-                <SelectItem value="1">1º Ano</SelectItem>
-                <SelectItem value="2">2º Ano</SelectItem>
-                <SelectItem value="3">3º Ano</SelectItem>
-                <SelectItem value="4">4º Ano</SelectItem>
-                <SelectItem value="5">5º Ano</SelectItem>
+                <SelectItem value="all-years">Todos</SelectItem>
+                {courseYears.map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -89,7 +108,7 @@ const ExploreFilters = ({ filters, onFiltersChange }: ExploreFiltersProps) => {
         <div className="flex justify-end mt-4">
           <Button 
             variant="outline" 
-            onClick={() => onFiltersChange({ search: '', faculty: '', course: '', year: '' })}
+            onClick={onClearFilters}
           >
             Limpar Filtros
           </Button>
