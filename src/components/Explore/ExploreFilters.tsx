@@ -1,173 +1,101 @@
 
 import { useState } from "react";
-import { Filter, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { FormLabel } from "@/components/ui/form";
-import { z } from "zod";
-
-// Form schema type - making all fields required to match usage in Explore.tsx
-export const formSchema = z.object({
-  search: z.string(),
-  faculty: z.string(),
-  courseYear: z.string(),
-  course: z.string(),
-});
-
-export type FilterValues = z.infer<typeof formSchema>;
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExploreFiltersProps {
-  filters: FilterValues;
-  faculties: string[];
-  courseYears: string[];
-  courses: string[];
-  onFilterChange: (newFilters: FilterValues) => void;
-  onClearFilters: () => void;
+  filters: {
+    search: string;
+    faculty: string;
+    course: string;
+    year: string;
+  };
+  onFiltersChange: (filters: any) => void;
 }
 
-const ExploreFilters = ({
-  filters,
-  faculties,
-  courseYears,
-  courses,
-  onFilterChange,
-  onClearFilters,
-}: ExploreFiltersProps) => {
-  const [showFilters, setShowFilters] = useState(false);
-  
-  const activeFilters = Object.entries(filters).filter(
-    ([_, value]) => value && value.trim() !== ""
-  ).length;
-
-  const handleSearchChange = (value: string) => {
-    onFilterChange({ ...filters, search: value });
-  };
-
-  const handleFacultyChange = (value: string) => {
-    onFilterChange({ ...filters, faculty: value });
-  };
-
-  const handleCourseYearChange = (value: string) => {
-    onFilterChange({ ...filters, courseYear: value });
-  };
-
-  const handleCourseChange = (value: string) => {
-    onFilterChange({ ...filters, course: value });
+const ExploreFilters = ({ filters, onFiltersChange }: ExploreFiltersProps) => {
+  const handleFilterChange = (key: string, value: string) => {
+    onFiltersChange({
+      ...filters,
+      [key]: value
+    });
   };
 
   return (
-    <div className="mb-6">
-      <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-          <Input 
-            placeholder="Buscar por título, faculdade ou curso..."
-            value={filters.search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10 pr-4 w-full"
-          />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className={`flex items-center gap-2 ${showFilters ? 'bg-blue-50 border-blue-500 text-blue-700' : ''}`}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-4 w-4" />
-            Filtros
-            {activeFilters > 0 && (
-              <Badge className="ml-1 bg-blue-500">
-                {activeFilters}
-              </Badge>
-            )}
-          </Button>
-          
-          {activeFilters > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClearFilters}
-            >
-              Limpar filtros
-            </Button>
-          )}
-        </div>
-      </div>
-      
-      {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 p-4 bg-white rounded-lg shadow-sm">
-          <div>
-            <FormLabel>Faculdade</FormLabel>
-            <Select
-              value={filters.faculty}
-              onValueChange={handleFacultyChange}
-            >
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>Filtros</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="search">Buscar</Label>
+            <Input
+              id="search"
+              placeholder="Nome do quiz..."
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="faculty">Faculdade</Label>
+            <Select value={filters.faculty} onValueChange={(value) => handleFilterChange('faculty', value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar faculdade" />
+                <SelectValue placeholder="Selecione uma faculdade" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-faculties">Todas as faculdades</SelectItem>
-                {faculties.map((faculty) => (
-                  <SelectItem key={faculty} value={faculty}>
-                    {faculty}
-                  </SelectItem>
-                ))}
+                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="Engenharia">Engenharia</SelectItem>
+                <SelectItem value="Medicina">Medicina</SelectItem>
+                <SelectItem value="Direito">Direito</SelectItem>
+                <SelectItem value="Administração">Administração</SelectItem>
+                <SelectItem value="Psicologia">Psicologia</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
-          <div>
-            <FormLabel>Ano do Curso</FormLabel>
-            <Select
-              value={filters.courseYear}
-              onValueChange={handleCourseYearChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar ano" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-years">Todos os anos</SelectItem>
-                {courseYears.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <FormLabel>Curso/Matéria</FormLabel>
-            <Select
+
+          <div className="space-y-2">
+            <Label htmlFor="course">Curso</Label>
+            <Input
+              id="course"
+              placeholder="Nome do curso..."
               value={filters.course}
-              onValueChange={handleCourseChange}
-            >
+              onChange={(e) => handleFilterChange('course', e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="year">Ano</Label>
+            <Select value={filters.year} onValueChange={(value) => handleFilterChange('year', value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar curso" />
+                <SelectValue placeholder="Selecione o ano" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-courses">Todos os cursos</SelectItem>
-                {courses.map((course) => (
-                  <SelectItem key={course} value={course}>
-                    {course}
-                  </SelectItem>
-                ))}
+                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="1">1º Ano</SelectItem>
+                <SelectItem value="2">2º Ano</SelectItem>
+                <SelectItem value="3">3º Ano</SelectItem>
+                <SelectItem value="4">4º Ano</SelectItem>
+                <SelectItem value="5">5º Ano</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
-      )}
-    </div>
+
+        <div className="flex justify-end mt-4">
+          <Button 
+            variant="outline" 
+            onClick={() => onFiltersChange({ search: '', faculty: '', course: '', year: '' })}
+          >
+            Limpar Filtros
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
