@@ -94,8 +94,14 @@ const Quiz = () => {
         </div>
       ) : (
         <div className="flex flex-col flex-1">
-          {/* Back button and Quiz Title */}
-          <QuizHeader title={quiz?.title} />
+          {/* Back button and Quiz Title with action buttons */}
+          <QuizHeader 
+            title={quiz?.title} 
+            quizId={id}
+            onAddQuestion={isCreator ? handleOpenAddModal : undefined}
+            onQuestionCreated={fetchQuestions}
+            isCreator={isCreator}
+          />
           
           {/* Pro user AI usage display */}
           {isPROUser && isCreator && (
@@ -142,9 +148,9 @@ const Quiz = () => {
                   question={currentQuestion}
                   userAnswers={userAnswers}
                   handleAnswer={handleAnswer}
-                  onOpenAddModal={handleOpenAddModal}
-                  onOpenEditModal={handleOpenEditModal}
-                  onDeleteQuestion={handleDeleteQuestion}
+                  onOpenAddModal={isCreator ? handleOpenAddModal : undefined}
+                  onOpenEditModal={isCreator ? handleOpenEditModal : undefined}
+                  onDeleteQuestion={isCreator ? handleDeleteQuestion : undefined}
                   currentIndex={currentQuestionIndex}
                   totalQuestions={questions.length}
                   isPublicQuiz={isPublicQuiz}
@@ -155,7 +161,7 @@ const Quiz = () => {
             </div>
           </div>
           
-          {/* Navigation buttons - Mostramos botão de adicionar questão apenas para o criador */}
+          {/* Navigation buttons */}
           {questions.length > 0 && (
             <QuizFooter
               quizId={id || ""}
@@ -163,7 +169,7 @@ const Quiz = () => {
               totalQuestions={questions.length}
               onPrevious={goToPreviousQuestion}
               onNext={goToNextQuestion}
-              onAddQuestion={isCreator ? handleOpenAddModal : undefined}
+              onAddQuestion={undefined} // Remove from footer since it's now in header
               onQuestionCreated={fetchQuestions}
               onImportQuestion={isCreator ? handleOpenImportQuestionDialog : undefined}
             />
@@ -206,7 +212,7 @@ const Quiz = () => {
                     <Button 
                       variant="default" 
                       size="sm"
-                      className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600"
+                      className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 border-0"
                       onClick={() => setIsPremiumWarningOpen(false)}
                     >
                       Fazer Upgrade

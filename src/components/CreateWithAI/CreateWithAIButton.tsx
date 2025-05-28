@@ -49,7 +49,7 @@ const CreateWithAIButton: React.FC<CreateWithAIButtonProps> = ({ quizId, onSucce
               <Button
                 variant="ghost" 
                 size="sm"
-                className={`flex items-center gap-1 transition-colors ${
+                className={`flex items-center gap-1 transition-colors border-0 ${
                   limitReached
                     ? "text-gray-400 hover:text-gray-500 cursor-not-allowed"
                     : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"

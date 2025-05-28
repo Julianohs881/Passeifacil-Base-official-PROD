@@ -1,21 +1,24 @@
 
-import { Link } from "react-router-dom";
 import { Book, Eye, School } from "lucide-react";
 import { ExtendedQuiz } from "./types";
 import { useAuth } from "@/context/AuthContext";
 
 interface QuizExploreCardProps {
   quiz: ExtendedQuiz;
+  onQuizClick: (quizId: string) => void;
 }
 
-const QuizExploreCard = ({ quiz }: QuizExploreCardProps) => {
+const QuizExploreCard = ({ quiz, onQuizClick }: QuizExploreCardProps) => {
   const { user } = useAuth();
 
+  const handleClick = () => {
+    onQuizClick(quiz.id);
+  };
+
   return (
-    <Link
-      key={quiz.id}
-      to={`/quiz/${quiz.id}`}
-      className="block hover:scale-105 transition-transform duration-200"
+    <div
+      onClick={handleClick}
+      className="block hover:scale-105 transition-transform duration-200 cursor-pointer"
     >
       <div className={`quiz-card ${quiz.color} p-5 flex flex-col justify-between h-52 relative rounded-lg shadow-md hover:shadow-lg`}>
         <div className="absolute top-3 left-3">
@@ -64,7 +67,7 @@ const QuizExploreCard = ({ quiz }: QuizExploreCardProps) => {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 
