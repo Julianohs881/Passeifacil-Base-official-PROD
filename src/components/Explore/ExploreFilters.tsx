@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormLabel } from "@/components/ui/form";
-import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
 // Form schema type - making all fields required to match usage in Explore.tsx
@@ -26,25 +25,43 @@ export const formSchema = z.object({
 export type FilterValues = z.infer<typeof formSchema>;
 
 interface ExploreFiltersProps {
-  form: UseFormReturn<FilterValues>;
+  filters: FilterValues;
   faculties: string[];
   courseYears: string[];
   courses: string[];
-  clearFilters: () => void;
+  onFilterChange: (newFilters: FilterValues) => void;
+  onClearFilters: () => void;
 }
 
 const ExploreFilters = ({
-  form,
+  filters,
   faculties,
   courseYears,
   courses,
-  clearFilters,
+  onFilterChange,
+  onClearFilters,
 }: ExploreFiltersProps) => {
   const [showFilters, setShowFilters] = useState(false);
   
-  const activeFilters = Object.entries(form.watch()).filter(
+  const activeFilters = Object.entries(filters).filter(
     ([_, value]) => value && value.trim() !== ""
   ).length;
+
+  const handleSearchChange = (value: string) => {
+    onFilterChange({ ...filters, search: value });
+  };
+
+  const handleFacultyChange = (value: string) => {
+    onFilterChange({ ...filters, faculty: value });
+  };
+
+  const handleCourseYearChange = (value: string) => {
+    onFilterChange({ ...filters, courseYear: value });
+  };
+
+  const handleCourseChange = (value: string) => {
+    onFilterChange({ ...filters, course: value });
+  };
 
   return (
     <div className="mb-6">
@@ -53,8 +70,8 @@ const ExploreFilters = ({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
           <Input 
             placeholder="Buscar por título, faculdade ou curso..."
-            value={form.watch("search")}
-            onChange={(e) => form.setValue("search", e.target.value)}
+            value={filters.search}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10 pr-4 w-full"
           />
         </div>
@@ -79,7 +96,7 @@ const ExploreFilters = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={clearFilters}
+              onClick={onClearFilters}
             >
               Limpar filtros
             </Button>
@@ -92,8 +109,8 @@ const ExploreFilters = ({
           <div>
             <FormLabel>Faculdade</FormLabel>
             <Select
-              value={form.watch("faculty")}
-              onValueChange={(value) => form.setValue("faculty", value)}
+              value={filters.faculty}
+              onValueChange={handleFacultyChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar faculdade" />
@@ -112,8 +129,8 @@ const ExploreFilters = ({
           <div>
             <FormLabel>Ano do Curso</FormLabel>
             <Select
-              value={form.watch("courseYear")}
-              onValueChange={(value) => form.setValue("courseYear", value)}
+              value={filters.courseYear}
+              onValueChange={handleCourseYearChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar ano" />
@@ -132,8 +149,8 @@ const ExploreFilters = ({
           <div>
             <FormLabel>Curso/Matéria</FormLabel>
             <Select
-              value={form.watch("course")}
-              onValueChange={(value) => form.setValue("course", value)}
+              value={filters.course}
+              onValueChange={handleCourseChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar curso" />
