@@ -27,7 +27,7 @@ export const HomePageHeader = ({
       <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-0">Meus Quizzes</h1>
       <div className="flex flex-wrap gap-2 w-full sm:w-auto">
         <div className="flex items-center gap-2">
-          <Button onClick={onOpenCreateQuiz} className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none">
+          <Button onClick={onOpenCreateQuiz} className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none border-0">
             <PlusCircle className="h-4 w-4 mr-2" /> 
             <span className="whitespace-nowrap">Novo Quiz</span>
           </Button>
@@ -48,16 +48,16 @@ export const HomePageHeader = ({
           <>
             <Button 
               onClick={() => navigate("/explore")} 
-              variant="outline" 
-              className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none border-blue-500 text-blue-900"
+              variant="ghost" 
+              className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none text-blue-900 border-0"
             >
               <span className="whitespace-nowrap">Explorar</span>
             </Button>
             
             <Button 
               onClick={onOpenImportDialog} 
-              variant="outline" 
-              className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none font-normal text-sm"
+              variant="ghost" 
+              className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none font-normal text-sm border-0"
             >
               <Download className="h-4 w-4 mr-2" />
               <span className="whitespace-nowrap">Importar</span>

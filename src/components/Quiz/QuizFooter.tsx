@@ -38,8 +38,8 @@ const QuizFooter: React.FC<QuizFooterProps> = ({
           <Button
             onClick={onImportQuestion}
             size="sm"
-            variant="outline"
-            className="border-blue-500 text-blue-600 hover:bg-blue-50 border-0"
+            variant="ghost"
+            className="text-blue-600 hover:bg-blue-50 border-0"
           >
             <FileCode2 className="mr-2 h-4 w-4" />
             Importar Questão
