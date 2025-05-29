@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { supabase, signInWithGoogle } from "@/lib/supabase";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +13,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signInWithGoogle, signInWithEmail } = useFirebaseAuth();
 
   const handleGoogleLogin = async () => {
     try {
@@ -44,7 +42,14 @@ const Login = () => {
     try {
       setLoading(true);
       setError("");
-      await signInWithEmail(email, password);
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo de volta!",

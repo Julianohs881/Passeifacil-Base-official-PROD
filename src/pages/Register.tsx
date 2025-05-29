@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { supabase, signInWithGoogle } from "@/lib/supabase";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +15,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signInWithGoogle, signUpWithEmail } = useFirebaseAuth();
 
   const handleGoogleSignUp = async () => {
     try {
@@ -52,7 +50,19 @@ const Register = () => {
     try {
       setLoading(true);
       setError("");
-      await signUpWithEmail(email, password, name);
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name
+          }
+        }
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Cadastro realizado com sucesso!",
         description: "Bem-vindo! Sua conta foi criada.",
