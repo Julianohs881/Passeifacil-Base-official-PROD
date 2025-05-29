@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,6 +13,7 @@ import Subscription from "./pages/Subscription";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
 import CreateQuiz from "./pages/CreateQuiz";
+import AuthCallback from "./pages/AuthCallback";
 import { useEffect } from "react";
 import { useStripeSubscription } from "./hooks/useStripeSubscription";
 
@@ -120,6 +120,7 @@ function AppContent() {
               </AuthRedirect>
             }
           />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Página de assinatura - aberta */}
           <Route path="/subscription" element={<Subscription />} />

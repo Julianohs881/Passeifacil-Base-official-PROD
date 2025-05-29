@@ -1,52 +1,38 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { signInWithGoogle } from "@/lib/supabase";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { loading, signInWithGoogle, signInWithEmail } = useFirebaseAuth();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        navigate("/quizzes");
-      }
-    });
-
-    return () => unsubscribe();
-  }, [navigate]);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    
-    const { user, error: signInError } = await signInWithEmail(email, password);
-    
-    if (signInError) {
-      setError(signInError.message || "Falha ao fazer login");
-    } else if (user) {
-      navigate("/quizzes");
-    }
-  };
+  const { toast } = useToast();
 
   const handleGoogleLogin = async () => {
-    setError("");
-    
-    const { user, error: signInError } = await signInWithGoogle();
-    
-    if (signInError) {
-      setError(signInError.message || "Falha no login com Google");
-    } else if (user) {
-      navigate("/quizzes");
+    try {
+      setLoading(true);
+      setError("");
+      await signInWithGoogle();
+      toast({
+        title: "Login iniciado",
+        description: "Você será redirecionado para o Google para completar o login.",
+      });
+    } catch (error: any) {
+      console.error("Erro no login com Google:", error);
+      setError(error.message || "Falha no login com Google");
+      toast({
+        title: "Erro no login com Google",
+        description: error.message || "Erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,74 +42,17 @@ const Login = () => {
         <CardHeader>
           <CardTitle className="text-2xl text-center">Login</CardTitle>
           <CardDescription className="text-center">
-            Entre com sua conta para acessar seus quizzes
+            Entre para acessar seus quizzes
           </CardDescription>
         </CardHeader>
+        
         <CardContent>
-          <form onSubmit={handleSubmit}>
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 text-red-500 rounded-xl text-sm">
-                {error}
-              </div>
-            )}
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-xl"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Senha
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-xl"
-                />
-              </div>
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full mt-6 bg-violet-500 hover:bg-violet-600 rounded-xl" 
-              disabled={loading}
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
-          
-          <div className="mt-4">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">
-                  Ou continue com
-                </span>
-              </div>
-            </div>
-            
+          {/* Botão de login com Google */}
+          <div className="mb-6">
             <Button
               type="button"
               variant="outline"
-              className="w-full mt-4 rounded-xl"
+              className="w-full rounded-xl"
               onClick={handleGoogleLogin}
               disabled={loading}
             >
@@ -148,6 +77,12 @@ const Login = () => {
               Entrar com Google
             </Button>
           </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
         </CardContent>
         
         <CardFooter className="flex justify-center">
