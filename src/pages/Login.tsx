@@ -47,9 +47,10 @@ const Login = () => {
       setError("");
       await signInWithGoogle();
       toast({
-        title: "Login iniciado",
-        description: "Você será redirecionado para o Google para completar o login.",
+        title: "Login realizado com sucesso!",
+        description: "Você foi logado com sua conta Google.",
       });
+      navigate('/quizzes');
     } catch (error: any) {
       console.error("Erro no login com Google:", error);
       setError(error.message || "Falha no login com Google");

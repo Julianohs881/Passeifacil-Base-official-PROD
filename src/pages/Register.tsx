@@ -21,9 +21,10 @@ const Register = () => {
       setError("");
       await signInWithGoogle();
       toast({
-        title: "Cadastro iniciado",
-        description: "Você será redirecionado para o Google para completar o cadastro.",
+        title: "Cadastro realizado com sucesso!",
+        description: "Você foi cadastrado com sua conta Google.",
       });
+      navigate('/quizzes');
     } catch (error: any) {
       console.error("Erro no cadastro com Google:", error);
       setError(error.message || "Falha no cadastro com Google");
