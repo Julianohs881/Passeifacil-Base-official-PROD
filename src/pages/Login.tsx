@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithGoogle } from "@/lib/supabase";
+import { signInWithGoogle, signInWithEmail, supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -13,6 +13,33 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Teste de conexão com o Supabase
+    const testConnection = async () => {
+      try {
+        const { data, error } = await supabase.from('quizzes').select('*').limit(1);
+        if (error) {
+          console.error('Erro na conexão com Supabase:', error);
+          toast({
+            title: "Erro de conexão",
+            description: "Não foi possível conectar ao Supabase. Verifique suas credenciais.",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Conexão com Supabase estabelecida com sucesso!');
+          toast({
+            title: "Conexão estabelecida",
+            description: "Conectado ao Supabase com sucesso!",
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao testar conexão:', err);
+      }
+    };
+
+    testConnection();
+  }, [toast]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -28,6 +55,30 @@ const Login = () => {
       setError(error.message || "Falha no login com Google");
       toast({
         title: "Erro no login com Google",
+        description: error.message || "Erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError("");
+      await signInWithEmail(email, password);
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo de volta!",
+      });
+      navigate('/quizzes');
+    } catch (error: any) {
+      console.error("Erro no login:", error);
+      setError(error.message || "Falha no login");
+      toast({
+        title: "Erro no login",
         description: error.message || "Erro inesperado",
         variant: "destructive",
       });
@@ -78,8 +129,48 @@ const Login = () => {
             </Button>
           </div>
 
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">ou</span>
+            </div>
+          </div>
+
+          {/* Formulário de login com email/senha */}
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-xl"
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-xl"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full rounded-xl"
+              disabled={loading}
+            >
+              {loading ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
+            <div className="mt-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
               {error}
             </div>
           )}

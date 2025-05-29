@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithGoogle } from "@/lib/supabase";
+import { signInWithGoogle, signUpWithEmail } from "@/integrations/supabase/client";
 
 const Register = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -26,6 +29,36 @@ const Register = () => {
       setError(error.message || "Falha no cadastro com Google");
       toast({
         title: "Erro no cadastro com Google",
+        description: error.message || "Erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      await signUpWithEmail(email, password);
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Por favor, verifique seu email para confirmar sua conta.",
+      });
+      navigate('/login');
+    } catch (error: any) {
+      console.error("Erro no cadastro:", error);
+      setError(error.message || "Falha no cadastro");
+      toast({
+        title: "Erro no cadastro",
         description: error.message || "Erro inesperado",
         variant: "destructive",
       });
@@ -76,8 +109,58 @@ const Register = () => {
             </Button>
           </div>
 
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">ou</span>
+            </div>
+          </div>
+
+          {/* Formulário de cadastro com email/senha */}
+          <form onSubmit={handleEmailSignUp} className="space-y-4">
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-xl"
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-xl"
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Confirmar senha"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full rounded-xl"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full rounded-xl"
+              disabled={loading}
+            >
+              {loading ? "Cadastrando..." : "Cadastrar"}
+            </Button>
+          </form>
+
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
+            <div className="mt-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
               {error}
             </div>
           )}
