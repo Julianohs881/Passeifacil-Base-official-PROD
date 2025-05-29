@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithGoogle } from "@/lib/supabase";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -13,6 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signInWithGoogle, signInWithEmail } = useFirebaseAuth();
 
   const handleGoogleLogin = async () => {
     try {
@@ -20,14 +22,39 @@ const Login = () => {
       setError("");
       await signInWithGoogle();
       toast({
-        title: "Login iniciado",
-        description: "Você será redirecionado para o Google para completar o login.",
+        title: "Login realizado com sucesso!",
+        description: "Você foi logado com sua conta Google.",
       });
+      navigate('/quizzes');
     } catch (error: any) {
       console.error("Erro no login com Google:", error);
       setError(error.message || "Falha no login com Google");
       toast({
         title: "Erro no login com Google",
+        description: error.message || "Erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError("");
+      await signInWithEmail(email, password);
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo de volta!",
+      });
+      navigate('/quizzes');
+    } catch (error: any) {
+      console.error("Erro no login com email:", error);
+      setError(error.message || "Falha no login");
+      toast({
+        title: "Erro no login",
         description: error.message || "Erro inesperado",
         variant: "destructive",
       });
@@ -78,8 +105,50 @@ const Login = () => {
             </Button>
           </div>
 
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Ou continue com
+              </span>
+            </div>
+          </div>
+
+          {/* Formulário de login com email */}
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="rounded-xl"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full rounded-xl"
+              disabled={loading}
+            >
+              Entrar
+            </Button>
+          </form>
+
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
+            <div className="mt-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
               {error}
             </div>
           )}

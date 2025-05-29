@@ -1,16 +1,22 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithGoogle } from "@/lib/supabase";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 
 const Register = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signInWithGoogle, signUpWithEmail } = useFirebaseAuth();
 
   const handleGoogleSignUp = async () => {
     try {
@@ -18,14 +24,45 @@ const Register = () => {
       setError("");
       await signInWithGoogle();
       toast({
-        title: "Cadastro iniciado",
-        description: "Você será redirecionado para o Google para completar o cadastro.",
+        title: "Cadastro realizado com sucesso!",
+        description: "Você foi cadastrado com sua conta Google.",
       });
+      navigate('/quizzes');
     } catch (error: any) {
       console.error("Erro no cadastro com Google:", error);
       setError(error.message || "Falha no cadastro com Google");
       toast({
         title: "Erro no cadastro com Google",
+        description: error.message || "Erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      await signUpWithEmail(email, password, name);
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Bem-vindo! Sua conta foi criada.",
+      });
+      navigate('/quizzes');
+    } catch (error: any) {
+      console.error("Erro no cadastro com email:", error);
+      setError(error.message || "Falha no cadastro");
+      toast({
+        title: "Erro no cadastro",
         description: error.message || "Erro inesperado",
         variant: "destructive",
       });
@@ -76,8 +113,70 @@ const Register = () => {
             </Button>
           </div>
 
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Ou cadastre-se com
+              </span>
+            </div>
+          </div>
+
+          {/* Formulário de cadastro com email */}
+          <form onSubmit={handleEmailSignUp} className="space-y-4">
+            <div>
+              <Input
+                type="text"
+                placeholder="Nome completo"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Confirmar senha"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="rounded-xl"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full rounded-xl"
+              disabled={loading}
+            >
+              Criar Conta
+            </Button>
+          </form>
+
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
+            <div className="mt-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
               {error}
             </div>
           )}
