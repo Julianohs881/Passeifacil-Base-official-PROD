@@ -1,62 +1,52 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { signIn } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { loading, signInWithGoogle, signInWithEmail } = useFirebaseAuth();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate("/quizzes");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     
-    try {
-      await signIn(email, password);
+    const { user, error: signInError } = await signInWithEmail(email, password);
+    
+    if (signInError) {
+      setError(signInError.message || "Falha ao fazer login");
+    } else if (user) {
       navigate("/quizzes");
-    } catch (error: any) {
-      setError(error.message || "Falha ao fazer login");
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/quizzes`
-        }
-      });
-      
-      if (error) {
-        toast({
-          title: "Erro no login com Google",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro no login com Google",
-        description: error.message || "Erro inesperado",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+    setError("");
+    
+    const { user, error: signInError } = await signInWithGoogle();
+    
+    if (signInError) {
+      setError(signInError.message || "Falha no login com Google");
+    } else if (user) {
+      navigate("/quizzes");
     }
   };
 

@@ -1,13 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { User } from "lucide-react";
 
 const Register = () => {
@@ -17,11 +17,19 @@ const Register = () => {
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { signUp } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { loading, signUpWithGoogle, signUpWithEmail } = useFirebaseAuth();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate("/quizzes");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -29,21 +37,13 @@ const Register = () => {
       
       // Check file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        toast({
-          title: "Arquivo muito grande",
-          description: "A imagem deve ter no máximo 2MB",
-          variant: "destructive",
-        });
+        setError("A imagem deve ter no máximo 2MB");
         return;
       }
       
       // Check file type
       if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Formato inválido",
-          description: "Por favor, envie apenas arquivos de imagem",
-          variant: "destructive",
-        });
+        setError("Por favor, envie apenas arquivos de imagem");
         return;
       }
       
@@ -53,121 +53,48 @@ const Register = () => {
       setAvatarPreview(url);
     }
   };
-  
-  const uploadAvatar = async (userId: string): Promise<string | null> => {
-    if (!avatar) return null;
-    
-    try {
-      const fileExt = avatar.name.split('.').pop();
-      const fileName = `${userId}/avatar.${fileExt}`;
-      
-      const { error: uploadError } = await supabase
-        .storage
-        .from('avatars')
-        .upload(fileName, avatar, { upsert: true });
-        
-      if (uploadError) throw uploadError;
-      
-      const { data } = supabase
-        .storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-        
-      return data.publicUrl;
-    } catch (error) {
-      console.error("Error uploading avatar:", error);
-      return null;
-    }
-  };
 
   const handleGoogleSignUp = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/quizzes`
-        }
-      });
-      
-      if (error) {
-        toast({
-          title: "Erro no cadastro com Google",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro no cadastro com Google",
-        description: error.message || "Erro inesperado",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+    setError("");
+    
+    const { user, error: signUpError } = await signUpWithGoogle();
+    
+    if (signUpError) {
+      setError(signUpError.message || "Falha no cadastro com Google");
+    } else if (user) {
+      navigate("/quizzes");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     
     // Validate name
     if (!name.trim()) {
       setError("O nome é obrigatório");
-      setLoading(false);
       return;
     }
     
     // Validate password match
     if (password !== confirmPassword) {
       setError("As senhas não coincidem");
-      setLoading(false);
       return;
     }
     
     // Validate password strength
     if (password.length < 6) {
       setError("A senha deve ter pelo menos 6 caracteres");
-      setLoading(false);
       return;
     }
     
-    try {
-      // Sign up the user
-      const { data: userData, error: signUpError } = await signUp(email, password, name);
-      
-      if (signUpError) throw signUpError;
-      
-      // If avatar was selected, upload it after successful signup
-      if (avatar && userData?.user) {
-        const avatarUrl = await uploadAvatar(userData.user.id);
-        
-        if (avatarUrl) {
-          // Update the profile with avatar URL
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ avatar_url: avatarUrl })
-            .eq('id', userData.user.id);
-            
-          if (updateError) console.error("Error updating profile with avatar:", updateError);
-        }
-      }
-      
-      // Notify user of successful registration
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu e-mail para confirmar sua conta.",
-      });
-      
-      // Navigate to login page
-      navigate("/login");
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      setError(error.message || "Falha ao criar conta");
-    } finally {
-      setLoading(false);
+    const { user, error: signUpError } = await signUpWithEmail(email, password);
+    
+    if (signUpError) {
+      setError(signUpError.message || "Falha ao criar conta");
+    } else if (user) {
+      // TODO: Save additional user data (name, avatar) to your database
+      navigate("/quizzes");
     }
   };
 
