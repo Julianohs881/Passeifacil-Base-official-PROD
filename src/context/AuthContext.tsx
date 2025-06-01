@@ -24,85 +24,65 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profileError, setProfileError] = useState<Error | null>(null);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
   const hasInitialized = useRef(false);
+  const lastProfileCheck = useRef<number>(0);
+  const profileCache = useRef<{ [key: string]: { profile: UserProfile, timestamp: number } }>({});
   
   const { subscriptionState, canVerify, debouncedAction, resetState } = useSubscriptionState();
 
-  useEffect(() => {
-    const getSession = async () => {
-      try {
-        setLoading(true);
-        setProfileError(null);
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          setUser(session.user);
-          // Use debounced action to prevent multiple simultaneous calls
-          debouncedAction(() => loadUserProfile(session.user.id));
-        } else {
-          setIsProfileLoaded(true);
-        }
-      } catch (error) {
-        console.error("Erro ao obter sessão:", error);
-        setProfileError(error instanceof Error ? error : new Error(String(error)));
-        setIsProfileLoaded(true);
-      } finally {
-        setLoading(false);
-        hasInitialized.current = true;
-      }
-    };
+  // Cache duration - 1 minute
+  const CACHE_DURATION = 60 * 1000;
 
-    // Só executa se não foi inicializado ainda
-    if (!hasInitialized.current) {
-      getSession();
+  // Função otimizada para verificar status PRO
+  const checkProStatus = (profile: UserProfile): boolean => {
+    // Verificação rápida - se já sabemos que não tem acesso
+    if (profile.has_access === false && !profile.manual_access) {
+      return false;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, !!session);
-      
-      // Previne loops infinitos
-      if (!hasInitialized.current && event === 'INITIAL_SESSION') {
-        return;
-      }
-      
-      if (session) {
-        setUser(session.user);
-        // Only load profile if it's a new session or significant change
-        if (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && !userProfile)) {
-          debouncedAction(() => loadUserProfile(session.user.id));
-        }
-      } else {
-        setUser(null);
-        setUserProfile(null);
-        setIsProfileLoaded(true);
-        resetState();
-      }
-    });
+    // Verificação rápida - se já sabemos que tem acesso
+    if (profile.has_access === true || profile.manual_access === true) {
+      return true;
+    }
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []); // Remove dependencies to prevent re-initialization
+    // Verificação do plano e data de expiração
+    if (profile.plan === 'pro' || profile.plan === 'assinante') {
+      if (profile.subscription_end_date) {
+        return new Date(profile.subscription_end_date) > new Date();
+      }
+      return true;
+    }
+
+    return false;
+  };
 
   const loadUserProfile = async (userId: string) => {
     try {
+      // Verifica cache primeiro
+      const cached = profileCache.current[userId];
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        console.log("Using cached profile");
+        setUserProfile(cached.profile);
+        setIsProfileLoaded(true);
+        return;
+      }
+
+      // Evita múltiplas chamadas em sequência
+      const now = Date.now();
+      if (now - lastProfileCheck.current < 2000) { // Reduzido para 2 segundos
+        console.log("Skipping profile check - too soon");
+        return;
+      }
+      lastProfileCheck.current = now;
+
       console.log("Loading user profile for ID:", userId);
       setProfileError(null);
       
-      // Simple profile fetch with timeout
-      const profilePromise = supabase
+      // Busca apenas os campos necessários
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, has_access, manual_access, plan, subscription_end_date, name, avatar_url, ai_questions_created')
         .eq('id', userId)
         .single();
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Tempo esgotado ao carregar perfil")), 15000);
-      });
-
-      const { data, error } = await Promise.race([
-        profilePromise,
-        timeoutPromise.then(() => { throw new Error("Tempo esgotado ao carregar perfil"); })
-      ]) as any;
 
       if (error) {
         console.error("Erro ao carregar perfil do usuário:", error);
@@ -124,10 +104,14 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: user?.email || ""
         };
         
-        console.log("User profile loaded successfully:", profileWithEmail);
+        // Atualiza o cache
+        profileCache.current[userId] = {
+          profile: profileWithEmail,
+          timestamp: Date.now()
+        };
+        
         setUserProfile(profileWithEmail);
       } else {
-        console.log("No user profile data found");
         setUserProfile(null);
       }
     } catch (error) {
@@ -137,6 +121,70 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsProfileLoaded(true);
     }
   };
+
+  useEffect(() => {
+    const getSession = async () => {
+      try {
+        setLoading(true);
+        setProfileError(null);
+        
+        // Tenta obter a sessão do cache primeiro
+        const cachedSession = localStorage.getItem('supabase.auth.token');
+        if (cachedSession) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            setUser(session.user);
+            loadUserProfile(session.user.id);
+            return;
+          }
+        }
+
+        // Se não tem cache ou é inválido, busca nova sessão
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setUser(session.user);
+          loadUserProfile(session.user.id);
+        } else {
+          setIsProfileLoaded(true);
+        }
+      } catch (error) {
+        console.error("Erro ao obter sessão:", error);
+        setProfileError(error instanceof Error ? error : new Error(String(error)));
+        setIsProfileLoaded(true);
+      } finally {
+        setLoading(false);
+        hasInitialized.current = true;
+      }
+    };
+
+    if (!hasInitialized.current) {
+      getSession();
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!hasInitialized.current && event === 'INITIAL_SESSION') {
+        return;
+      }
+      
+      if (session) {
+        setUser(session.user);
+        if (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && !userProfile)) {
+          loadUserProfile(session.user.id);
+        }
+      } else {
+        setUser(null);
+        setUserProfile(null);
+        setIsProfileLoaded(true);
+        resetState();
+        // Limpa o cache ao fazer logout
+        profileCache.current = {};
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Sign In function
   const signIn = async (email: string, password: string) => {
@@ -199,43 +247,28 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Update user profile function - now with better control
+  // Update user profile function - OPTIMIZED
   const updateUserProfile = async () => {
-    console.log("Manually refreshing user profile");
-    if (user && canVerify()) {
-      debouncedAction(() => loadUserProfile(user.id));
-    } else if (subscriptionState.isVerifying) {
+    if (!user || !canVerify()) return;
+    
+    // Evita múltiplas chamadas simultâneas
+    if (subscriptionState.isVerifying) {
       console.log("Profile update skipped - verification already in progress");
+      return;
     }
+
+    // Usa debounce para evitar múltiplas chamadas em sequência
+    debouncedAction(() => loadUserProfile(user.id));
   };
   
-  // Check if user is a PRO user - IMPROVED FUNCTION
+  // Check if user is a PRO user - OPTIMIZED FUNCTION
   const isPro = () => {
-    // If profile is not loaded yet, return false but don't show upgrade UI
+    // Se o perfil não foi carregado ainda, retorna false
     if (!isProfileLoaded || !userProfile) {
       return false;
     }
     
-    console.log("Checking PRO access:", {
-      uid: user?.id,
-      has_access: userProfile.has_access,
-      manual_access: userProfile.manual_access,
-      plan: userProfile.plan,
-      isProfileLoaded
-    });
-    
-    // Primary check: if has_access is true, user has subscription access
-    if (typeof userProfile.has_access === 'boolean' && userProfile.has_access === true) {
-      return true;
-    }
-    
-    // Secondary check: manual access override (for admin/test users)
-    if (typeof userProfile.manual_access === 'boolean' && userProfile.manual_access === true) {
-      return true;
-    }
-    
-    // Legacy check based on plan (should match with has_access in most cases)
-    return userProfile.plan === 'pro' || userProfile.plan === 'assinante';
+    return checkProStatus(userProfile);
   };
   
   // Check if user has reached AI generation limit
