@@ -89,13 +89,28 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Lado esquerdo - Frase */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12">
-        <div className="max-w-lg">
-          <h1 className="text-4xl font-bold text-gray-800">
-            O jeito mais fácil de estudar e criar questões!
-          </h1>
+    <div className="flex min-h-screen bg-white">
+      {/* Lado esquerdo - Logo e frase */}
+      <div className="hidden lg:flex lg:w-1/2 items-center p-12">
+        <div className="max-w-lg w-full">
+          {/* Logo alinhada à esquerda dentro do max-w-lg */}
+          <div className="flex justify-start mb-4">
+            <img 
+              src="/logo.png" 
+              alt="Passei Fácil Logo"
+              className="w-48"
+            />
+          </div>
+          {/* Frase e parágrafo centralizados dentro do max-w-lg */}
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">
+              O jeito mais fácil de estudar e criar questões!
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Transforme textos e imagens em quizzes interativos em
+              segundos. Prepare-se melhor para provas, concursos e OAB.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -103,7 +118,7 @@ const Login = () => {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <Card className="w-full max-w-md rounded-2xl shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Login</CardTitle>
+            <CardTitle className="text-2xl text-center">Bem-vindo de volta!</CardTitle>
             <CardDescription className="text-center">
               Entre para acessar seus quizzes
             </CardDescription>
