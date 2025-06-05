@@ -1,8 +1,7 @@
-
-import React from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { VisibilityOption } from "@/types";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
 
 interface VisibilitySelectorProps {
   visibility: VisibilityOption;
@@ -13,6 +12,8 @@ export const VisibilitySelector: React.FC<VisibilitySelectorProps> = ({
   visibility,
   setVisibility,
 }) => {
+  const { isPro } = useAuth();
+
   return (
     <div className="grid grid-cols-4 items-center gap-4">
       <Label className="text-right">Visibilidade</Label>
@@ -33,12 +34,20 @@ export const VisibilitySelector: React.FC<VisibilitySelectorProps> = ({
         </div>
         
         <div 
-          className={`flex items-center p-3 border rounded-lg cursor-pointer ${
+          className={`flex items-center p-3 border rounded-lg ${
             visibility === 'public' 
               ? 'border-blue-500 bg-blue-50' 
-              : 'border-gray-200 hover:bg-gray-50'
+              : 'border-gray-200'
+          } ${
+            !isPro() ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'
           }`}
-          onClick={() => setVisibility('public')}
+          onClick={() => {
+            if (isPro()) {
+              setVisibility('public');
+            } else {
+              console.log("Funcionalidade de quiz público apenas para usuários PRO");
+            }
+          }}
         >
           <Eye className="h-5 w-5 mr-2 text-gray-600" />
           <div>

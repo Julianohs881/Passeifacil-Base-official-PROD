@@ -34,24 +34,17 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Função otimizada para verificar status PRO
   const checkProStatus = (profile: UserProfile): boolean => {
-    // Verificação rápida - se já sabemos que não tem acesso
-    if (profile.has_access === false && !profile.manual_access) {
-      return false;
+    // Um usuário é PRO se tiver o plano 'pro' ou 'assinante' OU acesso manual explícito
+    if (profile.plan === 'pro' || profile.plan === 'assinante' || profile.manual_access === true) {
+        // Se tiver data de expiração, verificar se não expirou
+        if (profile.subscription_end_date) {
+            return new Date(profile.subscription_end_date) > new Date();
+        }
+        // Se não tiver data de expiração ou se a data ainda é válida, é PRO
+        return true;
     }
 
-    // Verificação rápida - se já sabemos que tem acesso
-    if (profile.has_access === true || profile.manual_access === true) {
-      return true;
-    }
-
-    // Verificação do plano e data de expiração
-    if (profile.plan === 'pro' || profile.plan === 'assinante') {
-      if (profile.subscription_end_date) {
-        return new Date(profile.subscription_end_date) > new Date();
-      }
-      return true;
-    }
-
+    // Em todos os outros casos (plano 'gratuito', 'sem assinatura', etc. sem manual_access=true), não é PRO
     return false;
   };
 

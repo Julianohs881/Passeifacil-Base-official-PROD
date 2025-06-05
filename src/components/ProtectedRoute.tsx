@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -100,20 +99,25 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   // Check if user has access based on profile fields
   if (userProfile) {
+    // Define as rotas permitidas para usuários não-PRO
+    const allowedRoutesForFree = ['/meus-quizzes', '/perfil', '/subscription']; // Incluindo /subscription para evitar loop
+
     // Primary check: if has_access is explicitly false, redirect to subscription page
-    // But only if we're not already on the subscription page (to avoid loops)
-    if (userProfile.has_access === false && window.location.pathname !== '/subscription') {
+    // But only if we're not on an allowed route for free users
+    if (userProfile.has_access === false && 
+        !allowedRoutesForFree.includes(window.location.pathname)) {
       console.log("User does not have subscription access, redirecting to subscription page");
       return <Navigate to="/subscription" replace />;
     }
     
     // Secondary check: if manual_access is explicitly false and no has_access,
     // AND the plan is not pro or assinante, redirect to subscription
+    // But only if we're not on an allowed route for free users
     if (userProfile.has_access !== true &&
         userProfile.manual_access !== true &&
         userProfile.plan !== 'pro' && 
         userProfile.plan !== 'assinante' &&
-        window.location.pathname !== '/subscription') {
+        !allowedRoutesForFree.includes(window.location.pathname)) {
       console.log("User has no subscription access rights, redirecting to subscription page");
       return <Navigate to="/subscription" replace />;
     }

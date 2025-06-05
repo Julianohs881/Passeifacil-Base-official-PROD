@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ExploreFilters, { FilterValues } from "@/components/Explore/ExploreFilters";
@@ -13,6 +12,20 @@ const Explore = () => {
   const { isPro } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirecionar usuários não-PRO para a página de assinatura
+  if (!isPro()) {
+    useEffect(() => {
+       toast({
+        title: "Recurso exclusivo PRO",
+        description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
+        variant: "destructive",
+      });
+      navigate("/subscription");
+    }, [navigate, toast]); // Adiciona dependências
+    return null; // Retorna null enquanto redireciona
+  }
+
   const [filters, setFilters] = useState<FilterValues>({
     search: "",
     faculty: "",

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -11,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 
 const NavBar = () => {
-  const { user, signOut, userProfile } = useAuth();
+  const { user, signOut, userProfile, isPro } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -152,7 +151,17 @@ const NavBar = () => {
                 <Link 
                   to="/explore" 
                   className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors"
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => {
+                    if (!isPro()) {
+                      e.preventDefault();
+                      setOpen(false); // Fechar o menu mobile
+                      toast({
+                        title: "Recurso exclusivo PRO",
+                        description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 >
                   Explorar
                 </Link>
@@ -202,7 +211,19 @@ const NavBar = () => {
           <Link to="/quizzes" className="py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors">
             Meus Quizzes
           </Link>
-          <Link to="/explore" className="py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors">
+          <Link to="/explore" 
+            className="py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
+            onClick={(e) => {
+              if (!isPro()) {
+                e.preventDefault();
+                 toast({
+                  title: "Recurso exclusivo PRO",
+                  description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
+                  variant: "destructive",
+                });
+              }
+            }}
+          >
             Explorar
           </Link>
 
