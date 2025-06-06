@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const FREE_PLAN_LIMITS = {
-  CREATED_QUIZZES: 5,
   EXPLORED_QUIZZES: 5
 };
 
@@ -46,20 +44,14 @@ export const useFreePlanLimits = () => {
     }
   };
 
-  const canCreateQuiz = () => {
-    if (isPro()) return true;
-    return createdQuizzesCount < FREE_PLAN_LIMITS.CREATED_QUIZZES;
-  };
+  const canCreateQuiz = () => true; // Sempre permite criar quizzes
 
   const canExploreMore = () => {
     if (isPro()) return true;
     return exploredQuizzesCount < FREE_PLAN_LIMITS.EXPLORED_QUIZZES;
   };
 
-  const getRemainingCreatedQuizzes = () => {
-    if (isPro()) return Infinity;
-    return Math.max(0, FREE_PLAN_LIMITS.CREATED_QUIZZES - createdQuizzesCount);
-  };
+  const getRemainingCreatedQuizzes = () => Infinity; // Sempre retorna infinito
 
   const getRemainingExploredQuizzes = () => {
     if (isPro()) return Infinity;

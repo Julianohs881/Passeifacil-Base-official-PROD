@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Download, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +42,16 @@ export const HomePageHeader = ({
           )}
         </div>
         
+        {/* Botão de Upgrade para usuários gratuitos */}
+        {!hasPremiumAccess && (
+           <Button 
+            onClick={() => navigate("/subscription")}
+            className="bg-violet-600 hover:bg-violet-700 text-white min-w-[40px] min-h-[40px] flex-1 sm:flex-none"
+          >
+            Upgrade para PRO
+          </Button>
+        )}
+
         {/* Only show these buttons for premium users */}
         {hasPremiumAccess && (
           <>

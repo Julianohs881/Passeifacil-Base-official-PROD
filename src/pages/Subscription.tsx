@@ -9,7 +9,7 @@ import { Check, X, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Subscription = () => {
-  const { user, userProfile, updateUserProfile, signOut } = useAuth();
+  const { user, userProfile, updateUserProfile, signOut, isPro } = useAuth();
   const { createCheckoutSession, verifySubscriptionStatus, isLoading, openCustomerPortal } = useStripeSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ const Subscription = () => {
       
       // Determinar se devemos verificar o status da assinatura
       const shouldCheckStatus = isNewSubscriber || 
-                              (userProfile && userProfile.has_access === true) || 
+                              (userProfile && isPro()) ||
                               window.location.search.includes('subscription=') ||
                               isRetrying;
       
@@ -60,31 +60,35 @@ const Subscription = () => {
         if (result.success && result.has_access) {
           await updateUserProfile();
           
-          // Se for um novo assinante, mostrar mensagem de boas-vindas
-          if (isNewSubscriber) {
-            toast({
-              title: "Assinatura ativada com sucesso!",
-              description: "Bem-vindo(a) ao Passei Fácil! Você já tem acesso completo.",
-              duration: 5000,
-            });
+          // Agora, após atualizar o perfil, verificamos se ele é PRO
+          if (isPro()) {
+            // Se for um novo assinante PRO, mostrar mensagem de boas-vindas
+            if (isNewSubscriber) {
+              toast({
+                title: "Assinatura ativada com sucesso!",
+                description: "Bem-vindo(a) ao Passei Fácil! Você já tem acesso completo.",
+                duration: 5000,
+              });
+              
+              sessionStorage.removeItem("new_subscriber");
+              navigate("/quizzes");
+              return;
+            }
             
-            sessionStorage.removeItem("new_subscriber");
+            // Se já era PRO (ou se tornou PRO agora), redirecionar
+            toast({
+              title: "Assinatura ativa",
+              description: "Você já possui uma assinatura ativa!",
+              duration: 3000,
+            });
             navigate("/quizzes");
             return;
           }
-          
-          // Se já tem acesso, redirecionar para dashboard
-          toast({
-            title: "Assinatura ativa",
-            description: "Você já possui uma assinatura ativa!",
-            duration: 3000,
-          });
-          navigate("/quizzes");
-          return;
+          // Se tem has_access=true mas não é PRO, não faz nada (continua na página de assinatura)
         }
         
-        // Se chegamos até aqui, o usuário não tem assinatura ativa
-        // Vamos parar de verificar e mostrar a página de assinatura
+        // Se chegamos até aqui (result.success && result.has_access é false, ou !result.success)
+        // significa que não tem uma assinatura PRO ativa. Paramos a verificação
         setCheckingStatus(false);
         setIsRetrying(false);
       } catch (error) {
@@ -312,7 +316,7 @@ const Subscription = () => {
             
             <ul className="space-y-3">
               {[
-                "Criar até 5 quizzes",
+                "Criar quizzes ilimitados",
                 "Explorar até 5 quizzes públicos",
                 "Quizzes apenas privados",
                 "Suporte básico"
@@ -381,26 +385,35 @@ const Subscription = () => {
             </ul>
           </CardContent>
           
-          <CardFooter className="flex flex-col">
-            <Button 
-              className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 text-lg"
-              onClick={handleSubscribe}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Processando...
-                </span>
-              ) : "Assinar Agora"}
-            </Button>
-            <p className="text-xs text-gray-500 mt-4 text-center">
-              Cancele a qualquer momento. Processado com segurança pelo Stripe.
-            </p>
+          <CardFooter>
+            {/* Se o usuário for PRO, mostra botão de gerenciar. Caso contrário, mostra assinar. */}
+            {isPro() ? (
+               <Button 
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 text-lg"
+                onClick={openCustomerPortal}
+                disabled={isLoading}
+              >
+                Gerenciar Assinatura
+              </Button>
+            ) : (
+               <Button 
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 text-lg"
+                onClick={handleSubscribe}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Processando...
+                  </span>
+                ) : "Assinar Agora"}
+              </Button>
+            )}
           </CardFooter>
         </Card>
       </div>
 
-      {verificationError && (
+      {/* Se o usuário for PRO, não mostra a seção de erro/retry. */}
+      {!isPro() && verificationError && (
         <Alert variant="destructive" className="max-w-md mx-auto mb-6 border-red-200 bg-red-50">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erro ao verificar assinatura</AlertTitle>

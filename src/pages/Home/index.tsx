@@ -196,17 +196,18 @@ const Home = () => {
     <div className="container py-8">
       <ProfileIncompleteAlert />
       
-      {/* Mostrar limitações para usuários gratuitos */}
-      {!isPro() && (
-        <div className="mb-6">
-          <FreePlanLimits
-            currentCount={createdQuizzesCount}
-            limit={limits.CREATED_QUIZZES}
-            feature="quizzes"
-            onUpgrade={() => navigate("/subscription")}
-          />
+      {/* Mostrar botão de Upgrade para usuários gratuitos */}
+      {/* BOTÃO MOVIDO PARA HOMEPAGEHEADER */}
+      {/* {!isPro() && (
+        <div className="mb-6 flex justify-center">
+          <Button 
+            onClick={() => navigate("/subscription")}
+            className="bg-violet-600 hover:bg-violet-700 text-white"
+          >
+            Upgrade para PRO
+          </Button>
         </div>
-      )}
+      )} */}
       
       <HomePageHeader 
         onOpenCreateQuiz={handleCreateQuiz}
