@@ -155,6 +155,7 @@ const NavBar = () => {
                     if (!isPro()) {
                       e.preventDefault();
                       setOpen(false); // Fechar o menu mobile
+                      navigate("/subscription"); // Redirecionar para a página de assinatura
                       toast({
                         title: "Recurso exclusivo PRO",
                         description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
@@ -216,7 +217,8 @@ const NavBar = () => {
             onClick={(e) => {
               if (!isPro()) {
                 e.preventDefault();
-                 toast({
+                navigate("/subscription"); // Redirecionar para a página de assinatura
+                toast({
                   title: "Recurso exclusivo PRO",
                   description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
                   variant: "destructive",

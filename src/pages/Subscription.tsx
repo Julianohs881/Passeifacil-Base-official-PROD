@@ -317,7 +317,6 @@ const Subscription = () => {
             <ul className="space-y-3">
               {[
                 "Criar quizzes ilimitados",
-                "Explorar até 5 quizzes públicos",
                 "Quizzes apenas privados",
                 "Suporte básico"
               ].map((feature, index) => (
@@ -328,6 +327,7 @@ const Subscription = () => {
               ))}
               
               {[
+                "Explorar",
                 "Sem criação com IA",
                 "Sem compartilhamento",
                 "Sem importação"
@@ -364,7 +364,7 @@ const Subscription = () => {
           
           <CardContent className="pt-6">
             <div className="text-center mb-4">
-              <p className="text-3xl font-bold">R$14,90<span className="text-base font-normal text-gray-500">/mês</span></p>
+              <p className="text-3xl font-bold">R$19,90<span className="text-base font-normal text-gray-500">/mês</span></p>
             </div>
             
             <ul className="space-y-3 mt-6">

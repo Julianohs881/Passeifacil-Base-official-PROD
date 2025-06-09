@@ -153,6 +153,14 @@ function AppContent() {
             }
           />
           <Route 
+            path="/quizzes/:quizId/edit"
+            element={
+              <ProtectedRoute>
+                <CreateQuiz />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
             path="/profile" 
             element={
               <ProtectedRoute>

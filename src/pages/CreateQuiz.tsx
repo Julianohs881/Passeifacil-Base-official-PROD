@@ -1,6 +1,5 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,8 +11,43 @@ const CreateQuiz = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { quizId } = useParams<{ quizId: string }>();
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
+  const [isLoading, setIsLoading] = useState(!!quizId);
 
-  const handleCreateQuiz = async (quizData: Omit<Quiz, "id" | "user_id" | "created_at">) => {
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      if (quizId) {
+        try {
+          const { data, error } = await supabase
+            .from("quizzes")
+            .select("*")
+            .eq("id", quizId)
+            .single();
+
+          if (error) throw error;
+          
+          setEditingQuiz({...data, color: data.color as ColorOption});
+        } catch (error) {
+          console.error("Erro ao carregar quiz para edição:", error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar os dados do quiz.",
+            variant: "destructive",
+          });
+          navigate("/quizzes");
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQuiz();
+  }, [quizId, navigate, toast]);
+
+  const handleSaveQuiz = async (quizData: Omit<Quiz, "id" | "user_id" | "created_at">) => {
     try {
       if (!user) {
         toast({
@@ -25,29 +59,46 @@ const CreateQuiz = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("quizzes")
-        .insert({
-          ...quizData,
-          user_id: user.id,
-        })
-        .select("*")
-        .single();
+      let result;
+      if (editingQuiz) {
+        result = await supabase
+          .from("quizzes")
+          .update(quizData)
+          .eq("id", editingQuiz.id)
+          .select("*")
+          .single();
 
-      if (error) throw error;
+        if (result.error) throw result.error;
 
-      toast({
-        title: "Quiz criado com sucesso!",
-        description: "Você já pode começar a adicionar questões.",
-      });
+        toast({
+          title: "Quiz atualizado com sucesso!",
+          description: "",
+        });
 
-      // Navigate to the quiz page
-      navigate(`/quiz/${data.id}`);
+      } else {
+        result = await supabase
+          .from("quizzes")
+          .insert({
+            ...quizData,
+            user_id: user.id,
+          })
+          .select("*")
+          .single();
+
+        if (result.error) throw result.error;
+        
+        toast({
+          title: "Quiz criado com sucesso!",
+          description: "Você já pode começar a adicionar questões.",
+        });
+      }
+
+      navigate(`/quiz/${result.data.id}`);
     } catch (error) {
-      console.error("Erro ao criar quiz:", error);
+      console.error("Erro ao salvar quiz:", error);
       toast({
-        title: "Erro ao criar quiz",
-        description: "Ocorreu um erro ao criar o quiz. Tente novamente.",
+        title: `Erro ao ${editingQuiz ? 'atualizar' : 'criar'} quiz`,
+        description: "Ocorreu um erro ao salvar o quiz. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -63,7 +114,8 @@ const CreateQuiz = () => {
       <AddQuizModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        onSave={handleCreateQuiz}
+        onSave={handleSaveQuiz}
+        quiz={editingQuiz}
       />
     </div>
   );
