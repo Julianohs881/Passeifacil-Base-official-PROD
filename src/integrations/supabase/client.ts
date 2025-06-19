@@ -27,14 +27,24 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 });
 
 export const signInWithGoogle = async () => {
+  const redirectUrl = `${window.location.origin}/auth/callback`;
+  console.log('URL de redirecionamento:', redirectUrl);
+  
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`
+      redirectTo: redirectUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent'
+      }
     }
   });
 
-  if (error) throw error;
+  if (error) {
+    console.error('Erro no login com Google:', error);
+    throw error;
+  }
   return data;
 };
 
