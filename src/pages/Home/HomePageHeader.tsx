@@ -60,7 +60,7 @@ export const HomePageHeader = ({
               variant="ghost" 
               className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none text-blue-900 border-0"
             >
-              <span className="whitespace-nowrap">Explorar</span>
+              <span className="whitespace-nowrap">Comunidade</span>
             </Button>
             
             <Button 

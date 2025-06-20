@@ -81,7 +81,7 @@ const Explore = () => {
   return (
     <div className="container py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-0">Explorar Quizzes Públicos</h1>
+        <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-0">Comunidade de Quizzes Públicos</h1>
       </div>
       
       {/* Mostrar limitações para usuários gratuitos */}

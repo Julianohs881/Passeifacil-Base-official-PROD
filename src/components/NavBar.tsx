@@ -158,13 +158,13 @@ const NavBar = () => {
                       navigate("/subscription"); // Redirecionar para a página de assinatura
                       toast({
                         title: "Recurso exclusivo PRO",
-                        description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
+                        description: "Faça upgrade para o plano PRO para acessar a comunidade de quizzes públicos.",
                         variant: "destructive",
                       });
                     }
                   }}
                 >
-                  Explorar
+                  Comunidade
                 </Link>
                 {user ? (
                   <>
@@ -220,13 +220,13 @@ const NavBar = () => {
                 navigate("/subscription"); // Redirecionar para a página de assinatura
                 toast({
                   title: "Recurso exclusivo PRO",
-                  description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
+                  description: "Faça upgrade para o plano PRO para acessar a comunidade de quizzes públicos.",
                   variant: "destructive",
                 });
               }
             }}
           >
-            Explorar
+            Comunidade
           </Link>
 
           {user && (
