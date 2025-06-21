@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { User, Calendar, Clock } from "lucide-react";
 import PlanBadge from "@/components/PlanBadge";
 import { UserPlan } from "@/types";
+import { useStripeSubscription } from "@/hooks/useStripeSubscription";
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const UserProfile = () => {
   const { user, userProfile, updateProfile, isPro } = useAuth();
@@ -19,6 +21,8 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { openCustomerPortal, isLoading: isLoadingStripe } = useStripeSubscription();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   useEffect(() => {
     if (userProfile?.name) {
@@ -276,8 +280,7 @@ const UserProfile = () => {
                   </p>
                 </div>
               </div>
-              
-              <div className="text-right">
+              <div className="text-right space-y-2">
                 <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   subscriptionDaysLeft !== null && subscriptionDaysLeft > 30
                     ? 'bg-green-100 text-green-800'
@@ -290,11 +293,44 @@ const UserProfile = () => {
                     : 'Expirada'
                   }
                 </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => setShowCancelDialog(true)}
+                  disabled={isLoadingStripe}
+                >
+                  Cancelar assinatura
+                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
+      {/* Modal de confirmação de cancelamento */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogTitle>Cancelar assinatura</DialogTitle>
+          <DialogDescription>
+            Tem certeza que deseja cancelar sua assinatura PRO? Sua conta será rebaixada para gratuita e você perderá os benefícios do plano PRO.
+          </DialogDescription>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
+              Não, manter PRO
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                setShowCancelDialog(false);
+                await openCustomerPortal();
+              }}
+              disabled={isLoadingStripe}
+            >
+              Sim, cancelar assinatura
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -26,8 +26,6 @@ const Home = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
-  const [isColorPopoverOpen, setIsColorPopoverOpen] = useState(false);
   const { user, isPro } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -118,24 +116,18 @@ const Home = () => {
     navigate(`/quizzes/${quiz.id}/edit`);
   };
 
-  const handleColorChange = (quiz: Quiz) => {
-    // Open color change popover or modal
-    setSelectedQuiz(quiz);
-    setIsColorPopoverOpen(true);
-  };
-
-  const handleSaveQuizColor = async (quiz: Quiz, newColor: ColorOption) => {
+  const handleSaveQuizColor = async (quizToUpdate: Quiz) => {
     try {
       const { error } = await supabase
         .from("quizzes")
-        .update({ color: newColor })
-        .eq("id", quiz.id);
+        .update({ color: quizToUpdate.color })
+        .eq("id", quizToUpdate.id);
 
       if (error) throw error;
       
       // Update the local state with the new color
       setQuizzes(
-        quizzes.map((q) => (q.id === quiz.id ? { ...q, color: newColor } : q))
+        quizzes.map((q) => (q.id === quizToUpdate.id ? { ...q, color: quizToUpdate.color } : q))
       );
       
       toast({
@@ -250,7 +242,7 @@ const Home = () => {
             onOpenCreateQuiz={handleCreateQuiz}
             onDeleteQuiz={handleDeleteQuiz}
             onEditQuiz={handleEditQuiz}
-            onChangeColor={handleColorChange}
+            onChangeColor={handleSaveQuizColor}
             onToggleVisibility={handleToggleVisibility}
           />
         </div>
