@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/utils/supabase";
@@ -32,12 +31,24 @@ export const useExploreQuizzes = () => {
 
       if (error) throw error;
       
+      // Buscar nomes dos criadores manualmente
+      const userIds = [...new Set((data || []).map(q => q.user_id))];
+      let userIdToName: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, name")
+          .in("id", userIds);
+        (profiles || []).forEach(profile => {
+          userIdToName[profile.id] = profile.name || "Usuário";
+        });
+      }
+
       // Transform the data para garantir que color é uma ColorOption válida
       const transformedData = (data || []).map(item => ({
         ...item,
         color: parseColorOption(item.color),
-        // Sem tentar acessar o perfil do usuário por enquanto
-        createdBy: "Usuário"
+        createdBy: userIdToName[item.user_id] || "Usuário"
       })) as ExtendedQuiz[];
       
       setQuizzes(transformedData);
