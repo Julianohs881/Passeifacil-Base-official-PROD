@@ -8,7 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 // Price configuration object for easy editing
 const PRICING_CONFIG = {
-  monthlyPriceDisplay: "R$ 19,90",
+  monthlyPriceDisplay: "R$ 14,90",
   // Amount in cents for Stripe
   monthlyPriceAmount: 1990,
   currency: "brl"
@@ -286,7 +286,7 @@ const Landing = () => {
                 <div>
                   <h3 className="font-medium text-lg text-gray-800 mb-2">Como funciona a assinatura?</h3>
                   <p className="text-gray-600">
-                    A assinatura mensal de R$ 19,90 dá acesso completo a todos os recursos do Passei Fácil, 
+                    A assinatura mensal de R$ 14,90 dá acesso completo a todos os recursos do Passei Fácil, 
                     incluindo criação ilimitada de quizzes, geração de questões por IA, exploração de conteúdo 
                     da comunidade e muito mais. A cobrança é feita mensalmente e você pode cancelar a qualquer momento.
                   </p>
