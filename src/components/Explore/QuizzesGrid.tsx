@@ -1,4 +1,3 @@
-
 import QuizExploreCard from "./QuizExploreCard";
 import { ExtendedQuiz } from "./types";
 
@@ -29,7 +28,7 @@ const QuizzesGrid = ({ quizzes, loading, onQuizClick }: QuizzesGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {quizzes.map((quiz) => (
         <QuizExploreCard 
           key={quiz.id} 

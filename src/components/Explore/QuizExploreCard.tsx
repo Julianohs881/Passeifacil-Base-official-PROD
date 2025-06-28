@@ -1,4 +1,3 @@
-
 import { Book, Eye, School } from "lucide-react";
 import { ExtendedQuiz } from "./types";
 import { useAuth } from "@/context/AuthContext";
@@ -20,50 +19,51 @@ const QuizExploreCard = ({ quiz, onQuizClick }: QuizExploreCardProps) => {
       onClick={handleClick}
       className="block hover:scale-105 transition-transform duration-200 cursor-pointer"
     >
-      <div className={`quiz-card ${quiz.color} p-5 flex flex-col justify-between h-52 relative rounded-lg shadow-md hover:shadow-lg`}>
-        <div className="absolute top-3 left-3">
+      <div className={`quiz-card ${quiz.color} p-4 h-32 sm:h-44 relative rounded-xl shadow-md hover:shadow-lg`}>
+        <div className="absolute top-2 left-2">
           <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
             <Eye className="h-3 w-3 mr-1" />
-            Público
+            <span className="hidden sm:inline">Público</span>
           </span>
         </div>
         
         {/* Visualizar se o usuário atual é o criador para exibir controles */}
         {user && user.id === quiz.user_id && (
-          <div className="absolute top-3 right-3 bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full">
+          <div className="absolute top-2 right-2 bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full">
             Seu quiz
           </div>
         )}
         
         {/* Título do quiz centralizado */}
         <div className="flex-grow flex items-center justify-center">
-          <h3 className="text-base font-medium text-white text-center">
+          <h3 className="text-sm sm:text-base font-medium text-white text-center break-words line-clamp-3">
             {quiz.title}
           </h3>
         </div>
         
-        {/* Informações do curso */}
-        <div className="mt-2 flex flex-col gap-1 text-white">
-          {quiz.faculty && (
-            <div className="flex items-center text-xs">
-              <School className="h-3 w-3 mr-1" />
-              {quiz.faculty}
+        {/* Informações do curso - posicionadas na parte inferior */}
+        <div className="absolute bottom-2 left-2 right-2">
+          <div className="flex flex-col gap-1 text-white">
+            {quiz.faculty && (
+              <div className="flex items-center text-xs">
+                <School className="h-3 w-3 mr-1" />
+                <span className="truncate">{quiz.faculty}</span>
+              </div>
+            )}
+            {quiz.course && (
+              <div className="flex items-center text-xs">
+                <Book className="h-3 w-3 mr-1" />
+                <span className="truncate">
+                  {quiz.course}
+                  {quiz.course_year && ` - ${quiz.course_year}`}
+                </span>
+              </div>
+            )}
+            
+            {/* Nome do criador */}
+            <div className="text-xs text-white text-right mt-1">
+              Por: {quiz.createdBy}
             </div>
-          )}
-          {quiz.course && (
-            <div className="flex items-center text-xs">
-              <Book className="h-3 w-3 mr-1" />
-              {quiz.course}
-              {quiz.course_year && ` - ${quiz.course_year}`}
-            </div>
-          )}
-          {!quiz.faculty && !quiz.course && (
-            <div className="h-6"></div>
-          )}
-          
-          {/* Nome do criador */}
-          <div className="text-xs text-white text-right mt-1">
-            Por: {quiz.createdBy}
           </div>
         </div>
       </div>
