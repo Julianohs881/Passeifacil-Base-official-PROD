@@ -15,30 +15,7 @@ const Login = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Teste de conexão com o Supabase
-    const testConnection = async () => {
-      try {
-        const { data, error } = await supabase.from('quizzes').select('*').limit(1);
-        if (error) {
-          console.error('Erro na conexão com Supabase:', error);
-          toast({
-            title: "Erro de conexão",
-            description: "Não foi possível conectar ao Supabase. Verifique suas credenciais.",
-            variant: "destructive",
-          });
-        } else {
-          console.log('Conexão com Supabase estabelecida com sucesso!');
-          toast({
-            title: "Conexão estabelecida",
-            description: "Conectado ao Supabase com sucesso!",
-          });
-        }
-      } catch (err) {
-        console.error('Erro ao testar conexão:', err);
-      }
-    };
-
-    testConnection();
+    // Teste de conexão com o Supabase REMOVIDO
   }, [toast]);
 
   const handleGoogleLogin = async () => {
