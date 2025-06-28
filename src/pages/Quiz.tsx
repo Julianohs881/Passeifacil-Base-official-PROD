@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Question } from "../types";
@@ -101,6 +100,7 @@ const Quiz = () => {
             onAddQuestion={isCreator ? handleOpenAddModal : undefined}
             onQuestionCreated={fetchQuestions}
             isCreator={isCreator}
+            onImportQuestion={isCreator ? handleOpenImportQuestionDialog : undefined}
           />
           
           {/* Pro user AI usage display */}

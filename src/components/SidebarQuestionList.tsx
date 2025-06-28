@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Question } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -92,7 +91,7 @@ const SidebarQuestionList = ({
   // The actual question list component
   const QuestionList = () => (
     <>
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="p-4 border-b flex items-center justify-between gap-2">
         <h2 className="font-medium text-lg">Questões</h2>
       </div>
       <div className="p-2 border-b bg-gray-50">
@@ -185,7 +184,7 @@ const SidebarQuestionList = ({
         <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
           <DrawerContent className="w-[80vw] max-w-[320px] h-full p-0">
             <div className="flex flex-col h-full">
-              <div className="p-4 border-b flex items-center justify-between">
+              <div className="p-4 border-b flex items-center justify-between gap-2">
                 <h2 className="font-medium text-lg">Questões</h2>
                 <DrawerClose asChild>
                   <Button variant="ghost" size="icon">

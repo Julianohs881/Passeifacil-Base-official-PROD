@@ -1,6 +1,5 @@
-
 import React from "react";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -12,6 +11,7 @@ interface QuizHeaderProps {
   onAddQuestion?: () => void;
   onQuestionCreated?: () => void;
   isCreator?: boolean;
+  onImportQuestion?: () => void;
 }
 
 const QuizHeader: React.FC<QuizHeaderProps> = ({ 
@@ -19,7 +19,8 @@ const QuizHeader: React.FC<QuizHeaderProps> = ({
   quizId, 
   onAddQuestion, 
   onQuestionCreated,
-  isCreator 
+  isCreator,
+  onImportQuestion
 }) => {
   const navigate = useNavigate();
   const { isPro } = useAuth();
@@ -57,7 +58,19 @@ const QuizHeader: React.FC<QuizHeaderProps> = ({
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Questão
               </Button>
-              
+              {/* Botão Importar Questão - só para PRO */}
+              {isPROUser && quizId && onImportQuestion && (
+                <Button
+                  onClick={onImportQuestion}
+                  size="sm"
+                  variant="outline"
+                  className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                  type="button"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Importar questão
+                </Button>
+              )}
               {/* Only render the CreateWithAIButton for PRO users */}
               {isPROUser && quizId && onQuestionCreated && (
                 <CreateWithAIButton 
