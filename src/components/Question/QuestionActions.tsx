@@ -1,10 +1,15 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Share2, Info } from "lucide-react";
+import { Edit, Trash2, Share2, Info, MoreVertical } from "lucide-react";
 import { Question } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu";
 
 interface QuestionActionsProps {
   question: Question;
@@ -30,7 +35,7 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
   const aiQuestionsRemaining = Math.max(0, aiQuestionsLimit - aiQuestionsCreated);
 
   return (
-    <div className="action-buttons-container py-[4px] flex items-center gap-2">
+    <div className="action-buttons-container py-[4px] flex items-center gap-2 justify-end w-full">
       {/* AI Usage Info for PRO users */}
       {isPROUser && (
         <TooltipProvider>
@@ -54,28 +59,31 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
           </Tooltip>
         </TooltipProvider>
       )}
-      
-      {/* Share button - only show for PRO users */}
-      {isPROUser && (
-        <Button variant="outline" size="sm" onClick={onOpenShareDialog} className="action-button text-gray-600 hover:text-blue-600 hover:bg-blue-50">
-          <Share2 className="h-4 w-4 mr-1" />
-          <span className="whitespace-nowrap">Compartilhar</span>
-        </Button>
-      )}
-      
-      {/* Creator-only buttons */}
-      {isCreator && (
-        <>
-          <Button variant="outline" size="sm" onClick={() => onOpenEditModal(question)} className="action-button text-gray-600 hover:text-blue-600 hover:bg-blue-50">
-            <Edit className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Editar</span>
+      {/* Menu de três pontos */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="text-gray-600 hover:text-blue-600">
+            <MoreVertical className="h-5 w-5" />
           </Button>
-          <Button variant="outline" size="sm" onClick={onOpenDeleteDialog} className="action-button text-gray-600 hover:text-red-600 hover:bg-red-50">
-            <Trash2 className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Excluir</span>
-          </Button>
-        </>
-      )}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {isPROUser && (
+            <DropdownMenuItem onClick={onOpenShareDialog} className="flex items-center gap-2">
+              <Share2 className="h-4 w-4" /> Compartilhar
+            </DropdownMenuItem>
+          )}
+          {isCreator && (
+            <DropdownMenuItem onClick={() => onOpenEditModal(question)} className="flex items-center gap-2">
+              <Edit className="h-4 w-4" /> Editar
+            </DropdownMenuItem>
+          )}
+          {isCreator && (
+            <DropdownMenuItem onClick={onOpenDeleteDialog} className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-4 w-4" /> Excluir
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
