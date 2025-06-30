@@ -177,7 +177,42 @@ const Subscription = () => {
       return;
     }
 
-    // Indicar que estamos processando
+    // Função auxiliar para checar status e redirecionar se virar PRO
+    const checkAndRedirectIfPro = async (label: string) => {
+      const result = await verifySubscriptionStatus();
+      if (result.success && result.has_access) {
+        await updateUserProfile();
+        if (isPro()) {
+          toast({
+            title: "Assinatura ativada!",
+            description: `Seu acesso foi liberado com sucesso (${label}).`,
+            duration: 4000,
+          });
+          navigate("/quizzes");
+        }
+      }
+    };
+
+    // Guardar timeouts para limpar depois
+    const timeouts: NodeJS.Timeout[] = [];
+
+    // Agendar checagens em 30s, 1min e 5min
+    timeouts.push(setTimeout(() => checkAndRedirectIfPro('30s'), 30000));
+    timeouts.push(setTimeout(() => checkAndRedirectIfPro('1min'), 60000));
+    timeouts.push(setTimeout(() => checkAndRedirectIfPro('5min'), 300000));
+
+    // Limpar timeouts se o componente desmontar
+    // (garantir que não haja vazamento de memória)
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      return () => {
+        timeouts.forEach(clearTimeout);
+      };
+      // Não adicionar dependências, pois queremos rodar só no unmount
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Fluxo normal de assinatura
     try {
       const result = await createCheckoutSession();
       
