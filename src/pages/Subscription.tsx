@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ const Subscription = () => {
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [shouldContinueChecking, setShouldContinueChecking] = useState(true);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -168,6 +169,7 @@ const Subscription = () => {
         console.log("Limpando intervalo de verificação automática");
         clearInterval(intervalId);
       }
+      timeoutsRef.current.forEach(clearTimeout);
     };
   }, [user, userProfile, navigate, toast, updateUserProfile, verifySubscriptionStatus, verificationAttempts, maxVerificationAttempts, isRetrying, checkingStatus, shouldContinueChecking]);
 
@@ -193,24 +195,13 @@ const Subscription = () => {
       }
     };
 
-    // Guardar timeouts para limpar depois
-    const timeouts: NodeJS.Timeout[] = [];
-
-    // Agendar checagens em 30s, 1min e 5min
-    timeouts.push(setTimeout(() => checkAndRedirectIfPro('30s'), 30000));
-    timeouts.push(setTimeout(() => checkAndRedirectIfPro('1min'), 60000));
-    timeouts.push(setTimeout(() => checkAndRedirectIfPro('5min'), 300000));
-
-    // Limpar timeouts se o componente desmontar
-    // (garantir que não haja vazamento de memória)
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      return () => {
-        timeouts.forEach(clearTimeout);
-      };
-      // Não adicionar dependências, pois queremos rodar só no unmount
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // Limpar timeouts antigos antes de adicionar novos
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [
+      setTimeout(() => checkAndRedirectIfPro('30s'), 30000),
+      setTimeout(() => checkAndRedirectIfPro('1min'), 60000),
+      setTimeout(() => checkAndRedirectIfPro('5min'), 300000),
+    ];
 
     // Fluxo normal de assinatura
     try {
