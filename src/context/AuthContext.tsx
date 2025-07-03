@@ -201,7 +201,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
         options: {
           data: {
-            full_name: name
+            name: name
           }
         }
       });

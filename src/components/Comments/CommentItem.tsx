@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -36,8 +35,11 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
         if (error) throw error;
 
         if (data) {
+          console.log("[DEBUG] Perfil buscado para o comentário:", data);
           setUserName(data.name || null);
           setAvatarUrl(data.avatar_url || null);
+        } else {
+          console.log("[DEBUG] Nenhum dado de perfil encontrado para o comentário");
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
