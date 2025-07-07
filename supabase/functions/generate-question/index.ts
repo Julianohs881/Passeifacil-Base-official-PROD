@@ -145,11 +145,12 @@ Sua tarefa é:
 
 1. Analisar todo o texto, sem omitir nenhuma parte importante.
 2. Extrair e organizar o texto integralmente para que nenhuma informação da questão se perca.
-3. Reorganizar o texto do enunciado para que fique bem formatado, usando quebras de linha apropriadas (\\n) e mantendo a estrutura lógica.
+3. Reorganizar o texto do enunciado para que fique bem formatado, usando quebras de linha apropriadas (\n) e mantendo a estrutura lógica.
 4. Preservar os números e marcadores de lista (como "I.", "II.", "III."), com cada item em linha separada.
 5. Manter as referências e outras informações importantes também formatadas em parágrafos separados usando quebras de linha.
 6. Não alterar o conteúdo, apenas melhorar a organização visual para facilitar a leitura.
-7. A partir do texto completo formatado, gerar a questão de múltipla escolha completa com enunciado, alternativas, resposta correta e fonte, no formato JSON.
+7. Gere sempre pelo menos 4 alternativas distintas para a questão, mesmo que precise criar alternativas plausíveis e realistas. Nunca gere apenas uma alternativa. Se o texto original não tiver alternativas suficientes, crie alternativas plausíveis e realistas.
+8. A partir do texto completo formatado, gerar a questão de múltipla escolha completa com enunciado, alternativas, resposta correta e fonte, no formato JSON.
 
 Forneça o resultado como um objeto JSON com os seguintes campos:
 - statement: texto completo do enunciado formatado com quebras de linha apropriadas
@@ -163,7 +164,7 @@ Forneça o resultado como um objeto JSON com os seguintes campos:
   - correta: a letra da alternativa correta (A, B, C, D ou E)
   - fonte: fonte da questão (se disponível)
 
-Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
+Certifique-se de que o JSON seja válido, esteja estruturado adequadamente e contenha pelo menos 4 alternativas distintas no array options.`
           },
           {
             role: "user",
