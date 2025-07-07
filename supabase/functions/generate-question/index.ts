@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -112,6 +111,19 @@ async function performOCR(base64Image: string) {
   }
 }
 
+function extractFirstJson(text: string) {
+  // Procura o primeiro bloco de JSON (objeto ou array)
+  const match = text.match(/({[\s\S]*})|\[([\s\S]*)\]/);
+  if (match) {
+    try {
+      return JSON.parse(match[0]);
+    } catch (e) {
+      throw new Error('Falha ao fazer parse do JSON extraído: ' + e.message);
+    }
+  }
+  throw new Error('Nenhum JSON válido encontrado na resposta da IA.');
+}
+
 async function generateQuestionWithOpenAI(text: string) {
   try {
     console.log("Enviando texto para geração de questão...");
@@ -171,13 +183,10 @@ Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
 
     const result = await openAIResponse.json();
     const responseText = result.choices[0].message.content;
-    
+    console.log('Resposta bruta da OpenAI:', responseText);
     try {
-      // Extract JSON from response text (in case OpenAI adds any commentary)
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      const jsonString = jsonMatch ? jsonMatch[0] : responseText;
-      const questionData = JSON.parse(jsonString);
-      
+      // Usar parser robusto
+      const questionData = extractFirstJson(responseText);
       // Validate required fields
       if (!questionData.statement || !Array.isArray(questionData.options) || 
           questionData.options.length < 2 || 
@@ -185,7 +194,6 @@ Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
           questionData.correct_index < 0) {
         throw new Error("Formato de questão inválido ou incompleto");
       }
-
       // Add metadata
       return {
         ...questionData,
@@ -198,6 +206,6 @@ Certifique-se de que o JSON seja válido e esteja estruturado adequadamente.`
     }
   } catch (error) {
     console.error("OpenAI error:", error);
-    throw new Error("Falha ao gerar questão com IA");
+    throw error;
   }
 }
