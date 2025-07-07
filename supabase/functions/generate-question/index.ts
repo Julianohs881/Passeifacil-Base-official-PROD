@@ -152,8 +152,6 @@ Sua tarefa é:
 7. Gere sempre pelo menos 4 alternativas distintas para a questão, mesmo que precise criar alternativas plausíveis e realistas. Nunca gere apenas uma alternativa. Se o texto original não tiver alternativas suficientes, crie alternativas plausíveis e realistas.
 8. A partir do texto completo formatado, gerar a questão de múltipla escolha completa com enunciado, alternativas, resposta correta e fonte, no formato JSON.
 
-Responda apenas com o JSON, nada além disso. Não adicione explicações, comentários ou texto fora do JSON.
-
 Forneça o resultado como um objeto JSON com os seguintes campos:
 - statement: texto completo do enunciado formatado com quebras de linha apropriadas
 - options: array com as alternativas sem os identificadores (A, B, C, D, E)
@@ -166,7 +164,9 @@ Forneça o resultado como um objeto JSON com os seguintes campos:
   - correta: a letra da alternativa correta (A, B, C, D ou E)
   - fonte: fonte da questão (se disponível)
 
-Certifique-se de que o JSON seja válido, esteja estruturado adequadamente e contenha pelo menos 4 alternativas distintas no array options.`
+Certifique-se de que o JSON seja válido, esteja estruturado adequadamente e contenha pelo menos 4 alternativas distintas no array options.
+
+Responda apenas com o JSON, nada além disso. Não adicione explicações, comentários ou texto fora do JSON.`
           },
           {
             role: "user",
