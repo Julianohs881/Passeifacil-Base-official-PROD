@@ -92,6 +92,19 @@ const ChoosePaymentModal: React.FC<ChoosePaymentModalProps> = ({ open, onOpenCha
     }
   };
 
+  const handleBack = () => {
+    setPaymentData(null);
+    setPaymentStatus('pending');
+    setCopied(false);
+  };
+
+  const handleClose = () => {
+    setPaymentData(null);
+    setPaymentStatus('pending');
+    setCopied(false);
+    onOpenChange(false);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,6 +164,12 @@ const ChoosePaymentModal: React.FC<ChoosePaymentModalProps> = ({ open, onOpenCha
 
               <div className="flex space-x-2 mt-4">
                 <Button
+                  onClick={handleBack}
+                  variant="outline"
+                >
+                  Voltar
+                </Button>
+                <Button
                   onClick={checkPaymentStatus}
                   className="flex-1"
                   variant="outline"
@@ -181,7 +200,7 @@ const ChoosePaymentModal: React.FC<ChoosePaymentModalProps> = ({ open, onOpenCha
             </div>
           )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="ghost" onClick={handleClose}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

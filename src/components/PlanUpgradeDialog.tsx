@@ -129,7 +129,13 @@ const PlanUpgradeDialog: React.FC<PlanUpgradeDialogProps> = ({ isOpen, onClose }
       </Dialog>
       <ChoosePaymentModal
         open={paymentModalOpen}
-        onOpenChange={setPaymentModalOpen}
+        onOpenChange={(open) => {
+          setPaymentModalOpen(open);
+          if (!open) {
+            // Se o modal de pagamento fechar, também fecha o modal de upgrade
+            onClose();
+          }
+        }}
         userEmail={userProfile?.email || ''}
       />
     </>
