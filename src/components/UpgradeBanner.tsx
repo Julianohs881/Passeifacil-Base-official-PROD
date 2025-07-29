@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Crown, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
@@ -11,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import PlanUpgradeDialog from './PlanUpgradeDialog';
 
 interface UpgradeBannerProps {
   onUpgradeClick: () => void;
@@ -21,6 +21,7 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
   const { createCheckoutSession, isLoading, openCustomerPortal } = useStripeSubscription();
   const { toast } = useToast();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   
   // Função para lidar com o clique direto no botão de upgrade
   const handleDirectUpgrade = async (e: React.MouseEvent) => {
@@ -96,7 +97,7 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  onClick={isLoading ? undefined : handleDirectUpgrade}
+                  onClick={isLoading ? undefined : () => setUpgradeDialogOpen(true)}
                   size="sm"
                   disabled={isLoading}
                   className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 whitespace-nowrap w-full sm:w-auto"
@@ -118,6 +119,7 @@ const UpgradeBanner: React.FC<UpgradeBannerProps> = ({ onUpgradeClick }) => {
           </TooltipProvider>
         </div>
       </div>
+      <PlanUpgradeDialog isOpen={upgradeDialogOpen} onClose={() => setUpgradeDialogOpen(false)} />
     </div>
   );
 };

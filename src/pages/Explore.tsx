@@ -13,19 +13,6 @@ const Explore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirecionar usuários não-PRO para a página de assinatura
-  if (!isPro()) {
-    useEffect(() => {
-       toast({
-        title: "Recurso exclusivo PRO",
-        description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
-        variant: "destructive",
-      });
-      navigate("/subscription");
-    }, [navigate, toast]); // Adiciona dependências
-    return null; // Retorna null enquanto redireciona
-  }
-
   const [filters, setFilters] = useState<FilterValues>({
     search: "",
     faculty: "",
@@ -52,6 +39,23 @@ const Explore = () => {
     showUpgradeToast,
     limits
   } = useFreePlanLimits();
+
+  // Redirecionar usuários não-PRO para a página de assinatura
+  useEffect(() => {
+    if (!isPro()) {
+      toast({
+        title: "Recurso exclusivo PRO",
+        description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
+        variant: "destructive",
+      });
+      navigate("/subscription");
+    }
+  }, [isPro, navigate, toast]);
+
+  // Se não for PRO, não renderiza o conteúdo
+  if (!isPro()) {
+    return null;
+  }
 
   const handleFilterChange = (newFilters: FilterValues) => {
     setFilters(newFilters);

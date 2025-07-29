@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, X, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import PlanUpgradeDialog from '@/components/PlanUpgradeDialog';
 
 const Subscription = () => {
   const { user, userProfile, updateUserProfile, signOut, isPro } = useAuth();
@@ -22,6 +23,7 @@ const Subscription = () => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [shouldContinueChecking, setShouldContinueChecking] = useState(true);
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -424,7 +426,7 @@ const Subscription = () => {
             ) : (
                <Button 
                 className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 text-lg"
-                onClick={handleSubscribe}
+                onClick={() => setUpgradeDialogOpen(true)}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -465,6 +467,8 @@ const Subscription = () => {
           </div>
         </Alert>
       )}
+
+      <PlanUpgradeDialog isOpen={upgradeDialogOpen} onClose={() => setUpgradeDialogOpen(false)} />
     </div>
   );
 };

@@ -27,13 +27,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Não exibir comentários em quizzes privados
-  if (!isPublicQuiz) return null;
-
-  useEffect(() => {
-    fetchComments();
-  }, [questionId]);
-
   const fetchComments = async () => {
     try {
       setLoading(true);
@@ -52,6 +45,15 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isPublicQuiz) {
+      fetchComments();
+    }
+  }, [questionId, isPublicQuiz]);
+
+  // Não exibir comentários em quizzes privados
+  if (!isPublicQuiz) return null;
 
   const handleSubmitComment = async () => {
     if (!user) {

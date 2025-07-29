@@ -48,12 +48,12 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return false;
   };
 
-  const loadUserProfile = async (userId: string) => {
+  // Atualize a assinatura de loadUserProfile para aceitar email
+  const loadUserProfile = async (userId: string, userEmail?: string) => {
     try {
       // Verifica cache primeiro
       const cached = profileCache.current[userId];
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        console.log("Using cached profile");
         setUserProfile(cached.profile);
         setIsProfileLoaded(true);
         return;
@@ -62,14 +62,10 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Evita múltiplas chamadas em sequência
       const now = Date.now();
       if (now - lastProfileCheck.current < 2000) { // Reduzido para 2 segundos
-        console.log("Skipping profile check - too soon");
         return;
       }
       lastProfileCheck.current = now;
 
-      console.log("Loading user profile for ID:", userId);
-      setProfileError(null);
-      
       // Busca apenas os campos necessários
       const { data, error } = await supabase
         .from('profiles')
@@ -90,11 +86,10 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ['gratuito', 'pro', 'assinante', 'cancelado', 'sem assinatura'].includes(planValue)
             ? planValue as UserPlan
             : 'gratuito';
-
         const profileWithEmail: UserProfile = {
           ...data,
           plan: validPlan,
-          email: user?.email || ""
+          email: user?.email || userEmail || ""
         };
         
         // Atualiza o cache
@@ -120,23 +115,21 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         setLoading(true);
         setProfileError(null);
-        
         // Tenta obter a sessão do cache primeiro
         const cachedSession = localStorage.getItem('supabase.auth.token');
         if (cachedSession) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             setUser(session.user);
-            loadUserProfile(session.user.id);
+            loadUserProfile(session.user.id, session.user.email);
             return;
           }
         }
-
         // Se não tem cache ou é inválido, busca nova sessão
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setUser(session.user);
-          loadUserProfile(session.user.id);
+          loadUserProfile(session.user.id, session.user.email);
         } else {
           setIsProfileLoaded(true);
         }
@@ -162,7 +155,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session) {
         setUser(session.user);
         if (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && !userProfile)) {
-          loadUserProfile(session.user.id);
+          loadUserProfile(session.user.id, session.user.email);
         }
       } else {
         setUser(null);
@@ -224,7 +217,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       if (force) {
-        console.log("Forçando logout local mesmo com erro");
         setUser(null);
         setUserProfile(null);
         setIsProfileLoaded(false);
@@ -246,7 +238,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Evita múltiplas chamadas simultâneas
     if (subscriptionState.isVerifying) {
-      console.log("Profile update skipped - verification already in progress");
       return;
     }
 
