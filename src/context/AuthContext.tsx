@@ -29,22 +29,36 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   const { subscriptionState, canVerify, debouncedAction, resetState } = useSubscriptionState();
 
-  // Cache duration - 1 minute
-  const CACHE_DURATION = 60 * 1000;
+  // Cache duration - 30 seconds (reduced for better responsiveness)
+  const CACHE_DURATION = 30 * 1000;
 
   // Função otimizada para verificar status PRO
   const checkProStatus = (profile: UserProfile): boolean => {
+    console.log("Verificando status PRO para perfil:", {
+      plan: profile.plan,
+      has_access: profile.has_access,
+      manual_access: profile.manual_access,
+      subscription_end_date: profile.subscription_end_date
+    });
+    
     // Um usuário é PRO se tiver o plano 'pro' ou 'assinante' OU acesso manual explícito
     if (profile.plan === 'pro' || profile.plan === 'assinante' || profile.manual_access === true) {
         // Se tiver data de expiração, verificar se não expirou
         if (profile.subscription_end_date) {
-            return new Date(profile.subscription_end_date) > new Date();
+            const isExpired = new Date(profile.subscription_end_date) <= new Date();
+            console.log("Verificando data de expiração:", {
+              end_date: profile.subscription_end_date,
+              is_expired: isExpired
+            });
+            return !isExpired;
         }
         // Se não tiver data de expiração ou se a data ainda é válida, é PRO
+        console.log("Usuário é PRO (sem data de expiração)");
         return true;
     }
 
     // Em todos os outros casos (plano 'gratuito', 'sem assinatura', etc. sem manual_access=true), não é PRO
+    console.log("Usuário NÃO é PRO");
     return false;
   };
 
@@ -81,6 +95,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data) {
+        console.log("Dados do perfil carregados do banco:", data);
+        
         const planValue = data.plan as string;
         const validPlan: UserPlan = 
           ['gratuito', 'pro', 'assinante', 'cancelado', 'sem assinatura'].includes(planValue)
@@ -92,6 +108,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: user?.email || userEmail || ""
         };
         
+        console.log("Perfil processado:", profileWithEmail);
+        
         // Atualiza o cache
         profileCache.current[userId] = {
           profile: profileWithEmail,
@@ -100,6 +118,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         setUserProfile(profileWithEmail);
       } else {
+        console.log("Nenhum perfil encontrado para o usuário:", userId);
         setUserProfile(null);
       }
     } catch (error) {
@@ -239,6 +258,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Evita múltiplas chamadas simultâneas
     if (subscriptionState.isVerifying) {
       return;
+    }
+
+    // Limpa o cache para forçar uma nova busca
+    if (profileCache.current[user.id]) {
+      delete profileCache.current[user.id];
     }
 
     // Usa debounce para evitar múltiplas chamadas em sequência

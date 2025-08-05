@@ -1,49 +1,114 @@
 import { serve } from "https://deno.land/std/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!, 
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-  
-  const body = await req.json();
-  
-  if (body.type === "payment") {
-    const paymentId = body.data.id;
-    
-    // Consulta o pagamento no Mercado Pago
-    const resp = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-      headers: {
-        Authorization: `Bearer ${Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")}`
-      }
+serve(async (req)=>{
+  const headers = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey"
+  };
+  if (req.method === "OPTIONS") {
+    return new Response("", {
+      status: 200,
+      headers
     });
-    
-    const payment = await resp.json();
-    
-    if (payment.status === "approved") {
-      const userId = payment.external_reference; // o mesmo user_id enviado no create-pix
-      
-      await supabase
-        .from("users")
-        .update({
-          plan: "assinante",
-          has_access: true,
-          subscription_status: "active"
-        })
-        .eq("id", userId);
+  }
+  if (req.method === "GET") {
+    return new Response(JSON.stringify({
+      message: "Webhook funcionando!"
+    }), {
+      headers
+    });
+  }
+  if (req.method === "POST") {
+    try {
+      console.log("=== WEBHOOK RECEBIDO ===", new Date().toISOString());
+      const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+      const body = await req.json();
+      console.log("Body recebido:", JSON.stringify(body, null, 2));
+      if (body.type === "payment") {
+        const paymentId = body.data.id;
+        console.log("Payment ID:", paymentId);
+        const resp = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+          headers: {
+            Authorization: `Bearer ${Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")}`
+          }
+        });
+        const payment = await resp.json();
+        console.log("Payment status:", payment.status);
+        console.log("Payment external_reference:", payment.external_reference);
+        if (payment.status === "approved") {
+          const userId = payment.external_reference;
+          if (!userId) {
+            console.error("external_reference não encontrado no pagamento");
+            return new Response(JSON.stringify({
+              error: "external_reference não encontrado"
+            }), {
+              status: 400,
+              headers
+            });
+          }
+          console.log("Verificando se usuário existe na tabela profiles:", userId);
+          const { data: userData, error: userError } = await supabase.from("profiles").select("id, plan").eq("id", userId).single();
+          if (userError) {
+            console.error("Erro ao buscar usuário:", userError);
+            return new Response(JSON.stringify({
+              error: "Usuário não encontrado: " + userError.message
+            }), {
+              status: 404,
+              headers
+            });
+          }
+          console.log("Usuário encontrado:", userData);
+          // Calcular data de expiração (30 dias a partir de agora)
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 30);
+          console.log("Data de expiração calculada:", expirationDate.toISOString());
+          console.log("Atualizando usuário:", userId);
+          const { data, error } = await supabase.from("profiles").update({
+            plan: "assinante",
+            has_access: true,
+            subscription_status: "active",
+            subscription_end_date: expirationDate.toISOString()
+          }).eq("id", userId).select();
+          if (error) {
+            console.error("Erro ao atualizar usuário:", error);
+            return new Response(JSON.stringify({
+              error: "Erro ao atualizar usuário: " + error.message
+            }), {
+              status: 500,
+              headers
+            });
+          } else {
+            console.log("Usuário atualizado com sucesso:", data);
+          }
+        } else {
+          console.log("Pagamento não aprovado, status:", payment.status);
+        }
+      } else {
+        console.log("Tipo de evento não é payment:", body.type);
+      }
+      return new Response(JSON.stringify({
+        received: true
+      }), {
+        status: 200,
+        headers
+      });
+    } catch (error) {
+      console.error("Erro no webhook:", error);
+      return new Response(JSON.stringify({
+        error: error.message
+      }), {
+        status: 500,
+        headers
+      });
     }
   }
-  
   return new Response(JSON.stringify({
-    received: true
+    error: "Method not allowed"
   }), {
-    status: 200,
-    headers: corsHeaders
+    status: 405,
+    headers
   });
 }); 
