@@ -66,8 +66,7 @@ const ChoosePaymentModal: React.FC<ChoosePaymentModalProps> = ({ open, onOpenCha
     if (!paymentData?.payment_id) return;
 
     try {
-      // Aqui você pode implementar uma verificação de status
-      // Por enquanto, vamos simular uma verificação
+      // Verificar status no MercadoPago
       const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentData.payment_id}`, {
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`
@@ -78,7 +77,13 @@ const ChoosePaymentModal: React.FC<ChoosePaymentModalProps> = ({ open, onOpenCha
       
       if (payment.status === 'approved') {
         setPaymentStatus('approved');
-        await updateUserProfile();
+        
+        // Aguardar um pouco para o webhook processar
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Força a atualização do perfil imediatamente após pagamento aprovado
+        await updateUserProfile(true);
+        
         toast({
           title: "Pagamento aprovado!",
           description: "Seu plano Premium foi ativado com sucesso!",

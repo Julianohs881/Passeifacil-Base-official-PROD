@@ -252,12 +252,17 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Update user profile function - OPTIMIZED
-  const updateUserProfile = async () => {
-    if (!user || !canVerify()) return;
+  const updateUserProfile = async (force: boolean = false) => {
+    if (!user) return;
     
-    // Evita múltiplas chamadas simultâneas
-    if (subscriptionState.isVerifying) {
-      return;
+    // Se for uma atualização forçada, ignora as verificações de debounce
+    if (!force) {
+      if (!canVerify()) return;
+      
+      // Evita múltiplas chamadas simultâneas
+      if (subscriptionState.isVerifying) {
+        return;
+      }
     }
 
     // Limpa o cache para forçar uma nova busca
@@ -265,8 +270,13 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       delete profileCache.current[user.id];
     }
 
-    // Usa debounce para evitar múltiplas chamadas em sequência
-    debouncedAction(() => loadUserProfile(user.id));
+    // Se for forçado, executa imediatamente, senão usa debounce
+    if (force) {
+      await loadUserProfile(user.id);
+    } else {
+      // Usa debounce para evitar múltiplas chamadas em sequência
+      debouncedAction(() => loadUserProfile(user.id));
+    }
   };
   
   // Check if user is a PRO user - OPTIMIZED FUNCTION
