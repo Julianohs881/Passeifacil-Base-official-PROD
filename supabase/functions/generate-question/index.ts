@@ -139,34 +139,26 @@ async function generateQuestionWithOpenAI(text: string) {
         messages: [
           {
             role: "system",
-            content: `Você recebe um texto que foi extraído de uma imagem contendo uma questão completa, incluindo o enunciado, alternativas, referências e demais informações.
+            content: `Você é um assistente especializado em processar textos contendo questões de múltipla escolha extraídas de imagens ou documentos desorganizados. O texto pode estar em qualquer formato: corrido, com ou sem quebras de linha, com ou sem marcadores nas alternativas, com ou sem gabarito explícito.
 
 Sua tarefa é:
 
-1. Analisar todo o texto, sem omitir nenhuma parte importante.
-2. Extrair e organizar o texto integralmente para que nenhuma informação da questão se perca.
-3. Reorganizar o texto do enunciado para que fique bem formatado, usando quebras de linha apropriadas (\n) e mantendo a estrutura lógica.
-4. Preservar os números e marcadores de lista (como "I.", "II.", "III."), com cada item em linha separada.
-5. Manter as referências e outras informações importantes também formatadas em parágrafos separados usando quebras de linha.
-6. Não alterar o conteúdo, apenas melhorar a organização visual para facilitar a leitura.
-7. Gere sempre pelo menos 4 alternativas distintas para a questão, mesmo que precise criar alternativas plausíveis e realistas. Nunca gere apenas uma alternativa. Se o texto original não tiver alternativas suficientes, crie alternativas plausíveis e realistas.
-8. A partir do texto completo formatado, gerar a questão de múltipla escolha completa com enunciado, alternativas, resposta correta e fonte, no formato JSON.
+1. Analisar o texto inteiro com atenção, mesmo que ele esteja mal formatado.
+2. Identificar e extrair corretamente:
+   - O enunciado da questão
+   - As alternativas (mínimo de 4; crie alternativas plausíveis se necessário)
+   - A resposta correta (se presente)
+   - A fonte ou referência (se presente)
+3. Reorganizar o enunciado com quebras de linha apropriadas (\\n) para melhorar a leitura, mantendo a lógica e a clareza do conteúdo.
+4. Gerar sempre pelo menos 4 alternativas distintas e plausíveis.
+5. Retornar o resultado em formato JSON válido com os seguintes campos:
+   - statement: enunciado formatado com quebras de linha
+   - options: array com as alternativas (sem A, B, C, D)
+   - correct_index: índice da alternativa correta (0-3)
+   - explanation: explicação da resposta (se disponível)
+   - source: fonte da questão (se disponível)
 
-Forneça o resultado como um objeto JSON com os seguintes campos:
-- statement: texto completo do enunciado formatado com quebras de linha apropriadas
-- options: array com as alternativas sem os identificadores (A, B, C, D, E)
-- correct_index: índice da alternativa correta (0 para A, 1 para B, etc.)
-- explanation: explicação sobre por que a resposta correta é a correta (se disponível no texto)
-- source: fonte da informação (se mencionada no texto)
-- originalFormat: um objeto adicional com o formato original da questão:
-  - enunciado: texto completo do enunciado formatado com quebras de linha apropriadas
-  - alternativas: objeto com chaves A, B, C, D, E e os textos das alternativas
-  - correta: a letra da alternativa correta (A, B, C, D ou E)
-  - fonte: fonte da questão (se disponível)
-
-Certifique-se de que o JSON seja válido, esteja estruturado adequadamente e contenha pelo menos 4 alternativas distintas no array options.
-
-Responda apenas com o JSON, nada além disso. Não adicione explicações, comentários ou texto fora do JSON.`
+Responda APENAS com o JSON válido, sem explicações ou texto adicional.`
           },
           {
             role: "user",

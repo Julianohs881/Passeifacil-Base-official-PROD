@@ -7,6 +7,7 @@ import FreePlanLimits from "@/components/FreePlanLimits";
 import { useExploreQuizzes } from "@/components/Explore/useExploreQuizzes";
 import { useFreePlanLimits } from "@/hooks/useFreePlanLimits";
 import { useToast } from "@/hooks/use-toast";
+import { ChevronDown } from "lucide-react";
 
 const Explore = () => {
   const { isPro } = useAuth();
@@ -109,6 +110,14 @@ const Explore = () => {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
         />
+        
+        {/* Indicador de scroll no mobile */}
+        <div className="md:hidden text-center py-2">
+          <div className="flex flex-col items-center text-gray-500 text-sm">
+            <ChevronDown className="h-4 w-4 animate-bounce mb-1" />
+            <span>Role para ver os quizzes</span>
+          </div>
+        </div>
         
         <QuizzesGrid 
           quizzes={displayedQuizzes}
