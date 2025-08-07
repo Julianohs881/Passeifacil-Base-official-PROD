@@ -54,10 +54,18 @@ serve(async (req)=>{
         console.log("Payment external_reference:", payment.external_reference);
         console.log("Payment payment_method_id:", payment.payment_method_id);
         console.log("Payment date_approved:", payment.date_approved);
+        console.log("Payment amount:", payment.transaction_amount);
         
         // Verificar se o pagamento foi aprovado (incluindo PIX)
-        const isApproved = payment.status === "approved" || 
-                          (payment.payment_method_id === "pix" && payment.date_approved !== null);
+        // Para PIX, verificamos se date_approved não é null (pagamento foi aprovado)
+        // Para outros métodos, verificamos se status é "approved"
+        const isPixPayment = payment.payment_method_id === "pix";
+        const isApproved = isPixPayment 
+          ? payment.date_approved !== null 
+          : payment.status === "approved";
+        
+        console.log("É pagamento PIX:", isPixPayment);
+        console.log("Pagamento aprovado:", isApproved);
         
         if (isApproved) {
           const userId = payment.external_reference;
@@ -74,7 +82,7 @@ serve(async (req)=>{
           console.log("Verificando se usuário existe na tabela profiles:", userId);
           const { data: userData, error: userError } = await supabase
             .from("profiles")
-            .select("id, plan, has_access, subscription_status")
+            .select("id, plan, has_access, subscription_status, subscription_end_date")
             .eq("id", userId)
             .single();
             
@@ -89,6 +97,20 @@ serve(async (req)=>{
           }
           
           console.log("Usuário encontrado:", userData);
+          
+          // Verificar se já não foi processado (evitar duplicação)
+          if (userData.has_access === true && 
+              (userData.plan === "assinante" || userData.plan === "pro") &&
+              userData.subscription_status === "active") {
+            console.log("Usuário já tem acesso ativo, não processando novamente");
+            return new Response(JSON.stringify({
+              received: true,
+              message: "Usuário já tem acesso ativo"
+            }), {
+              status: 200,
+              headers
+            });
+          }
           
           // Calcular data de expiração (30 dias a partir de agora)
           const expirationDate = new Date();
@@ -117,9 +139,19 @@ serve(async (req)=>{
             });
           } else {
             console.log("Usuário atualizado com sucesso:", data);
+            console.log("Pagamento MercadoPago processado:", {
+              paymentId,
+              userId,
+              method: isPixPayment ? "pix" : payment.payment_method_id,
+              amount: payment.transaction_amount,
+              expirationDate: expirationDate.toISOString()
+            });
           }
         } else {
           console.log("Pagamento não aprovado, status:", payment.status);
+          if (isPixPayment) {
+            console.log("Pagamento PIX ainda pendente, date_approved:", payment.date_approved);
+          }
         }
       } else {
         console.log("Tipo de evento não é payment:", body.type);

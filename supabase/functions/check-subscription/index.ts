@@ -88,6 +88,76 @@ serve(async (req) => {
       userId: user.id, 
       email: user.email 
     });
+
+    // First, check the current profile status in the database
+    log("Checking current profile status in database");
+    const { data: currentProfile, error: profileError } = await supabaseClient
+      .from("profiles")
+      .select("id, plan, has_access, subscription_status, subscription_end_date, manual_access")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      log("ERROR: Failed to get current profile", { error: profileError.message });
+      throw new Error(`Error getting profile: ${profileError.message}`);
+    }
+
+    log("Current profile status", {
+      plan: currentProfile.plan,
+      has_access: currentProfile.has_access,
+      subscription_status: currentProfile.subscription_status,
+      subscription_end_date: currentProfile.subscription_end_date
+    });
+
+    // Check if user has active MercadoPago subscription (PIX payments)
+    // If the user already has has_access=true and plan="assinante" from MercadoPago, respect that
+    if (currentProfile.has_access === true && 
+        (currentProfile.plan === "assinante" || currentProfile.plan === "pro") &&
+        currentProfile.subscription_status === "active") {
+      
+      log("User has active MercadoPago subscription, maintaining access");
+      
+      // Check if subscription hasn't expired
+      if (currentProfile.subscription_end_date) {
+        const isExpired = new Date(currentProfile.subscription_end_date) <= new Date();
+        if (isExpired) {
+          log("MercadoPago subscription has expired, updating to inactive");
+          const { error: updateError } = await supabaseClient
+            .from("profiles")
+            .update({
+              has_access: false,
+              plan: "sem assinatura",
+              subscription_status: "expired"
+            })
+            .eq("id", user.id);
+          
+          if (updateError) {
+            log("ERROR: Failed to update expired profile", { error: updateError.message });
+          }
+          
+          return new Response(JSON.stringify({
+            has_access: false,
+            plan: "sem assinatura",
+            subscription_status: "expired",
+            subscription_end_date: currentProfile.subscription_end_date
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+      }
+      
+      // Return current MercadoPago subscription status
+      return new Response(JSON.stringify({
+        has_access: currentProfile.has_access,
+        plan: currentProfile.plan,
+        subscription_status: currentProfile.subscription_status,
+        subscription_end_date: currentProfile.subscription_end_date
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     
     // Initialize Stripe with the API key
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
@@ -103,18 +173,11 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       log("No customer found with this email, updating profile with no subscription");
       
-      // Get manual_access before updating
-      const { data: profile } = await supabaseClient
-        .from("profiles")
-        .select("manual_access")
-        .eq("id", user.id)
-        .single();
-
       // ---- TEST/ADMIN ACCESS CONTROL ----
       // Add your test/admin emails to this list:
       const adminEmails = ["seuemail@dominio.com"];
       // Set has_access only if it's an admin email AND manual_access is true
-      let hasAccessFinal = (adminEmails.includes(user.email) && profile?.manual_access === true);
+      let hasAccessFinal = (adminEmails.includes(user.email) && currentProfile?.manual_access === true);
 
       // Update the profile with subscription status
       const { data: updateData, error: updateError } = await supabaseClient
@@ -212,18 +275,11 @@ serve(async (req) => {
       }
     }
 
-    // Get manual_access before updating profile
-    const { data: profile } = await supabaseClient
-      .from("profiles")
-      .select("manual_access")
-      .eq("id", user.id)
-      .single();
-
     // ---- TEST/ADMIN ACCESS CONTROL ----
     // Add your test/admin emails to this list:
     const adminEmails = ["seuemail@dominio.com"];
     // Set has_access to true if it's an admin email AND manual_access is true, OR if the user has a valid subscription
-    let hasAccessFinal = (adminEmails.includes(user.email) && profile?.manual_access === true) ? true : hasAccess;
+    let hasAccessFinal = (adminEmails.includes(user.email) && currentProfile?.manual_access === true) ? true : hasAccess;
 
     // Update profile with subscription details
     log("Updating profile with subscription information", {
@@ -236,7 +292,7 @@ serve(async (req) => {
       .from("profiles")
       .update({
         has_access: hasAccessFinal,
-        plan: hasAccessFinal && adminEmails.includes(user.email) && profile?.manual_access === true ? "assinante (manual)" : plan,
+        plan: hasAccessFinal && adminEmails.includes(user.email) && currentProfile?.manual_access === true ? "assinante (manual)" : plan,
         subscription_status: subscriptionStatus,
         subscription_id: subscriptionId,
         stripe_customer_id: customerId,
@@ -252,13 +308,13 @@ serve(async (req) => {
     log("Profile updated successfully", {
       userId: user.id,
       hasAccess: hasAccessFinal,
-      plan: hasAccessFinal && adminEmails.includes(user.email) && profile?.manual_access === true ? "assinante (manual)" : plan
+      plan: hasAccessFinal && adminEmails.includes(user.email) && currentProfile?.manual_access === true ? "assinante (manual)" : plan
     });
     
     // Return subscription status
     return new Response(JSON.stringify({
       has_access: hasAccessFinal,
-      plan: hasAccessFinal && adminEmails.includes(user.email) && profile?.manual_access === true ? "assinante (manual)" : plan,
+      plan: hasAccessFinal && adminEmails.includes(user.email) && currentProfile?.manual_access === true ? "assinante (manual)" : plan,
       subscription_status: subscriptionStatus,
       subscription_end_date: subscriptionEnd
     }), {
