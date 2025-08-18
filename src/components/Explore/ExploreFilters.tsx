@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { ChevronDown, ChevronUp, Filter, Search, X } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface FilterValues {
   search: string;
@@ -32,6 +33,7 @@ const ExploreFilters = ({
   onClearFilters 
 }: ExploreFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
   
   const handleFilterChange = (key: keyof FilterValues, value: string) => {
     onFilterChange({
@@ -43,6 +45,14 @@ const ExploreFilters = ({
   // Verificar se há filtros ativos
   const hasActiveFilters = filters.search || filters.faculty || filters.course || filters.courseYear;
 
+  // Contar filtros ativos para exibir no badge
+  const activeFiltersCount = [
+    filters.search,
+    filters.faculty !== 'all-faculties' ? filters.faculty : null,
+    filters.course !== 'all-courses' ? filters.course : null,
+    filters.courseYear !== 'all-years' ? filters.courseYear : null
+  ].filter(Boolean).length;
+
   return (
     <Card className="mb-6">
       <CardHeader className="pb-3">
@@ -51,7 +61,12 @@ const ExploreFilters = ({
             <Filter className="h-5 w-5 text-gray-600" />
             <CardTitle className="text-lg">Filtros</CardTitle>
             {hasActiveFilters && (
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-xs text-blue-600 font-medium">
+                  {activeFiltersCount} ativo{activeFiltersCount !== 1 ? 's' : ''}
+                </span>
+              </div>
             )}
           </div>
           
@@ -80,27 +95,44 @@ const ExploreFilters = ({
       {/* Conteúdo dos filtros - sempre visível no desktop, condicional no mobile */}
       <div className={`md:block ${isExpanded ? 'block' : 'hidden'}`}>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Layout responsivo: 1 coluna no mobile, 2 no tablet, 4 no desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* Campo de busca */}
             <div className="space-y-2">
-              <Label htmlFor="search">Buscar</Label>
-              <Input
-                id="search"
-                placeholder="Nome do quiz..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-              />
+              <Label htmlFor="search" className="text-sm font-medium">Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search"
+                  placeholder="Nome do quiz..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="pl-10 h-9 text-sm"
+                />
+                {filters.search && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFilterChange('search', '')}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 hover:bg-gray-100"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </div>
 
+            {/* Filtro de Faculdade */}
             <div className="space-y-2">
-              <Label htmlFor="faculty">Faculdade</Label>
+              <Label htmlFor="faculty" className="text-sm font-medium">Faculdade</Label>
               <Select value={filters.faculty} onValueChange={(value) => handleFilterChange('faculty', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma faculdade" />
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Todas as faculdades" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-faculties">Todas</SelectItem>
                   {faculties.map((faculty) => (
-                    <SelectItem key={faculty} value={faculty}>
+                    <SelectItem key={faculty} value={faculty} className="text-sm">
                       {faculty}
                     </SelectItem>
                   ))}
@@ -108,16 +140,17 @@ const ExploreFilters = ({
               </Select>
             </div>
 
+            {/* Filtro de Curso */}
             <div className="space-y-2">
-              <Label htmlFor="course">Curso</Label>
+              <Label htmlFor="course" className="text-sm font-medium">Curso</Label>
               <Select value={filters.course} onValueChange={(value) => handleFilterChange('course', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um curso" />
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Todos os cursos" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-courses">Todos</SelectItem>
                   {courses.map((course) => (
-                    <SelectItem key={course} value={course}>
+                    <SelectItem key={course} value={course} className="text-sm">
                       {course}
                     </SelectItem>
                   ))}
@@ -125,16 +158,17 @@ const ExploreFilters = ({
               </Select>
             </div>
 
+            {/* Filtro de Ano */}
             <div className="space-y-2">
-              <Label htmlFor="courseYear">Ano</Label>
+              <Label htmlFor="courseYear" className="text-sm font-medium">Ano</Label>
               <Select value={filters.courseYear} onValueChange={(value) => handleFilterChange('courseYear', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o ano" />
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Todos os anos" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-years">Todos</SelectItem>
                   {courseYears.map((year) => (
-                    <SelectItem key={year} value={year}>
+                    <SelectItem key={year} value={year} className="text-sm">
                       {year}
                     </SelectItem>
                   ))}
@@ -143,15 +177,20 @@ const ExploreFilters = ({
             </div>
           </div>
 
-          <div className="flex justify-end mt-4">
-            <Button 
-              variant="ghost" 
-              onClick={onClearFilters}
-              className="border-0"
-            >
-              Limpar Filtros
-            </Button>
-          </div>
+          {/* Botão de limpar filtros */}
+          {hasActiveFilters && (
+            <div className="flex justify-end mt-4">
+              <Button 
+                variant="ghost" 
+                onClick={onClearFilters}
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-0"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpar Filtros
+              </Button>
+            </div>
+          )}
         </CardContent>
       </div>
       
@@ -159,35 +198,76 @@ const ExploreFilters = ({
       <div className={`md:hidden ${!isExpanded ? 'block' : 'hidden'}`}>
         <CardContent className="pt-0">
           <div className="space-y-3">
-            {/* Busca sempre visível */}
+            {/* Busca sempre visível com design compacto */}
             <div className="space-y-2">
-              <Label htmlFor="search-mobile">Buscar</Label>
-              <Input
-                id="search-mobile"
-                placeholder="Nome do quiz..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-              />
+              <Label htmlFor="search-mobile" className="text-sm font-medium">Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="search-mobile"
+                  placeholder="Nome do quiz..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="pl-10 h-9 text-sm"
+                />
+                {filters.search && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFilterChange('search', '')}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 hover:bg-gray-100"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </div>
             
-            {/* Filtros ativos em chips */}
+            {/* Filtros ativos em chips compactos */}
             {hasActiveFilters && (
-              <div className="flex flex-wrap gap-2">
-                {filters.faculty && filters.faculty !== 'all-faculties' && (
-                  <div className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                    {filters.faculty}
-                  </div>
-                )}
-                {filters.course && filters.course !== 'all-courses' && (
-                  <div className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                    {filters.course}
-                  </div>
-                )}
-                {filters.courseYear && filters.courseYear !== 'all-years' && (
-                  <div className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                    {filters.courseYear}
-                  </div>
-                )}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-600">Filtros ativos:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {filters.faculty && filters.faculty !== 'all-faculties' && (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      <span>🏛️ {filters.faculty}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFilterChange('faculty', 'all-faculties')}
+                        className="h-4 w-4 p-0 hover:bg-blue-200 ml-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                  {filters.course && filters.course !== 'all-courses' && (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                      <span>📚 {filters.course}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFilterChange('course', 'all-courses')}
+                        className="h-4 w-4 p-0 hover:bg-green-200 ml-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                  {filters.courseYear && filters.courseYear !== 'all-years' && (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                      <span>📅 {filters.courseYear}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFilterChange('courseYear', 'all-years')}
+                        className="h-4 w-4 p-0 hover:bg-purple-200 ml-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
