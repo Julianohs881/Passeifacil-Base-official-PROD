@@ -14,7 +14,7 @@ const NavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
-  const [logoSize, setLogoSize] = useState(20); // Default size value
+  const [logoSize, setLogoSize] = useState(36); // Default size value
   const [showLogoEditor, setShowLogoEditor] = useState(false);
   const { toast } = useToast();
 
@@ -95,7 +95,7 @@ const NavBar = () => {
             <img 
               src="/lovable-uploads/61906f4a-5d23-4a09-909e-921d27ec387b.png" 
               alt="Passei Fácil" 
-              className={`h-${logoSize} max-h-[60px] w-auto object-contain`} 
+              className={`h-${logoSize} max-h-[100px] w-auto object-contain`} 
             />
           </Link>
           
@@ -112,7 +112,7 @@ const NavBar = () => {
                       <span>Menor</span>
                       <span>Maior</span>
                     </div>
-                    <Slider defaultValue={[logoSize]} max={24} min={12} step={1} onValueChange={handleLogoSizeChange} />
+                    <Slider defaultValue={[logoSize]} max={40} min={12} step={1} onValueChange={handleLogoSizeChange} />
                   </div>
                   <div className="flex justify-end">
                     <Button onClick={saveLogoSize} size="sm">
