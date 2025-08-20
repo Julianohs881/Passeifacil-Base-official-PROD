@@ -66,7 +66,7 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
             <MoreVertical className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="bg-white border border-gray-200 shadow-lg">
           {isPROUser && (
             <DropdownMenuItem onClick={onOpenShareDialog} className="flex items-center gap-2">
               <Share2 className="h-4 w-4" /> Compartilhar
