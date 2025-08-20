@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { ShareCodeDialog } from "./Share/ShareCodeDialog";
 import QuizNavigationButtons from "./QuizNavigationButtons";
-import { useMediaQuery } from "@/hooks/use-mobile";
+
 import CommentSection from "./Comments/CommentSection";
 
 // Import new components
@@ -48,7 +48,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     user,
     isPro
   } = useAuth();
-  const isMobile = useMediaQuery("(max-width: 640px)");
 
   // Check if the current user is the creator of the quiz
   const isCreator = user?.id === question.user_id;
@@ -76,14 +75,23 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <FormattedText text={question.statement} />
         </div>
 
+        {/* Navigation Buttons - show for all devices below the question */}
+        {onPrevious && onNext && (
+          <div className="mb-6 flex justify-center">
+            <QuizNavigationButtons 
+              currentIndex={currentIndex} 
+              totalQuestions={totalQuestions} 
+              onPrevious={onPrevious} 
+              onNext={onNext} 
+            />
+          </div>
+        )}
+
         <QuestionOptions question={question} userAnswer={userAnswer} handleAnswer={handleAnswer} />
 
         <QuestionExplanation explanation={question.explanation} isVisible={isAnswered} />
 
-        {/* Mobile Navigation Buttons - show only on mobile */}
-        {isMobile && onPrevious && onNext && <div className="mt-8 mb-4">
-            <QuizNavigationButtons currentIndex={currentIndex} totalQuestions={totalQuestions} onPrevious={onPrevious} onNext={onNext} />
-          </div>}
+
 
         {/* Comments section - only for public quizzes and PRO users */}
         {isPublicQuiz && isPROUser && <CommentSection questionId={question.id} userAnswer={userAnswer} isPublicQuiz={isPublicQuiz} />}
