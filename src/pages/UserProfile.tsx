@@ -25,8 +25,16 @@ const UserProfile = () => {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   useEffect(() => {
+    console.log("UserProfile useEffect - userProfile:", userProfile);
+    console.log("userProfile?.name:", userProfile?.name);
+    console.log("Tipo do userProfile?.name:", typeof userProfile?.name);
+    
     if (userProfile?.name) {
+      console.log("Setting name from userProfile:", userProfile.name);
       setName(userProfile.name);
+    } else {
+      console.log("No name in userProfile, setting empty string");
+      setName("");
     }
     
     if (userProfile?.avatar_url) {
@@ -110,6 +118,7 @@ const UserProfile = () => {
     
     if (!user || !updateProfile) return;
     
+    console.log("Submitting profile update with name:", name);
     setLoading(true);
     
     try {
@@ -123,16 +132,19 @@ const UserProfile = () => {
       }
       
       // Update profile with name and possibly new avatar URL
-      await updateProfile({ 
+      const result = await updateProfile({ 
         name: name.trim() || undefined,
         avatarUrl: avatarUrl
       });
+      
+      console.log("Profile update result:", result);
       
       toast({
         title: "Perfil atualizado",
         description: "Suas informações foram atualizadas com sucesso.",
       });
     } catch (error: any) {
+      console.error("Error updating profile:", error);
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message || "Ocorreu um erro ao atualizar seu perfil",

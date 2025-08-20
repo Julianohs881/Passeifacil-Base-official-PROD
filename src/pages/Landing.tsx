@@ -65,16 +65,7 @@ const Landing = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1 fade-in-element">
-              {/* Logo centered above the title - visible only on desktop */}
-              {!isMobile && (
-                <div className="flex justify-center md:justify-start mb-6 px-0 py-0 rounded-none my-[2px]">
-                  <img 
-                    alt="Passei Fácil Logo" 
-                    src="/lovable-uploads/4ed732db-a250-4cac-ba13-9727435d44dc.png" 
-                    className="h-[64px] lg:h-[72px] w-auto object-contain" 
-                  />
-                </div>
-              )}
+              {/* Logo removed - keeping only the header logo */}
               
               <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 leading-tight px-0 mx-[11px] my-0 py-0 lg:text-6xl tracking-tight">
                 O jeito mais fácil de estudar e criar questões!
@@ -96,8 +87,7 @@ const Landing = () => {
               <div className="flex flex-col sm:flex-row gap-4 mb-10">
                 <Link to={user ? "/quizzes" : "/register"}>
                   <Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-8 py-6 text-lg font-medium shadow-md transition-transform hover:scale-105">
-                    Assine Agora
-                    <ArrowRight className="h-5 w-5 ml-2" />
+                    Assine Agora →
                   </Button>
                 </Link>
               </div>
@@ -346,8 +336,7 @@ const Landing = () => {
           </p>
           <Link to={user ? "/quizzes" : "/register"}>
             <Button className="bg-white text-blue-700 hover:bg-blue-50 text-lg px-8 py-6 rounded-full shadow-lg transition-transform hover:scale-105">
-              Assine Agora
-              <ArrowRight className="h-5 w-5 ml-2" />
+              Assine Agora →
             </Button>
           </Link>
         </div>

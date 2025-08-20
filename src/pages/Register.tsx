@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { signInWithGoogle, signUpWithEmail, supabase } from "@/integrations/supabase/client";
 
 const Register = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,19 +41,117 @@ const Register = () => {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!name.trim()) {
+      setError("Por favor, insira seu nome");
+      return;
+    }
+    
     if (password !== confirmPassword) {
       setError("As senhas não coincidem");
       return;
     }
+    
     try {
       setLoading(true);
       setError("");
-      await signUpWithEmail(email, password);
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Bem-vindo ao Passei Fácil!",
+      
+      console.log("Iniciando cadastro para:", email, "com nome:", name);
+      
+      // Criar conta com email e senha
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
-      navigate('/quizzes');
+      
+      if (signUpError) throw signUpError;
+      
+      if (data.user) {
+        console.log("Usuário criado com sucesso:", data.user.id);
+        
+        // Aguardar um pouco para garantir que o usuário foi criado
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verificar se o perfil já existe
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .eq('id', data.user.id)
+          .single();
+          
+        console.log("Perfil existente:", existingProfile);
+        
+        if (!existingProfile) {
+          // Criar perfil do usuário com o nome
+          console.log("Criando perfil para usuário:", data.user.id);
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                name: name.trim(),
+                email: email,
+                plan: 'gratuito'
+              }
+            ]);
+            
+          if (profileError) {
+            console.error("Erro ao criar perfil:", profileError);
+            
+            // Se der erro ao criar perfil, tentar novamente
+            const { error: retryError } = await supabase
+              .from('profiles')
+              .upsert([
+                {
+                  id: data.user.id,
+                  name: name.trim(),
+                  email: email,
+                  plan: 'gratuito'
+                }
+              ]);
+              
+            if (retryError) {
+              console.error("Erro na segunda tentativa de criar perfil:", retryError);
+            } else {
+              console.log("Perfil criado com upsert");
+            }
+          } else {
+            console.log("Perfil criado com sucesso");
+          }
+          
+          // Verificar se o perfil foi criado
+          const { data: verifyProfile } = await supabase
+            .from('profiles')
+            .select('id, name, email')
+            .eq('id', data.user.id)
+            .single();
+            
+          console.log("Perfil verificado após criação:", verifyProfile);
+        } else {
+          console.log("Perfil já existe, atualizando nome");
+          
+          // Atualizar o nome se o perfil já existir
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ name: name.trim() })
+            .eq('id', data.user.id);
+            
+          if (updateError) {
+            console.error("Erro ao atualizar nome:", updateError);
+          } else {
+            console.log("Nome atualizado com sucesso");
+          }
+        }
+        
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Bem-vindo ao Passei Fácil!",
+        });
+        navigate('/quizzes');
+      }
     } catch (error: any) {
       console.error("Erro no cadastro:", error);
       setError(error.message || "Falha no cadastro");
@@ -145,6 +244,16 @@ const Register = () => {
 
             {/* Formulário de cadastro com email/senha */}
             <form onSubmit={handleEmailSignUp} className="space-y-4">
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Nome completo"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full rounded-xl"
+                />
+              </div>
               <div>
                 <Input
                   type="email"
