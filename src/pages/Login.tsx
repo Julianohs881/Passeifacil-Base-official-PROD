@@ -71,19 +71,19 @@ const Login = () => {
       <div className="hidden lg:flex lg:w-1/2 items-center p-12">
         <div className="max-w-lg w-full">
           {/* Logo alinhada à esquerda dentro do max-w-lg */}
-          <div className="flex justify-start mb-4">
+          <div className="flex justify-start mb-8">
             <img 
               src="/logo.png" 
               alt="Passei Fácil Logo"
-              className="w-48"
+              className="w-64"
             />
           </div>
-          {/* Frase e parágrafo centralizados dentro do max-w-lg */}
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">
+          {/* Frase e parágrafo alinhados à esquerda */}
+          <div className="text-left">
+            <h1 className="text-4xl font-bold text-gray-800 mb-4 leading-tight">
               O jeito mais fácil de estudar e criar questões!
             </h1>
-            <p className="text-gray-600 text-lg">
+            <p className="text-gray-600 text-lg leading-relaxed">
               Transforme textos e imagens em quizzes interativos em
               segundos. Prepare-se melhor para provas, concursos e OAB.
             </p>
