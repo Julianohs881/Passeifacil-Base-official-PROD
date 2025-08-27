@@ -242,57 +242,118 @@ serve(async (req) => {
       case 'customer.subscription.deleted': {
         // Assinatura cancelada ou expirada
         const subscription = event.data.object;
+        log("=== CANCELAMENTO DE ASSINATURA DETECTADO ===");
         log("Evento customer.subscription.deleted recebido", { 
           subscriptionId: subscription.id,
-          customerId: subscription.customer
+          customerId: subscription.customer,
+          canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end
         });
         
         // Buscar detalhes do cliente
         const customer = await stripe.customers.retrieve(subscription.customer as string);
-        log("Detalhes do cliente recuperados para assinatura cancelada", { 
-          customer: customer.id,
-          email: customer.email
+        log("Detalhes do cliente recuperados para cancelamento", { 
+          customerId: customer.id,
+          email: customer.email,
+          customerCreated: customer.created ? new Date(customer.created * 1000).toISOString() : null
         });
         
         if (!customer.email) {
-          log("ERRO: Email do cliente não encontrado");
-          throw new Error("Email do cliente não encontrado");
+          log("ERRO: Email do cliente não encontrado no Stripe", { customerId: customer.id });
+          throw new Error("Email do cliente não encontrado no Stripe");
         }
         
-        // Buscar usuário pelo email
+        // Buscar usuário pelo email no Supabase
+        log("Procurando usuário no Supabase por email", { email: customer.email });
         const { data: users, error: userError } = await supabaseClient.auth.admin.listUsers();
         if (userError) {
-          log("ERRO: Falha ao listar usuários", { error: userError.message });
+          log("ERRO: Falha ao listar usuários do Supabase", { error: userError.message });
           throw new Error(`Erro ao listar usuários: ${userError.message}`);
         }
         
         const user = users.users.find(u => u.email === customer.email);
         if (!user) {
-          log("ERRO: Usuário não encontrado com email", { email: customer.email });
-          throw new Error(`Usuário com email ${customer.email} não encontrado`);
+          log("AVISO: Usuário não encontrado no Supabase com email", { 
+            email: customer.email,
+            totalUsers: users.users.length 
+          });
+          // Não é um erro crítico - pode ser que o usuário tenha sido deletado
+          return new Response(JSON.stringify({ 
+            success: true, 
+            message: "Usuário não encontrado no Supabase", 
+            event: "customer.subscription.deleted" 
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
         }
         
-        log("Usuário encontrado, revogando acesso", { userId: user.id });
+        log("Usuário encontrado no Supabase, processando cancelamento", { 
+          userId: user.id,
+          userEmail: user.email,
+          userCreated: user.created_at
+        });
         
-        // Atualizar o perfil do usuário para remover acesso
-        const { error: updateError } = await supabaseClient
+        // Verificar estado atual do perfil antes da atualização
+        const { data: currentProfile, error: profileError } = await supabaseClient
           .from("profiles")
-          .update({ 
-            has_access: false,
-            plan: "gratuito",
-            subscription_status: "canceled",
-            subscription_end_date: new Date().toISOString()
-          })
-          .eq("id", user.id);
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        
+        if (profileError) {
+          log("AVISO: Erro ao buscar perfil atual", { error: profileError.message });
+        } else {
+          log("Estado atual do perfil", {
+            currentPlan: currentProfile.plan,
+            currentHasAccess: currentProfile.has_access,
+            currentSubscriptionStatus: currentProfile.subscription_status,
+            currentSubscriptionId: currentProfile.subscription_id
+          });
+        }
+        
+        // Atualizar o perfil do usuário para modo gratuito
+        const updateData = {
+          has_access: false,
+          plan: "gratuito",
+          subscription_status: "canceled",
+          subscription_end_date: new Date().toISOString(),
+          // Manter o stripe_customer_id para referência futura
+          // subscription_id: null // Opcionalmente limpar o subscription_id
+        };
+        
+        log("Atualizando perfil para modo gratuito", updateData);
+        
+        const { data: updateResult, error: updateError } = await supabaseClient
+          .from("profiles")
+          .update(updateData)
+          .eq("id", user.id)
+          .select();
         
         if (updateError) {
-          log("ERRO: Falha ao atualizar perfil", { error: updateError.message });
+          log("ERRO: Falha ao atualizar perfil para modo gratuito", { 
+            error: updateError.message,
+            userId: user.id 
+          });
           throw new Error(`Erro ao atualizar perfil: ${updateError.message}`);
         }
         
-        log("Acesso do usuário revogado devido ao cancelamento da assinatura", { userId: user.id });
+        log("=== CANCELAMENTO PROCESSADO COM SUCESSO ===");
+        log("Usuário rebaixado para plano gratuito", { 
+          userId: user.id,
+          email: customer.email,
+          subscriptionId: subscription.id,
+          updatedRows: updateResult?.length || 0,
+          newProfile: updateResult?.[0] || null
+        });
         
-        return new Response(JSON.stringify({ success: true, event: "customer.subscription.deleted" }), {
+        return new Response(JSON.stringify({ 
+          success: true, 
+          event: "customer.subscription.deleted",
+          userId: user.id,
+          email: customer.email,
+          message: "Usuário rebaixado para plano gratuito com sucesso"
+        }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });

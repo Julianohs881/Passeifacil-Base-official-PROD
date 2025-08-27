@@ -64,15 +64,18 @@ export const useStripeSubscription = () => {
   const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 15000): Promise<T> => {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
+        console.error(`Timeout após ${timeoutMs}ms`);
         reject(new Error(`Operação excedeu o tempo limite de ${timeoutMs/1000} segundos`));
       }, timeoutMs);
       
       promise.then(
         (value) => {
+          console.log("Promise resolvida com sucesso:", value);
           clearTimeout(timeoutId);
           resolve(value);
         },
         (error) => {
+          console.error("Promise rejeitada com erro:", error);
           clearTimeout(timeoutId);
           reject(error);
         }
@@ -223,51 +226,50 @@ export const useStripeSubscription = () => {
     }
   };
   
-  const openCustomerPortal = async () => {
+  const cancelSubscription = async () => {
     setIsLoading(true);
     
     try {
-      console.log("Iniciando abertura do portal do cliente");
+      console.log("=== INICIANDO CANCELAMENTO DE ASSINATURA ===");
       
-      const { data, error } = await withTimeout(
-        supabase.functions.invoke('customer-portal'),
-        15000
-      );
+      toast({
+        title: "Redirecionando para o Stripe...",
+        description: "Você será redirecionado para cancelar sua assinatura",
+        duration: 3000,
+      });
       
-      if (error) {
-        console.error("Erro detalhado ao invocar função customer-portal:", error);
-        throw new Error(`Erro no portal do cliente: ${extractDetailedErrorMessage(error)}`);
-      }
+      // Aguardar um pouco para o usuário ver a mensagem
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (data.error) {
-        if (data.error.includes("Portal do cliente do Stripe não está configurado")) {
-          throw new Error("O Portal do Cliente do Stripe não está configurado. Acesse o Dashboard do Stripe para configurá-lo em: Configurações > Portal do Cliente.");
-        }
-        
-        throw new Error(data.error);
-      }
+      // Redirecionar diretamente para a URL específica do Stripe
+      const stripePortalUrl = "https://billing.stripe.com/p/login/4gM3cvbuF3vu7kv3mY3ZK00";
+      console.log("Redirecionando para:", stripePortalUrl);
       
-      if (data.url) {
-        window.open(data.url, '_blank');
-        return { success: true };
-      } else {
-        throw new Error("URL do portal não disponível");
-      }
+      window.open(stripePortalUrl, '_blank');
+      
+      // Mostrar mensagem informativa
+      toast({
+        title: "Redirecionamento realizado",
+        description: "Complete o cancelamento no Stripe. Sua conta será atualizada automaticamente após o cancelamento.",
+        duration: 8000,
+      });
+      
+      return { success: true };
     } catch (error: any) {
-      console.error("Erro completo ao abrir portal do cliente:", error);
-      
-      const detailedMessage = extractDetailedErrorMessage(error);
+      console.error("=== ERRO NO CANCELAMENTO ===");
+      console.error("Erro ao redirecionar para cancelamento:", error);
       
       toast({
         variant: "destructive",
-        title: "Erro ao abrir portal de gerenciamento",
-        description: detailedMessage,
+        title: "Erro ao iniciar cancelamento",
+        description: "Não foi possível redirecionar para o portal de cancelamento. Tente novamente.",
         duration: 5000,
       });
       
       return { success: false, error };
     } finally {
       setIsLoading(false);
+      console.log("=== FINALIZANDO CANCELAMENTO ===");
     }
   };
   
@@ -275,6 +277,6 @@ export const useStripeSubscription = () => {
     isLoading,
     createCheckoutSession,
     verifySubscriptionStatus,
-    openCustomerPortal
+    cancelSubscription
   };
 };

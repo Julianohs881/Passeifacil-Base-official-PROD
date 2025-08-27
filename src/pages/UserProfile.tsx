@@ -21,7 +21,7 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { openCustomerPortal, isLoading: isLoadingStripe } = useStripeSubscription();
+  const { cancelSubscription, isLoading: isLoadingStripe } = useStripeSubscription();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   useEffect(() => {
@@ -312,7 +312,14 @@ const UserProfile = () => {
                   onClick={() => setShowCancelDialog(true)}
                   disabled={isLoadingStripe}
                 >
-                  Cancelar assinatura
+                  {isLoadingStripe ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      Processando...
+                    </>
+                  ) : (
+                    "Cancelar assinatura"
+                  )}
                 </Button>
               </div>
             </div>
@@ -324,7 +331,7 @@ const UserProfile = () => {
         <DialogContent>
           <DialogTitle>Cancelar assinatura</DialogTitle>
           <DialogDescription>
-            Tem certeza que deseja cancelar sua assinatura PRO? Sua conta será rebaixada para gratuita e você perderá os benefícios do plano PRO.
+            Tem certeza que deseja cancelar sua assinatura PRO? Você será redirecionado para o Stripe onde poderá confirmar o cancelamento. Sua conta será automaticamente rebaixada para gratuita após o cancelamento.
           </DialogDescription>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
@@ -334,11 +341,11 @@ const UserProfile = () => {
               variant="destructive"
               onClick={async () => {
                 setShowCancelDialog(false);
-                await openCustomerPortal();
+                await cancelSubscription();
               }}
               disabled={isLoadingStripe}
             >
-              Sim, cancelar assinatura
+              {isLoadingStripe ? "Redirecionando..." : "Sim, cancelar assinatura"}
             </Button>
           </DialogFooter>
         </DialogContent>

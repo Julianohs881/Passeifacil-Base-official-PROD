@@ -127,18 +127,11 @@ serve(async (req) => {
     let subscriptionId = null;
     let subscriptionEnd = null;
     let plan = "gratuito";
-    let hasAccess = true; // SEMPRE true para todos os usuários
+    let hasAccess = false;
     let stripeCustomerId = null;
-
-    // TESTE: Forçar manual_access para debug
-    const forceManualAccess = true; // Mude para false quando quiser testar normalmente
     
     // PRIMEIRO: Verificar se é um usuário admin com manual_access
-    if ((adminEmails.includes(user.email) && currentProfile?.manual_access === true) || forceManualAccess) {
-      if (forceManualAccess) {
-        log("FORÇANDO manual_access para teste - remova esta linha depois");
-      }
-      
+    if (adminEmails.includes(user.email) && currentProfile?.manual_access === true) {
       plan = "assinante (manual)";
       subscriptionStatus = "manual_active";
       hasAccess = true;
@@ -146,7 +139,6 @@ serve(async (req) => {
       log("Admin user with manual access detected - granting immediate access", {
         email: user.email,
         manual_access: currentProfile?.manual_access,
-        forceManualAccess: forceManualAccess,
         plan: plan
       });
     } else {
@@ -154,23 +146,23 @@ serve(async (req) => {
         isAdmin: adminEmails.includes(user.email),
         manualAccess: currentProfile?.manual_access,
         condition1: adminEmails.includes(user.email),
-        condition2: currentProfile?.manual_access === true,
-        forceManualAccess: forceManualAccess
+        condition2: currentProfile?.manual_access === true
       });
       
       // SEGUNDO: Verificar se o usuário já tem uma assinatura ativa no banco (MercadoPago ou Stripe)
       if (currentProfile.plan === "assinante") {
         // Verificar se a assinatura não expirou
-        if (currentProfile.subscription_end_date) {
+                if (currentProfile.subscription_end_date) {
           const expirationDate = new Date(currentProfile.subscription_end_date);
           const now = new Date();
-          
+
           if (expirationDate > now) {
             // Assinatura ainda é válida
             plan = currentProfile.plan;
             subscriptionStatus = currentProfile.subscription_status || "active";
             subscriptionEnd = currentProfile.subscription_end_date;
-            
+            hasAccess = true;
+
             log("Active subscription found in database (MercadoPago/Stripe)", {
               plan: currentProfile.plan,
               status: currentProfile.subscription_status,
@@ -188,7 +180,8 @@ serve(async (req) => {
           // Assinatura sem data de expiração (permanente)
           plan = currentProfile.plan;
           subscriptionStatus = currentProfile.subscription_status || "active";
-          
+          hasAccess = true;
+
           log("Active subscription found in database (no expiration date)", {
             plan: currentProfile.plan,
             status: currentProfile.subscription_status
@@ -229,18 +222,19 @@ serve(async (req) => {
               limit: 1,
             });
             
-            // If active subscription found, update profile with subscription details
+                        // If active subscription found, update profile with subscription details
             if (subscriptions.data.length > 0) {
               const subscription = subscriptions.data[0];
               subscriptionStatus = subscription.status;
               subscriptionId = subscription.id;
-              subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+              subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();       
               plan = "assinante";
-              
-              log("Active subscription found", { 
-                subscriptionId: subscription.id, 
+              hasAccess = true;
+
+              log("Active subscription found", {
+                subscriptionId: subscription.id,
                 status: subscription.status,
-                endDate: subscriptionEnd 
+                endDate: subscriptionEnd
               });
             } else {
               // If no active subscription, check for recent completed checkouts
@@ -261,12 +255,13 @@ serve(async (req) => {
                 return checkoutTime > oneDayAgo && checkout.payment_status === 'paid';
               });
               
-              if (recentCheckout) {
+                            if (recentCheckout) {
                 // If recent checkout found, grant temporary access
                 plan = "assinante";
                 subscriptionStatus = "pending_active";
-                
-                log("Recent successful checkout found, granting access", { 
+                hasAccess = true;
+
+                log("Recent successful checkout found, granting access", {
                   checkoutId: recentCheckout.id,
                   timestamp: new Date(recentCheckout.created * 1000).toISOString()
                 });
@@ -285,8 +280,8 @@ serve(async (req) => {
       }
     }
 
-    // Set has_access to true if it's an admin email AND manual_access is true, OR if the user has a valid subscription, OR if user is free
-    let hasAccessFinal = true; // SEMPRE true para todos os usuários
+    // Set final access based on the logic above
+    let hasAccessFinal = hasAccess;
     let finalPlan = plan;
 
     // Log final plan decision
@@ -298,7 +293,7 @@ serve(async (req) => {
       hasAccess: hasAccessFinal
     });
 
-    // Update profile with subscription details - SEMPRE com has_access: true
+    // Update profile with subscription details
     log("Updating profile with subscription information", {
       userId: user.id,
       hasAccess: hasAccessFinal,
@@ -308,7 +303,7 @@ serve(async (req) => {
     const { data: updateData, error: updateError } = await supabaseClient
       .from("profiles")
       .update({
-        has_access: true, // SEMPRE true para todos os usuários
+        has_access: hasAccessFinal,
         plan: finalPlan,
         subscription_status: subscriptionStatus,
         subscription_id: subscriptionId,
@@ -328,9 +323,9 @@ serve(async (req) => {
       plan: finalPlan
     });
     
-    // Return subscription status - SEMPRE com has_access: true
+    // Return subscription status
     return new Response(JSON.stringify({
-      has_access: true, // SEMPRE true para todos os usuários
+      has_access: hasAccessFinal,
       plan: finalPlan,
       subscription_status: subscriptionStatus,
       subscription_end_date: subscriptionEnd
