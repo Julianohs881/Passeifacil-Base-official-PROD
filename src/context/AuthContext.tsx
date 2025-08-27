@@ -42,9 +42,41 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       subscription_end_date: profile.subscription_end_date
     });
     
-    // TODOS OS USUÁRIOS SÃO PRO - has_access é sempre true
-    console.log("Usuário é PRO (has_access sempre true para todos)");
-    return true;
+    // PRIMEIRO: Se tem manual_access = true, é PRO independente de outras verificações
+    if (profile.manual_access === true) {
+      console.log("Usuário é PRO (manual_access = true)");
+      return true;
+    }
+    
+    // SEGUNDO: Verificar se tem plano PRO baseado no campo 'plan'
+    if (profile.plan === 'pro' || profile.plan === 'assinante') {
+        // Se tiver data de expiração, verificar se não expirou
+        if (profile.subscription_end_date) {
+            const isExpired = new Date(profile.subscription_end_date) <= new Date();
+            console.log("Verificando data de expiração:", {
+              end_date: profile.subscription_end_date,
+              is_expired: isExpired,
+              subscription_status: profile.subscription_status
+            });
+            
+            // Se não expirou, é PRO (mesmo que cancelado)
+            if (!isExpired) {
+              console.log("Usuário é PRO (ainda dentro do período pago)");
+              return true;
+            } else {
+              console.log("Usuário NÃO é PRO (período expirado)");
+              return false;
+            }
+        }
+        
+        // Se não tiver data de expiração, é PRO
+        console.log("Usuário é PRO (plano assinante/pro sem data de expiração)");
+        return true;
+    }
+
+    // Em todos os outros casos (plano 'gratuito', etc.), não é PRO
+    console.log("Usuário NÃO é PRO (plano gratuito)");
+    return false;
   };
 
   // Atualize a assinatura de loadUserProfile para aceitar email

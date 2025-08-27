@@ -328,11 +328,11 @@ serve(async (req) => {
           // Usar data atual como fallback
         }
 
-        // IMPORTANTE: has_access é SEMPRE true para todos os usuários
-        // O usuário mantém acesso total mesmo após cancelar
+        // IMPORTANTE: has_access é SEMPRE true, mas plano volta para gratuito
+        // O usuário mantém acesso básico mas perde benefícios PRO
         const updateData = {
           has_access: true, // SEMPRE true para todos os usuários
-          plan: "assinante", // Mantém plano até expirar
+          plan: "gratuito", // Volta para gratuito quando cancela
           subscription_status: "canceled",
           subscription_end_date: subscriptionEndDate,
           // Manter o stripe_customer_id para referência futura

@@ -48,29 +48,27 @@ serve(async (req) => {
     const now = new Date().toISOString();
     log("Checking for expired subscriptions", { currentTime: now });
 
-    // Find all profiles with expired subscriptions that still have access
-    const { data: expiredProfiles, error: queryError } = await supabaseClient
+    // Find ALL profiles with has_access = false (para corrigir)
+    const { data: incorrectProfiles, error: queryError } = await supabaseClient
       .from("profiles")
       .select("id, email, plan, has_access, subscription_status, subscription_end_date")
-      .eq("has_access", true)
-      .in("plan", ["pro", "assinante"])
-      .lt("subscription_end_date", now);
+      .eq("has_access", false);
 
     if (queryError) {
       log("ERROR: Failed to query expired subscriptions", { error: queryError.message });
       throw new Error(`Error querying expired subscriptions: ${queryError.message}`);
     }
 
-    log("Found expired subscriptions", { 
-      count: expiredProfiles?.length || 0,
-      profiles: expiredProfiles?.map(p => ({ id: p.id, plan: p.plan, end_date: p.subscription_end_date }))
+    log("Found profiles with has_access = false", { 
+      count: incorrectProfiles?.length || 0,
+      profiles: incorrectProfiles?.map(p => ({ id: p.id, plan: p.plan, has_access: p.has_access }))
     });
 
-    if (!expiredProfiles || expiredProfiles.length === 0) {
-      log("No expired subscriptions found");
+    if (!incorrectProfiles || incorrectProfiles.length === 0) {
+      log("No profiles with has_access = false found");
       return new Response(JSON.stringify({
         success: true,
-        message: "No expired subscriptions found",
+        message: "All profiles already have has_access = true",
         processed: 0
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -78,12 +76,12 @@ serve(async (req) => {
       });
     }
 
-    // Update expired profiles to free plan
-    const updatePromises = expiredProfiles.map(async (profile) => {
-      log("Processing expired profile", { 
+    // Update ALL profiles to has_access = true
+    const updatePromises = incorrectProfiles.map(async (profile) => {
+      log("Corrigindo perfil com has_access = false", { 
         userId: profile.id, 
         plan: profile.plan,
-        endDate: profile.subscription_end_date
+        currentHasAccess: profile.has_access
       });
 
       const { error: updateError } = await supabaseClient
@@ -102,7 +100,7 @@ serve(async (req) => {
         });
         return { success: false, userId: profile.id, error: updateError.message };
       } else {
-        log("Successfully updated expired profile", { userId: profile.id });
+        log("Successfully corrected profile to has_access = true", { userId: profile.id });
         return { success: true, userId: profile.id };
       }
     });
@@ -122,7 +120,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      message: "Expired subscriptions check completed",
+      message: "Profile correction completed - all users now have has_access = true",
       processed: results.length,
       successful,
       failed,
