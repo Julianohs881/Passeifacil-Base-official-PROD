@@ -312,17 +312,34 @@ serve(async (req) => {
           });
         }
         
-        // Atualizar o perfil do usuário para modo gratuito
+        // Buscar detalhes da assinatura para obter a data de término real
+        let subscriptionEndDate = new Date().toISOString();
+        try {
+          const subscriptionDetails = await stripe.subscriptions.retrieve(subscription.id);
+          if (subscriptionDetails.current_period_end) {
+            subscriptionEndDate = new Date(subscriptionDetails.current_period_end * 1000).toISOString();
+            log("Data de término da assinatura obtida", { 
+              originalEndDate: subscriptionEndDate,
+              currentPeriodEnd: subscriptionDetails.current_period_end 
+            });
+          }
+        } catch (subError) {
+          log("AVISO: Não foi possível obter detalhes da assinatura", { error: subError.message });
+          // Usar data atual como fallback
+        }
+
+        // IMPORTANTE: Manter has_access=true até a data de expiração
+        // O usuário mantém acesso ao que já pagou, mesmo após cancelar
         const updateData = {
-          has_access: false,
-          plan: "gratuito",
+          has_access: true, // Mantém acesso até o fim do período pago
+          plan: "assinante", // Mantém plano até expirar
           subscription_status: "canceled",
-          subscription_end_date: new Date().toISOString(),
+          subscription_end_date: subscriptionEndDate,
           // Manter o stripe_customer_id para referência futura
-          // subscription_id: null // Opcionalmente limpar o subscription_id
+          // subscription_id: subscription.id // Manter para referência
         };
         
-        log("Atualizando perfil para modo gratuito", updateData);
+        log("Atualizando perfil para cancelado (mantendo acesso até expiração)", updateData);
         
         const { data: updateResult, error: updateError } = await supabaseClient
           .from("profiles")
@@ -331,7 +348,7 @@ serve(async (req) => {
           .select();
         
         if (updateError) {
-          log("ERRO: Falha ao atualizar perfil para modo gratuito", { 
+          log("ERRO: Falha ao atualizar perfil para cancelado", { 
             error: updateError.message,
             userId: user.id 
           });
@@ -339,10 +356,11 @@ serve(async (req) => {
         }
         
         log("=== CANCELAMENTO PROCESSADO COM SUCESSO ===");
-        log("Usuário rebaixado para plano gratuito", { 
+        log("Assinatura cancelada, mas acesso mantido até expiração", { 
           userId: user.id,
           email: customer.email,
           subscriptionId: subscription.id,
+          subscriptionEndDate: subscriptionEndDate,
           updatedRows: updateResult?.length || 0,
           newProfile: updateResult?.[0] || null
         });
@@ -352,7 +370,8 @@ serve(async (req) => {
           event: "customer.subscription.deleted",
           userId: user.id,
           email: customer.email,
-          message: "Usuário rebaixado para plano gratuito com sucesso"
+          subscriptionEndDate: subscriptionEndDate,
+          message: "Assinatura cancelada, acesso mantido até a data de expiração"
         }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" }

@@ -38,27 +38,52 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       plan: profile.plan,
       has_access: profile.has_access,
       manual_access: profile.manual_access,
+      subscription_status: profile.subscription_status,
       subscription_end_date: profile.subscription_end_date
     });
     
-    // Um usuário é PRO se tiver o plano 'pro' ou 'assinante' OU acesso manual explícito
-    if (profile.plan === 'pro' || profile.plan === 'assinante' || profile.manual_access === true) {
+    // PRIMEIRO: Se tem manual_access = true, é PRO independente de outras verificações
+    if (profile.manual_access === true) {
+      console.log("Usuário é PRO (manual_access = true)");
+      return true;
+    }
+    
+    // SEGUNDO: Verificar se tem plano PRO (incluindo cancelados que ainda têm acesso)
+    if (profile.plan === 'pro' || profile.plan === 'assinante') {
         // Se tiver data de expiração, verificar se não expirou
         if (profile.subscription_end_date) {
             const isExpired = new Date(profile.subscription_end_date) <= new Date();
             console.log("Verificando data de expiração:", {
               end_date: profile.subscription_end_date,
-              is_expired: isExpired
+              is_expired: isExpired,
+              subscription_status: profile.subscription_status
             });
-            return !isExpired;
+            
+            // Se não expirou, é PRO (mesmo que cancelado)
+            if (!isExpired) {
+              console.log("Usuário é PRO (ainda dentro do período pago)");
+              return true;
+            } else {
+              console.log("Usuário NÃO é PRO (período expirado)");
+              return false;
+            }
         }
-        // Se não tiver data de expiração ou se a data ainda é válida, é PRO
-        console.log("Usuário é PRO (sem data de expiração)");
-        return true;
+        
+        // Se não tiver data de expiração mas has_access é true, é PRO
+        if (profile.has_access === true) {
+          console.log("Usuário é PRO (plano válido sem data de expiração)");
+          return true;
+        }
     }
 
-    // Em todos os outros casos (plano 'gratuito', 'sem assinatura', etc. sem manual_access=true), não é PRO
-    console.log("Usuário NÃO é PRO");
+    // TERCEIRO: Se has_access é explicitamente false, não é PRO
+    if (profile.has_access === false) {
+      console.log("Usuário NÃO é PRO (has_access = false)");
+      return false;
+    }
+
+    // Em todos os outros casos (plano 'gratuito', etc.), não é PRO
+    console.log("Usuário NÃO é PRO (plano gratuito ou sem assinatura)");
     return false;
   };
 

@@ -273,10 +273,49 @@ export const useStripeSubscription = () => {
     }
   };
   
+  const fixInconsistentProfile = async () => {
+    setIsLoading(true);
+    
+    try {
+      console.log("=== CORRIGINDO PERFIL INCONSISTENTE ===");
+      
+      // Primeiro, verificar o status atual no Stripe
+      const result = await verifySubscriptionStatus();
+      
+      if (result.success) {
+        console.log("Status verificado no Stripe:", result);
+        
+        toast({
+          title: "Perfil corrigido",
+          description: "Seu status de assinatura foi atualizado corretamente.",
+          duration: 3000,
+        });
+        
+        return { success: true };
+      } else {
+        throw new Error("Falha ao verificar status no Stripe");
+      }
+    } catch (error: any) {
+      console.error("Erro ao corrigir perfil inconsistente:", error);
+      
+      toast({
+        variant: "destructive",
+        title: "Erro ao corrigir perfil",
+        description: "Não foi possível corrigir o status da sua conta. Tente fazer logout e login novamente.",
+        duration: 5000,
+      });
+      
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isLoading,
     createCheckoutSession,
     verifySubscriptionStatus,
-    cancelSubscription
+    cancelSubscription,
+    fixInconsistentProfile
   };
 };

@@ -11,7 +11,7 @@ import PlanUpgradeDialog from '@/components/PlanUpgradeDialog';
 
 const Subscription = () => {
   const { user, userProfile, updateUserProfile, signOut, isPro } = useAuth();
-  const { createCheckoutSession, verifySubscriptionStatus, isLoading, openCustomerPortal } = useStripeSubscription();
+  const { createCheckoutSession, verifySubscriptionStatus, isLoading, fixInconsistentProfile } = useStripeSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -31,6 +31,33 @@ const Subscription = () => {
       if (!user) {
         setCheckingStatus(false);
         return;
+      }
+
+      // Verificar se o usuário tem assinatura expirada que precisa ser atualizada
+      if (userProfile && userProfile.subscription_end_date) {
+        const isExpired = new Date(userProfile.subscription_end_date) <= new Date();
+        
+        // Se a assinatura expirou mas ainda tem has_access=true, corrigir
+        if (isExpired && userProfile.has_access === true && (userProfile.plan === 'assinante' || userProfile.plan === 'pro')) {
+          console.log("ASSINATURA EXPIRADA DETECTADA: Atualizando status para gratuito");
+          
+          toast({
+            title: "Assinatura expirada",
+            description: "Sua assinatura expirou. Atualizando para plano gratuito...",
+            duration: 3000,
+          });
+          
+          // Força verificação do status no Stripe para atualizar
+          try {
+            const result = await verifySubscriptionStatus();
+            if (result.success) {
+              await updateUserProfile();
+              console.log("Perfil atualizado após expiração");
+            }
+          } catch (error) {
+            console.error("Erro ao atualizar perfil expirado:", error);
+          }
+        }
       }
       
       // Verificar se existe um novo assinante pela sessão (retornando do checkout)
@@ -210,15 +237,13 @@ const Subscription = () => {
       const result = await createCheckoutSession();
       
       if (result.redirectToPortal) {
-        const portalResult = await openCustomerPortal();
-        if (!portalResult.success) {
-          toast({
-            variant: "destructive",
-            title: "Erro",
-            description: "Não foi possível abrir o portal de gerenciamento de assinatura.",
-            duration: 5000,
-          });
-        }
+        toast({
+          title: "Você já possui uma assinatura ativa",
+          description: "Redirecionando para o perfil onde você pode gerenciar sua assinatura...",
+          duration: 3000,
+        });
+        navigate("/profile");
+        return;
       }
     } catch (error) {
       console.error("Erro ao iniciar processo de assinatura:", error);
@@ -418,7 +443,7 @@ const Subscription = () => {
             {isPro() ? (
                <Button 
                 className="w-full bg-violet-600 hover:bg-violet-700 text-white py-6 text-lg"
-                onClick={openCustomerPortal}
+                onClick={() => navigate("/profile")}
                 disabled={isLoading}
               >
                 Gerenciar Assinatura
@@ -441,6 +466,7 @@ const Subscription = () => {
       </div>
 
       {/* Se o usuário for PRO, não mostra a seção de erro/retry. */}
+
       {!isPro() && verificationError && (
         <Alert variant="destructive" className="max-w-md mx-auto mb-6 border-red-200 bg-red-50">
           <AlertCircle className="h-4 w-4" />

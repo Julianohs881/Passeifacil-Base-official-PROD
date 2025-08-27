@@ -294,33 +294,46 @@ const UserProfile = () => {
               </div>
               <div className="text-right space-y-2">
                 <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  subscriptionDaysLeft !== null && subscriptionDaysLeft > 30
-                    ? 'bg-green-100 text-green-800'
-                    : subscriptionDaysLeft !== null && subscriptionDaysLeft > 7
-                    ? 'bg-yellow-100 text-yellow-800'
+                  subscriptionDaysLeft !== null && subscriptionDaysLeft > 0
+                    ? userProfile?.subscription_status === 'canceled' 
+                      ? 'bg-orange-100 text-orange-800'
+                      : subscriptionDaysLeft > 30
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
                     : 'bg-red-100 text-red-800'
                 }`}>
                   {subscriptionDaysLeft !== null && subscriptionDaysLeft > 0
-                    ? 'Ativa'
+                    ? userProfile?.subscription_status === 'canceled' 
+                      ? 'Cancelada (ativa até expiração)'
+                      : 'Ativa'
                     : 'Expirada'
                   }
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => setShowCancelDialog(true)}
-                  disabled={isLoadingStripe}
-                >
-                  {isLoadingStripe ? (
-                    <>
-                      <Clock className="h-4 w-4 mr-2 animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                    "Cancelar assinatura"
-                  )}
-                </Button>
+                {userProfile?.subscription_status !== 'canceled' ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => setShowCancelDialog(true)}
+                    disabled={isLoadingStripe}
+                  >
+                    {isLoadingStripe ? (
+                      <>
+                        <Clock className="h-4 w-4 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      "Cancelar assinatura"
+                    )}
+                  </Button>
+                ) : (
+                  <div className="text-sm text-orange-600 mt-2">
+                    Assinatura cancelada<br/>
+                    <span className="text-xs text-gray-500">
+                      Acesso mantido até {new Date(userProfile.subscription_end_date).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
