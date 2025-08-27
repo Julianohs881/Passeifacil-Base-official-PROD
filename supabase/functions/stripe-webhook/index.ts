@@ -328,10 +328,10 @@ serve(async (req) => {
           // Usar data atual como fallback
         }
 
-        // IMPORTANTE: Manter has_access=true até a data de expiração
-        // O usuário mantém acesso ao que já pagou, mesmo após cancelar
+        // IMPORTANTE: has_access é SEMPRE true para todos os usuários
+        // O usuário mantém acesso total mesmo após cancelar
         const updateData = {
-          has_access: true, // Mantém acesso até o fim do período pago
+          has_access: true, // SEMPRE true para todos os usuários
           plan: "assinante", // Mantém plano até expirar
           subscription_status: "canceled",
           subscription_end_date: subscriptionEndDate,

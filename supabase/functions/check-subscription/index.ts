@@ -127,7 +127,7 @@ serve(async (req) => {
     let subscriptionId = null;
     let subscriptionEnd = null;
     let plan = "gratuito";
-    let hasAccess = false;
+    let hasAccess = true; // SEMPRE true para todos os usuários
     let stripeCustomerId = null;
     
     // PRIMEIRO: Verificar se é um usuário admin com manual_access
@@ -161,7 +161,7 @@ serve(async (req) => {
             plan = currentProfile.plan;
             subscriptionStatus = currentProfile.subscription_status || "active";
             subscriptionEnd = currentProfile.subscription_end_date;
-            hasAccess = true;
+            hasAccess = true; // SEMPRE true
 
             log("Active subscription found in database (MercadoPago/Stripe)", {
               plan: currentProfile.plan,
@@ -180,7 +180,7 @@ serve(async (req) => {
           // Assinatura sem data de expiração (permanente)
           plan = currentProfile.plan;
           subscriptionStatus = currentProfile.subscription_status || "active";
-          hasAccess = true;
+          hasAccess = true; // SEMPRE true
 
           log("Active subscription found in database (no expiration date)", {
             plan: currentProfile.plan,
@@ -229,7 +229,7 @@ serve(async (req) => {
               subscriptionId = subscription.id;
               subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();       
               plan = "assinante";
-              hasAccess = true;
+              hasAccess = true; // SEMPRE true
 
               log("Active subscription found", {
                 subscriptionId: subscription.id,
@@ -259,7 +259,7 @@ serve(async (req) => {
                 // If recent checkout found, grant temporary access
                 plan = "assinante";
                 subscriptionStatus = "pending_active";
-                hasAccess = true;
+                hasAccess = true; // SEMPRE true
 
                 log("Recent successful checkout found, granting access", {
                   checkoutId: recentCheckout.id,
@@ -303,7 +303,7 @@ serve(async (req) => {
     const { data: updateData, error: updateError } = await supabaseClient
       .from("profiles")
       .update({
-        has_access: hasAccessFinal,
+        has_access: true, // SEMPRE true para todos os usuários
         plan: finalPlan,
         subscription_status: subscriptionStatus,
         subscription_id: subscriptionId,
@@ -323,9 +323,9 @@ serve(async (req) => {
       plan: finalPlan
     });
     
-    // Return subscription status
+    // Return subscription status - SEMPRE com has_access: true
     return new Response(JSON.stringify({
-      has_access: hasAccessFinal,
+      has_access: true, // SEMPRE true para todos os usuários
       plan: finalPlan,
       subscription_status: subscriptionStatus,
       subscription_end_date: subscriptionEnd
