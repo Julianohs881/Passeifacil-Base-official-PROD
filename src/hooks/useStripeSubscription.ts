@@ -298,8 +298,8 @@ export const useStripeSubscription = () => {
     } catch (error: any) {
       console.error("Erro ao corrigir perfil inconsistente:", error);
       
-      toast({
-        variant: "destructive",
+        toast({
+          variant: "destructive",
         title: "Erro ao corrigir perfil",
         description: "Não foi possível corrigir o status da sua conta. Tente fazer logout e login novamente.",
         duration: 5000,
@@ -310,7 +310,7 @@ export const useStripeSubscription = () => {
       setIsLoading(false);
     }
   };
-
+  
   return {
     isLoading,
     createCheckoutSession,
