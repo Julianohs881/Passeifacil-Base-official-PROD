@@ -27,7 +27,12 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 });
 
 export const signInWithGoogle = async () => {
-  const redirectUrl = `${window.location.origin.replace(':5173', ':8080')}/auth/callback`;
+  // Detectar se está em produção ou desenvolvimento
+  const isProduction = window.location.hostname !== 'localhost';
+  const redirectUrl = isProduction 
+    ? 'https://passeifacil.com.br/auth/callback'
+    : `${window.location.origin.replace(':5173', ':8080')}/auth/callback`;
+  
   console.log('URL de redirecionamento:', redirectUrl);
   
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -59,11 +64,17 @@ export const signInWithEmail = async (email: string, password: string) => {
 };
 
 export const signUpWithEmail = async (email: string, password: string) => {
+  // Detectar se está em produção ou desenvolvimento
+  const isProduction = window.location.hostname !== 'localhost';
+  const redirectUrl = isProduction 
+    ? 'https://passeifacil.com.br/auth/callback'
+    : `${window.location.origin.replace(':5173', ':8080')}/auth/callback`;
+  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin.replace(':5173', ':8080')}/auth/callback`
+      emailRedirectTo: redirectUrl
     }
   });
 

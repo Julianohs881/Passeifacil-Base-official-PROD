@@ -6,13 +6,21 @@ export const usePasswordRecovery = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const sendResetEmail = useCallback(async (email: string) => {
+  const sendResetEmail = async (email: string) => {
     setLoading(true);
     setSuccess(false);
     
     try {
+      // Detectar se está em produção ou desenvolvimento
+      const isProduction = window.location.hostname !== 'localhost';
+      const redirectUrl = isProduction 
+        ? 'https://passeifacil.com.br/reset-password'
+        : `${window.location.origin.replace(':5173', ':8080')}/reset-password`;
+      
+      console.log('URL de redirecionamento:', redirectUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin.replace(':5173', ':8080')}/reset-password`,
+        redirectTo: redirectUrl,
       });
 
       if (error) {
@@ -31,7 +39,7 @@ export const usePasswordRecovery = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   const resetPassword = useCallback(async (password: string) => {
     setLoading(true);
