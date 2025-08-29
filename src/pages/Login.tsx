@@ -164,6 +164,17 @@ const Login = () => {
                   className="w-full rounded-xl"
                 />
               </div>
+              
+              {/* Link para recuperação de senha */}
+              <div className="text-right">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-violet-500 hover:underline"
+                >
+                  Esqueceu sua senha?
+                </Link>
+              </div>
+              
               <Button
                 type="submit"
                 className="w-full rounded-xl"

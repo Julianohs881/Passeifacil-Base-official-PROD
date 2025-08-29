@@ -27,7 +27,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 });
 
 export const signInWithGoogle = async () => {
-  const redirectUrl = `${window.location.origin}/auth/callback`;
+  const redirectUrl = `${window.location.origin.replace(':5173', ':8080')}/auth/callback`;
   console.log('URL de redirecionamento:', redirectUrl);
   
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -63,7 +63,7 @@ export const signUpWithEmail = async (email: string, password: string) => {
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`
+      emailRedirectTo: `${window.location.origin.replace(':5173', ':8080')}/auth/callback`
     }
   });
 

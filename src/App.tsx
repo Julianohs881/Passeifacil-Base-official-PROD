@@ -14,6 +14,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import NavBar from "./components/NavBar";
 import CreateQuiz from "./pages/CreateQuiz";
 import AuthCallback from "./pages/AuthCallback";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import { useEffect } from "react";
 import { useStripeSubscription } from "./hooks/useStripeSubscription";
 
@@ -121,6 +123,8 @@ function AppContent() {
             }
           />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Página de assinatura - aberta */}
           <Route path="/subscription" element={<Subscription />} />
