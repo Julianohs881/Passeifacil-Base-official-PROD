@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Quiz, ColorOption, VisibilityOption } from "@/types";
+import { Quiz, VisibilityOption } from "@/types";
 import AddQuizModal from "@/components/QuizForms/AddQuizModal";
 
 const CreateQuiz = () => {
@@ -27,7 +27,7 @@ const CreateQuiz = () => {
 
           if (error) throw error;
           
-          setEditingQuiz({...data, color: data.color as ColorOption});
+          setEditingQuiz({...data, color: "bg-gray-50"}); // Cor padrão fixa
         } catch (error) {
           console.error("Erro ao carregar quiz para edição:", error);
           toast({

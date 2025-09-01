@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ColorOption, Quiz, VisibilityOption } from "@/types";
+import { Quiz, VisibilityOption } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { QuizFormFields } from "./QuizFormFields";
 
@@ -27,24 +27,25 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
   quiz,
 }) => {
   const [title, setTitle] = useState("");
-  const [color, setColor] = useState<ColorOption>("bg-violet-500");
+
   const [visibility, setVisibility] = useState<VisibilityOption>("private");
   const [faculty, setFaculty] = useState("");
   const [courseYear, setCourseYear] = useState("");
   const [course, setCourse] = useState("");
+  const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   // Reset form when modal opens/closes or quiz changes
   useEffect(() => {
-    if (isOpen) {
-      setTitle(quiz?.title || "");
-      setColor((quiz?.color || "bg-violet-500") as ColorOption);
-      setVisibility((quiz?.visibility || "private") as VisibilityOption);
-      setFaculty(quiz?.faculty || "");
-      setCourseYear(quiz?.course_year || "");
-      setCourse(quiz?.course || "");
-    }
+          if (isOpen) {
+        setTitle(quiz?.title || "");
+        setVisibility((quiz?.visibility || "private") as VisibilityOption);
+        setFaculty(quiz?.faculty || "");
+        setCourseYear(quiz?.course_year || "");
+        setCourse(quiz?.course || "");
+        setDescription(quiz?.description || "");
+      }
   }, [isOpen, quiz]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,11 +68,12 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
       
       await onSave({ 
         title, 
-        color, 
+        color: "bg-gray-50", // Cor padrão fixa
         visibility,
         faculty: faculty.trim() || undefined,
         course_year: processedCourseYear || undefined,
         course: course.trim() || undefined,
+        description: description.trim() || undefined,
         share_code: null, // Added to fix TypeScript error
       });
       onClose();
@@ -103,8 +105,6 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
           <QuizFormFields 
             title={title}
             setTitle={setTitle}
-            color={color}
-            setColor={setColor}
             visibility={visibility}
             setVisibility={setVisibility}
             faculty={faculty}
@@ -113,6 +113,8 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
             setCourseYear={setCourseYear}
             course={course}
             setCourse={setCourse}
+            description={description}
+            setDescription={setDescription}
           />
           
           <DialogFooter>

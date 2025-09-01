@@ -8,8 +8,8 @@ interface QuizGridProps {
   onOpenCreateQuiz: () => void;
   onDeleteQuiz: (id: string) => void;
   onEditQuiz: (quiz: Quiz) => void;
-  onChangeColor: (quiz: Quiz) => void;
   onToggleVisibility: (quiz: Quiz, newVisibility: VisibilityOption) => void;
+  onStartQuiz: (quizId: string) => void;
 }
 
 export const QuizGrid = ({
@@ -17,8 +17,8 @@ export const QuizGrid = ({
   onOpenCreateQuiz,
   onDeleteQuiz,
   onEditQuiz,
-  onChangeColor,
   onToggleVisibility,
+  onStartQuiz,
 }: QuizGridProps) => {
   return (
     <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mt-6">
@@ -29,8 +29,8 @@ export const QuizGrid = ({
           quiz={quiz}
           onDelete={onDeleteQuiz}
           onEdit={onEditQuiz}
-          onColorChange={onChangeColor}
           onToggleVisibility={onToggleVisibility}
+          onStartQuiz={onStartQuiz}
         />
       ))}
     </div>

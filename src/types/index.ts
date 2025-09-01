@@ -1,45 +1,8 @@
 import { Session, User } from "@supabase/supabase-js";
 
-export type ColorOption =
-  | "bg-red-500"
-  | "bg-orange-500"
-  | "bg-amber-500"
-  | "bg-yellow-500"
-  | "bg-lime-500"
-  | "bg-green-500"
-  | "bg-emerald-500"
-  | "bg-teal-500"
-  | "bg-cyan-500"
-  | "bg-sky-500"
-  | "bg-blue-500"
-  | "bg-indigo-500"
-  | "bg-violet-500"
-  | "bg-purple-500"
-  | "bg-fuchsia-500"
-  | "bg-pink-500"
-  | "bg-rose-500"
-  | "bg-gray-500";
+export type ColorOption = "bg-gray-50";
 
-export const QUIZ_COLORS: ColorOption[] = [
-  "bg-red-500",
-  "bg-orange-500",
-  "bg-amber-500",
-  "bg-yellow-500",
-  "bg-lime-500",
-  "bg-green-500",
-  "bg-emerald-500",
-  "bg-teal-500",
-  "bg-cyan-500",
-  "bg-sky-500",
-  "bg-blue-500",
-  "bg-indigo-500",
-  "bg-violet-500",
-  "bg-purple-500",
-  "bg-fuchsia-500",
-  "bg-pink-500",
-  "bg-rose-500",
-  "bg-gray-500"
-];
+export const QUIZ_COLORS: ColorOption[] = ["bg-gray-50"];
 
 export type VisibilityOption = "public" | "private";
 export type UserPlan = "gratuito" | "pro" | "assinante" | "cancelado" | "sem assinatura";
@@ -55,6 +18,7 @@ export interface Quiz {
   faculty?: string;
   course_year?: string;
   course?: string;
+  description?: string;
   share_code: string | null;
 }
 
@@ -126,13 +90,6 @@ export interface AuthContextType {
 
 // Helper function to parse a string to a valid ColorOption
 export const parseColorOption = (color: string | undefined): ColorOption => {
-  if (!color) return "bg-violet-500";
-  
-  // Check if the string is already a valid ColorOption
-  if (QUIZ_COLORS.includes(color as ColorOption)) {
-    return color as ColorOption;
-  }
-  
-  // Default fallback
-  return "bg-violet-500";
+  // Always return the default color
+  return "bg-gray-50";
 };

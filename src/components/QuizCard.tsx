@@ -1,31 +1,36 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Edit, Trash2, Palette, Eye, EyeOff, Share2 } from "lucide-react";
+import { Edit, Trash2, Eye, EyeOff, Share2 } from "lucide-react";
 import { Quiz, VisibilityOption } from "../types";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { ShareCodeDialog } from "./Share/ShareCodeDialog";
-import ChangeColorPopover from "./ChangeColorPopover";
+import QuizDetailModal from "./QuizDetailModal";
 
 interface QuizCardProps {
   quiz: Quiz;
   onDelete: (id: string) => void;
   onEdit: (quiz: Quiz) => void;
-  onColorChange: (quiz: Quiz) => void;
   onToggleVisibility?: (quiz: Quiz, newVisibility: VisibilityOption) => void;
+  onStartQuiz: (quizId: string) => void;
 }
 
-const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }: QuizCardProps) => {
+const QuizCard = ({ quiz, onDelete, onEdit, onToggleVisibility, onStartQuiz }: QuizCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const { toast } = useToast();
   const { user, isPro } = useAuth();
 
   // Verifica se o usuário atual é o criador do quiz
   const isCreator = user && user.id === quiz.user_id;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDetailModalOpen(true);
+  };
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,12 +58,6 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
     onEdit(quiz);
   };
 
-  const handleColorChange = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsColorDialogOpen(true);
-  };
-
   const handleToggleVisibility = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -78,27 +77,13 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
 
   return (
     <>
-      <Link
-        to={`/quiz/${quiz.id}`}
-        className="group relative block"
+      <div
+        onClick={handleCardClick}
+        className="group relative block cursor-pointer"
       >
-        <div
-          className={`quiz-card ${quiz.color} p-4 h-32 sm:h-44`}
-        >
-          {/* Indicador de visibilidade */}
-          <div className="absolute top-2 left-2">
-            {quiz.visibility === "public" ? (
-              <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
-                <Eye className="h-3 w-3 mr-1" />
-                <span className="hidden sm:inline">Público</span>
-              </span>
-            ) : (
-              <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
-                <EyeOff className="h-3 w-3 mr-1" />
-                <span className="hidden sm:inline">Privado</span>
-              </span>
-            )}
-          </div>
+        <div className="relative bg-gray-50 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group-hover:border-violet-300">
+          {/* Header com cor padrão */}
+          <div className="h-3 bg-gray-100"></div>
 
           {/* Action buttons - Mostrar apenas se o usuário for o criador */}
           <div className="absolute top-2 right-2 flex space-x-1">
@@ -126,14 +111,6 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
                 >
                   <Edit className="h-3 w-3 text-gray-700" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
-                  onClick={handleColorChange}
-                >
-                  <Palette className="h-3 w-3 text-gray-700" />
-                </Button>
                 {/* Only show visibility toggle for PRO users */}
                 {onToggleVisibility && isPROUser && (
                   <Button
@@ -144,54 +121,54 @@ const QuizCard = ({ quiz, onDelete, onEdit, onColorChange, onToggleVisibility }:
                     title={quiz.visibility === "public" ? "Tornar privado" : "Tornar público"}
                   >
                     {quiz.visibility === "public" ? (
-                      <EyeOff className="h-3 w-3 text-gray-700" />
-                    ) : (
                       <Eye className="h-3 w-3 text-gray-700" />
+                    ) : (
+                      <EyeOff className="h-3 w-3 text-gray-700" />
                     )}
                   </Button>
                 )}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 hover:bg-red-200"
+                  className="h-6 w-6 rounded-full bg-white bg-opacity-70 hover:bg-opacity-80 backdrop-blur-sm"
                   onClick={handleDelete}
                   disabled={isDeleting}
+                  title="Excluir"
                 >
-                  <Trash2 className="h-3 w-3 text-gray-700" />
+                  {isDeleting ? (
+                    <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-gray-700"></div>
+                  ) : (
+                    <Trash2 className="h-3 w-3 text-gray-700" />
+                  )}
                 </Button>
               </>
             )}
           </div>
 
-          {/* Título do quiz centralizado verticalmente e horizontalmente */}
-          <div className="flex-grow flex items-center justify-center">
-            <h3 className="text-sm sm:text-base font-medium text-white text-center break-words line-clamp-3">
+          {/* Content */}
+          <div className="p-4">
+            <h3 className="font-medium text-black text-lg text-center line-clamp-3">
               {quiz.title}
             </h3>
           </div>
         </div>
-      </Link>
+      </div>
 
-      {/* Share Dialog - only for PRO users */}
-      {isPROUser && (
-        <ShareCodeDialog
-          isOpen={isShareDialogOpen}
-          onClose={() => setIsShareDialogOpen(false)}
-          title={quiz.title}
-          code={quiz.share_code}
-          type="quiz"
-        />
-      )}
+      {/* Share Dialog */}
+      <ShareCodeDialog
+        isOpen={isShareDialogOpen}
+        onClose={() => setIsShareDialogOpen(false)}
+        title={quiz.title}
+        code={quiz.share_code}
+        type="quiz"
+      />
 
-      {/* Color Change Dialog */}
-      <ChangeColorPopover
-        isOpen={isColorDialogOpen}
-        onClose={() => setIsColorDialogOpen(false)}
-        onSave={async (q, color) => {
-          await onColorChange({...q, color});
-          setIsColorDialogOpen(false);
-        }}
+      {/* Quiz Detail Modal */}
+      <QuizDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
         quiz={quiz}
+        onStartQuiz={onStartQuiz}
       />
     </>
   );

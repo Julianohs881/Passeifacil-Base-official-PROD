@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/utils/supabase";
-import { parseColorOption, ColorOption } from "@/types";
+
 import { ExtendedQuiz } from "./types";
 import { FilterValues } from "./ExploreFilters";
 
@@ -44,10 +44,10 @@ export const useExploreQuizzes = () => {
         });
       }
 
-      // Transform the data para garantir que color é uma ColorOption válida
+      // Transform the data para usar cor padrão
       const transformedData = (data || []).map(item => ({
         ...item,
-        color: parseColorOption(item.color),
+        color: "bg-gray-50", // Cor padrão fixa
         createdBy: userIdToName[item.user_id] || "Usuário"
       })) as ExtendedQuiz[];
       

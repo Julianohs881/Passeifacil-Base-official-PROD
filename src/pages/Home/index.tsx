@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Quiz, parseColorOption, ColorOption, VisibilityOption } from "@/types";
+import { Quiz, VisibilityOption } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import QuizCard from "@/components/QuizCard";
-import ChangeColorPopover from "@/components/ChangeColorPopover";
+
 import ProfileIncompleteAlert from "@/components/ProfileIncompleteAlert";
 import FreePlanLimits from "@/components/FreePlanLimits";
 import { HomePageHeader } from "./HomePageHeader";
@@ -61,12 +61,23 @@ const Home = () => {
         return;
       }
 
-      // Parse the color and visibility properties to ensure they conform to their expected types
+      // Buscar nome do usuário atual
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user!.id)
+        .single();
+
+      const userName = profile?.name || "Você";
+
+      // Definir cor padrão para todos os quizzes e adicionar nome do criador
       const parsedQuizzes: Quiz[] = (data || []).map(quiz => ({
         ...quiz,
-        color: parseColorOption(quiz.color),
+        color: "bg-gray-50", // Cor padrão fixa
         // Ensure visibility is either "public" or "private" (if not, default to "private")
-        visibility: (quiz.visibility === "public" ? "public" : "private") as VisibilityOption
+        visibility: (quiz.visibility === "public" ? "public" : "private") as VisibilityOption,
+        // Adicionar campo createdBy para compatibilidade com o modal
+        createdBy: userName
       }));
       
       setQuizzes(parsedQuizzes);
@@ -116,33 +127,7 @@ const Home = () => {
     navigate(`/quizzes/${quiz.id}/edit`);
   };
 
-  const handleSaveQuizColor = async (quizToUpdate: Quiz) => {
-    try {
-      const { error } = await supabase
-        .from("quizzes")
-        .update({ color: quizToUpdate.color })
-        .eq("id", quizToUpdate.id);
 
-      if (error) throw error;
-      
-      // Update the local state with the new color
-      setQuizzes(
-        quizzes.map((q) => (q.id === quizToUpdate.id ? { ...q, color: quizToUpdate.color } : q))
-      );
-      
-      toast({
-        title: "Cor alterada",
-        description: "Cor do quiz alterada com sucesso!",
-      });
-    } catch (error) {
-      console.error("Error changing quiz color:", error);
-      toast({
-        title: "Erro ao alterar cor",
-        description: "Não foi possível alterar a cor deste quiz.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleToggleVisibility = async (quiz: Quiz, newVisibility: VisibilityOption) => {
     try {
@@ -170,6 +155,11 @@ const Home = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleStartQuiz = (quizId: string) => {
+    // Navegar para a página do quiz para iniciar
+    navigate(`/quiz/${quizId}`);
   };
 
   const handleOpenImportDialog = () => {
@@ -242,8 +232,8 @@ const Home = () => {
             onOpenCreateQuiz={handleCreateQuiz}
             onDeleteQuiz={handleDeleteQuiz}
             onEditQuiz={handleEditQuiz}
-            onChangeColor={handleSaveQuizColor}
             onToggleVisibility={handleToggleVisibility}
+            onStartQuiz={handleStartQuiz}
           />
         </div>
       )}
