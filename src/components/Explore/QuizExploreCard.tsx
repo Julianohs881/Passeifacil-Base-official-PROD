@@ -46,7 +46,7 @@ const QuizExploreCard = ({ quiz, onQuizClick }: QuizExploreCardProps) => {
           {/* Título do quiz centralizado */}
           <div className="flex-grow flex items-center justify-center">
             <h3 className="text-sm sm:text-base font-medium text-black text-center break-words line-clamp-3">
-              {quiz.title}
+              {quiz.title.toUpperCase()}
             </h3>
           </div>
         </div>

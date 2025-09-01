@@ -51,6 +51,8 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("Submetendo formulário com description:", description); // Debug
+    
     if (!title.trim()) {
       toast({
         title: "Título necessário",
@@ -66,7 +68,7 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
       // Process courseYear value to handle the "none-specified" case
       const processedCourseYear = courseYear === "none-specified" ? "" : courseYear;
       
-      await onSave({ 
+      const quizData = { 
         title, 
         color: "bg-gray-50", // Cor padrão fixa
         visibility,
@@ -75,7 +77,11 @@ const AddQuizModal: React.FC<AddQuizModalProps> = ({
         course: course.trim() || undefined,
         description: description.trim() || undefined,
         share_code: null, // Added to fix TypeScript error
-      });
+      };
+      
+      console.log("Dados do quiz a serem salvos:", quizData); // Debug
+      
+      await onSave(quizData);
       onClose();
     } catch (error) {
       console.error("Error saving quiz:", error);

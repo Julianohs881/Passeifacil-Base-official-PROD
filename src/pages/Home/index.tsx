@@ -71,14 +71,17 @@ const Home = () => {
       const userName = profile?.name || "Você";
 
       // Definir cor padrão para todos os quizzes e adicionar nome do criador
-      const parsedQuizzes: Quiz[] = (data || []).map(quiz => ({
-        ...quiz,
-        color: "bg-gray-50", // Cor padrão fixa
-        // Ensure visibility is either "public" or "private" (if not, default to "private")
-        visibility: (quiz.visibility === "public" ? "public" : "private") as VisibilityOption,
-        // Adicionar campo createdBy para compatibilidade com o modal
-        createdBy: userName
-      }));
+      const parsedQuizzes: Quiz[] = (data || []).map(quiz => {
+        console.log("Quiz carregado:", quiz); // Debug: verificar campos
+        return {
+          ...quiz,
+          color: "bg-gray-50", // Cor padrão fixa
+          // Ensure visibility is either "public" or "private" (if not, default to "private")
+          visibility: (quiz.visibility === "public" ? "public" : "private") as VisibilityOption,
+          // Adicionar campo createdBy para compatibilidade com o modal
+          createdBy: userName
+        };
+      });
       
       setQuizzes(parsedQuizzes);
       refreshCounts();

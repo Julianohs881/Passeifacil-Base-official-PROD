@@ -43,7 +43,7 @@ const QuizDetailModal: React.FC<QuizDetailModalProps> = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            {quiz.title}
+            {quiz.title.toUpperCase()}
           </DialogTitle>
           <DialogDescription className="text-center text-gray-600">
             Detalhes do quiz

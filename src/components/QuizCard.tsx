@@ -79,11 +79,23 @@ const QuizCard = ({ quiz, onDelete, onEdit, onToggleVisibility, onStartQuiz }: Q
     <>
       <div
         onClick={handleCardClick}
-        className="group relative block cursor-pointer"
+        className="block hover:scale-105 transition-transform duration-200 cursor-pointer"
       >
-        <div className="relative bg-gray-50 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group-hover:border-violet-300">
-          {/* Header com cor padrão */}
-          <div className="h-3 bg-gray-100"></div>
+        <div className="quiz-card bg-gray-50 p-4 h-32 sm:h-44 relative rounded-xl shadow-md hover:shadow-lg">
+          {/* Indicador de visibilidade */}
+          <div className="absolute top-2 left-2">
+            {quiz.visibility === "public" ? (
+              <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
+                <Eye className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">Público</span>
+              </span>
+            ) : (
+              <span className="bg-white bg-opacity-70 text-xs px-2 py-1 rounded-full flex items-center">
+                <EyeOff className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">Privado</span>
+              </span>
+            )}
+          </div>
 
           {/* Action buttons - Mostrar apenas se o usuário for o criador */}
           <div className="absolute top-2 right-2 flex space-x-1">
@@ -144,11 +156,11 @@ const QuizCard = ({ quiz, onDelete, onEdit, onToggleVisibility, onStartQuiz }: Q
               </>
             )}
           </div>
-
-          {/* Content */}
-          <div className="p-4">
-            <h3 className="font-medium text-black text-lg text-center line-clamp-3">
-              {quiz.title}
+          
+          {/* Título do quiz centralizado */}
+          <div className="flex-grow flex items-center justify-center">
+            <h3 className="text-sm sm:text-base font-medium text-black text-center break-words line-clamp-3">
+              {quiz.title.toUpperCase()}
             </h3>
           </div>
         </div>

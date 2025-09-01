@@ -89,7 +89,10 @@ export const QuizFormFields: React.FC<QuizFormFieldsProps> = ({
         <Textarea
           id="description"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) => {
+            console.log("Campo description alterado para:", e.target.value); // Debug
+            setDescription(e.target.value);
+          }}
           className="col-span-3"
           placeholder="Descreva o conteúdo e objetivo deste quiz..."
           rows={3}
