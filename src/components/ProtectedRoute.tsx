@@ -14,6 +14,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [profileRefreshed, setProfileRefreshed] = useState(false);
 
+
+
+
+
   // Set timeout to show emergency logout if loading takes too long
   useEffect(() => {
     // Only set timeout if we're in a loading state

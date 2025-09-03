@@ -2,10 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { supabase } from '@/utils/supabase';
-import { Quiz, Question, QuestionStatus } from '@/types';
+import { Quiz, Question, QuestionStatus, QuizResult } from '@/types';
 
 export const useQuiz = (quizId: string | undefined) => {
   const { toast } = useToast();
+  
+
+  
+
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -15,6 +19,13 @@ export const useQuiz = (quizId: string | undefined) => {
 
   // Estado para rastrear o status de cada questão (respondida/não respondida)
   const [questionsStatus, setQuestionsStatus] = useState<Record<string, QuestionStatus>>({});
+  
+  // Estados para resultado e retry
+  const [showResult, setShowResult] = useState(false);
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+  const [previousResult, setPreviousResult] = useState<QuizResult | null>(null);
+  const [isRetryMode, setIsRetryMode] = useState(false);
+  const [retryIncorrectOnly, setRetryIncorrectOnly] = useState(false);
 
   // Buscar informações do quiz
   const fetchQuiz = async () => {
@@ -98,15 +109,75 @@ export const useQuiz = (quizId: string | undefined) => {
   // Navegar para a questão anterior
   const goToPreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      if (retryIncorrectOnly) {
+        // No modo retry, pular questões corretas
+        const previousIncorrectIndex = findPreviousIncorrectQuestion(currentQuestionIndex);
+        if (previousIncorrectIndex !== -1) {
+          setCurrentQuestionIndex(previousIncorrectIndex);
+        }
+      } else {
+        setCurrentQuestionIndex(currentQuestionIndex - 1);
+      }
     }
   };
 
   // Navegar para a próxima questão
   const goToNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      if (retryIncorrectOnly) {
+        // No modo retry, pular questões corretas
+        const nextIncorrectIndex = findNextIncorrectQuestion(currentQuestionIndex);
+        if (nextIncorrectIndex !== -1) {
+          setCurrentQuestionIndex(nextIncorrectIndex);
+        }
+      } else {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      }
     }
+  };
+
+  // Encontrar a próxima questão incorreta
+  const findNextIncorrectQuestion = (currentIndex: number): number => {
+    if (retryIncorrectOnly) {
+      // No modo retry, procurar por questões que foram marcadas como 'unanswered' (que eram incorretas)
+      for (let i = currentIndex + 1; i < questions.length; i++) {
+        const questionId = questions[i].id;
+        if (questionsStatus[questionId] === 'unanswered') {
+          return i;
+        }
+      }
+    } else {
+      // No modo normal, procurar por questões incorretas
+      for (let i = currentIndex + 1; i < questions.length; i++) {
+        const questionId = questions[i].id;
+        if (questionsStatus[questionId] === 'incorrect') {
+          return i;
+        }
+      }
+    }
+    return -1; // Não encontrou próxima questão incorreta
+  };
+
+  // Encontrar a questão incorreta anterior
+  const findPreviousIncorrectQuestion = (currentIndex: number): number => {
+    if (retryIncorrectOnly) {
+      // No modo retry, procurar por questões que foram marcadas como 'unanswered' (que eram incorretas)
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        const questionId = questions[i].id;
+        if (questionsStatus[questionId] === 'unanswered') {
+          return i;
+        }
+      }
+    } else {
+      // No modo normal, procurar por questões incorretas
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        const questionId = questions[i].id;
+        if (questionsStatus[questionId] === 'incorrect') {
+          return i;
+        }
+      }
+    }
+    return -1; // Não encontrou questão incorreta anterior
   };
 
   // Manipular resposta do usuário
@@ -132,6 +203,104 @@ export const useQuiz = (quizId: string | undefined) => {
       ...prev,
       [questionId]: isCorrect ? 'correct' : 'incorrect'
     }));
+
+    // Se estiver no modo retry e respondeu corretamente, navegar para próxima questão incorreta
+    if (retryIncorrectOnly && isCorrect) {
+      setTimeout(() => {
+        const nextIncorrectIndex = findNextIncorrectQuestion(currentQuestionIndex);
+        if (nextIncorrectIndex !== -1) {
+          setCurrentQuestionIndex(nextIncorrectIndex);
+        }
+      }, 500); // Pequeno delay para mostrar feedback visual
+    }
+  };
+
+  // Calcular resultado do quiz
+  const calculateResult = (): QuizResult => {
+    const totalQuestions = questions.length;
+    const correctAnswers = Object.values(questionsStatus).filter(status => status === 'correct').length;
+    const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+    
+    return {
+      correctAnswers,
+      totalQuestions,
+      percentage
+    };
+  };
+
+  // Verificar se todas as questões foram respondidas
+  const isQuizComplete = (): boolean => {
+    return questions.length > 0 && Object.keys(userAnswers).length === questions.length;
+  };
+
+  // Finalizar quiz e mostrar resultado
+  const finishQuiz = () => {
+    if (!isQuizComplete()) return;
+    
+    const result = calculateResult();
+    setQuizResult(result);
+    setShowResult(true);
+  };
+
+  // Refazer apenas as questões incorretas
+  const retryIncorrectQuestions = () => {
+    const incorrectQuestionIds = Object.entries(questionsStatus)
+      .filter(([_, status]) => status === 'incorrect')
+      .map(([questionId, _]) => questionId);
+    
+    if (incorrectQuestionIds.length === 0) return;
+    
+    // Salvar resultado anterior
+    setPreviousResult(quizResult);
+    
+    // Limpar respostas apenas das questões incorretas
+    const newUserAnswers = { ...userAnswers };
+    const newQuestionsStatus = { ...questionsStatus };
+    
+    incorrectQuestionIds.forEach(questionId => {
+      delete newUserAnswers[questionId];
+      newQuestionsStatus[questionId] = 'unanswered';
+    });
+    
+    setUserAnswers(newUserAnswers);
+    setQuestionsStatus(newQuestionsStatus);
+    setShowResult(false);
+    setIsRetryMode(true);
+    setRetryIncorrectOnly(true);
+    
+    // Ir para a primeira questão incorreta
+    const firstIncorrectIndex = questions.findIndex(q => incorrectQuestionIds.includes(q.id));
+    if (firstIncorrectIndex !== -1) {
+      setCurrentQuestionIndex(firstIncorrectIndex);
+    }
+  };
+
+  // Refazer todo o quiz
+  const retryAllQuestions = () => {
+    // Salvar resultado anterior
+    setPreviousResult(quizResult);
+    
+    // Limpar todas as respostas
+    setUserAnswers({});
+    setQuestionsStatus(prev => {
+      const newStatus: Record<string, QuestionStatus> = {};
+      Object.keys(prev).forEach(questionId => {
+        newStatus[questionId] = 'unanswered';
+      });
+      return newStatus;
+    });
+    
+    setShowResult(false);
+    setIsRetryMode(true);
+    setRetryIncorrectOnly(false);
+    setCurrentQuestionIndex(0);
+  };
+
+  // Resetar para modo normal (não retry)
+  const resetToNormalMode = () => {
+    setIsRetryMode(false);
+    setRetryIncorrectOnly(false);
+    setPreviousResult(null);
   };
 
   // Adicionar nova questão
@@ -264,6 +433,11 @@ export const useQuiz = (quizId: string | undefined) => {
     currentQuestionIndex,
     userAnswers,
     questionsStatus,
+    showResult,
+    quizResult,
+    previousResult,
+    isRetryMode,
+    retryIncorrectOnly,
     fetchQuiz,
     fetchQuestions,
     goToPreviousQuestion,
@@ -273,5 +447,13 @@ export const useQuiz = (quizId: string | undefined) => {
     handleDeleteQuestion,
     handleAnswer,
     setCurrentQuestionIndex,
+    calculateResult,
+    isQuizComplete,
+    finishQuiz,
+    retryIncorrectQuestions,
+    retryAllQuestions,
+    resetToNormalMode,
+    findNextIncorrectQuestion,
+    findPreviousIncorrectQuestion,
   };
 };
