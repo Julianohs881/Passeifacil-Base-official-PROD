@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Question } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -23,6 +23,8 @@ interface SidebarQuestionListProps {
   currentQuestionIndex: number;
   onSelectQuestion: (index: number) => void;
   questionsStatus: Record<string, QuestionStatus>;
+  isQuestionAccessible?: (index: number) => boolean;
+  isProUser?: boolean;
 }
 
 const SidebarQuestionList = ({
@@ -30,6 +32,8 @@ const SidebarQuestionList = ({
   currentQuestionIndex,
   onSelectQuestion,
   questionsStatus,
+  isQuestionAccessible,
+  isProUser = true,
 }: SidebarQuestionListProps) => {
   const isMobile = useIsMobile();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -46,6 +50,11 @@ const SidebarQuestionList = ({
   const getQuestionStatusClass = (questionId: string, index: number) => {
     if (currentQuestionIndex === index) {
       return "current";
+    }
+    
+    // Verificar se a questão está bloqueada para usuários não-PRO
+    if (!isProUser && isQuestionAccessible && !isQuestionAccessible(index)) {
+      return "locked";
     }
     
     const status = questionsStatus[questionId] || 'unanswered';
@@ -65,6 +74,11 @@ const SidebarQuestionList = ({
       return "current";
     }
     
+    // Verificar se a questão está bloqueada para usuários não-PRO
+    if (!isProUser && isQuestionAccessible && !isQuestionAccessible(index)) {
+      return "locked";
+    }
+    
     const status = questionsStatus[questionId] || 'unanswered';
     switch (status) {
       case 'correct':
@@ -78,6 +92,11 @@ const SidebarQuestionList = ({
 
   // Generate accessibility text
   const getAriaLabel = (index: number, questionId: string) => {
+    // Verificar se a questão está bloqueada para usuários não-PRO
+    if (!isProUser && isQuestionAccessible && !isQuestionAccessible(index)) {
+      return `Questão ${index + 1} — bloqueada (requer plano PRO)`;
+    }
+    
     const status = questionsStatus[questionId] || 'unanswered';
     const statusText = status === 'correct' 
       ? 'correta' 
@@ -108,6 +127,12 @@ const SidebarQuestionList = ({
             <span className="inline-block w-3 h-3 rounded-full bg-[#ADB5BD]"></span>
             Não respondida
           </span>
+          {!isProUser && (
+            <span className="flex items-center gap-1">
+              <Lock className="w-3 h-3 text-gray-400" />
+              Bloqueada
+            </span>
+          )}
         </div>
       </div>
       <ScrollArea className="h-[calc(100%-110px)]">
@@ -125,11 +150,13 @@ const SidebarQuestionList = ({
                   ${
                     isCurrent
                       ? "bg-[#E7F1FF] border-l-4 border-[#0D6EFD]"
-                      : statusClass === "correct"
-                        ? "bg-[#D1F7E9] border-l-4 border-[#198754]"
-                        : statusClass === "incorrect"
-                          ? "bg-[#FDEDEB] border-l-4 border-[#DC3545]"
-                          : "bg-white border-l-4 border-[#ADB5BD]"
+                      : statusClass === "locked"
+                        ? "bg-gray-100 border-l-4 border-gray-300 opacity-60"
+                        : statusClass === "correct"
+                          ? "bg-[#D1F7E9] border-l-4 border-[#198754]"
+                          : statusClass === "incorrect"
+                            ? "bg-[#FDEDEB] border-l-4 border-[#DC3545]"
+                            : "bg-white border-l-4 border-[#ADB5BD]"
                   }`}
                 aria-current={isCurrent}
                 aria-label={getAriaLabel(index, question.id)}
@@ -139,23 +166,31 @@ const SidebarQuestionList = ({
                     className={`w-8 h-8 flex items-center justify-center text-white font-medium rounded ${
                       numberStatusClass === "current"
                         ? "bg-[#0D6EFD]"
-                        : numberStatusClass === "correct"
-                          ? "bg-[#198754]"
-                          : numberStatusClass === "incorrect"
-                            ? "bg-[#DC3545]"
-                            : "bg-[#ADB5BD]"
+                        : numberStatusClass === "locked"
+                          ? "bg-gray-400"
+                          : numberStatusClass === "correct"
+                            ? "bg-[#198754]"
+                            : numberStatusClass === "incorrect"
+                              ? "bg-[#DC3545]"
+                              : "bg-[#ADB5BD]"
                     }`}
                   >
-                    {index + 1}
+                    {numberStatusClass === "locked" ? (
+                      <Lock className="w-4 h-4" />
+                    ) : (
+                      index + 1
+                    )}
                   </div>
                 </div>
                 <div className="overflow-hidden">
                   <p className={`text-[14px] line-clamp-2 ${
-                    statusClass === "correct"
-                      ? "text-[#155D40]"
-                      : statusClass === "incorrect"
-                        ? "text-[#B02A1D]"
-                        : "text-[#212529]"
+                    statusClass === "locked"
+                      ? "text-gray-500"
+                      : statusClass === "correct"
+                        ? "text-[#155D40]"
+                        : statusClass === "incorrect"
+                          ? "text-[#B02A1D]"
+                          : "text-[#212529]"
                   }`}>
                     {question.statement}
                   </p>

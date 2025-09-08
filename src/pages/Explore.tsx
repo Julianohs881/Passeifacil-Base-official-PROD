@@ -3,9 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ExploreFilters, { FilterValues } from "@/components/Explore/ExploreFilters";
 import QuizzesGrid from "@/components/Explore/QuizzesGrid";
-import FreePlanLimits from "@/components/FreePlanLimits";
 import { useExploreQuizzes } from "@/components/Explore/useExploreQuizzes";
-import { useFreePlanLimits } from "@/hooks/useFreePlanLimits";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronDown } from "lucide-react";
 
@@ -33,30 +31,7 @@ const Explore = () => {
     setFilteredQuizzes
   } = useExploreQuizzes();
 
-  const {
-    exploredQuizzesCount,
-    canExploreMore,
-    getRemainingExploredQuizzes,
-    showUpgradeToast,
-    limits
-  } = useFreePlanLimits();
-
-  // Redirecionar usuários não-PRO para a página de assinatura
-  useEffect(() => {
-    if (!isPro()) {
-      toast({
-        title: "Recurso exclusivo PRO",
-        description: "Faça upgrade para o plano PRO para explorar quizzes públicos.",
-        variant: "destructive",
-      });
-      navigate("/subscription");
-    }
-  }, [isPro, navigate, toast]);
-
-  // Se não for PRO, não renderiza o conteúdo
-  if (!isPro()) {
-    return null;
-  }
+  // Permitir acesso para todos os usuários, mas com limitações para gratuitos
 
   const handleFilterChange = (newFilters: FilterValues) => {
     setFilters(newFilters);
@@ -70,18 +45,11 @@ const Explore = () => {
   };
 
   const handleQuizClick = (quizId: string) => {
-    if (!isPro() && !canExploreMore()) {
-      showUpgradeToast("explore");
-      navigate("/subscription");
-      return;
-    }
     navigate(`/quiz/${quizId}`);
   };
 
-  // Limitar quizzes exibidos para usuários gratuitos
-  const displayedQuizzes = isPro() 
-    ? filteredQuizzes 
-    : filteredQuizzes.slice(0, limits.EXPLORED_QUIZZES);
+  // Mostrar todos os quizzes para todos os usuários
+  const displayedQuizzes = filteredQuizzes;
 
   return (
     <div className="container py-8">
@@ -89,17 +57,7 @@ const Explore = () => {
         <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-0">Comunidade de Quizzes Públicos</h1>
       </div>
       
-      {/* Mostrar limitações para usuários gratuitos */}
-      {!isPro() && (
-        <div className="mb-6">
-          <FreePlanLimits
-            currentCount={exploredQuizzesCount}
-            limit={limits.EXPLORED_QUIZZES}
-            feature="explore"
-            onUpgrade={() => navigate("/subscription")}
-          />
-        </div>
-      )}
+      {/* Limitações removidas - todos os usuários podem ver todos os quizzes */}
 
       <div className="space-y-6">
         <ExploreFilters
@@ -125,14 +83,7 @@ const Explore = () => {
           onQuizClick={handleQuizClick}
         />
         
-        {!isPro() && filteredQuizzes.length > limits.EXPLORED_QUIZZES && (
-          <div className="text-center mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
-            <p className="text-amber-700">
-              Mostrando apenas {limits.EXPLORED_QUIZZES} quizzes do plano gratuito. 
-              Faça upgrade para ver todos os {filteredQuizzes.length} quizzes disponíveis.
-            </p>
-          </div>
-        )}
+        {/* Limitação de visualização removida - todos os usuários veem todos os quizzes */}
       </div>
     </div>
   );

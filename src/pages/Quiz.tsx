@@ -11,6 +11,7 @@ import QuizHeader from "@/components/Quiz/QuizHeader";
 import QuizFooter from "@/components/Quiz/QuizFooter";
 import QuizEmptyState from "@/components/Quiz/QuizEmptyState";
 import QuizResult from "@/components/Quiz/QuizResult";
+import QuizAccessLimits from "@/components/Quiz/QuizAccessLimits";
 import { ImportQuestionDialog } from "@/components/Share/ImportQuestionDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,15 @@ const Quiz = () => {
     retryAllQuestions,
     resetToNormalMode,
     findNextIncorrectQuestion,
-    findPreviousIncorrectQuestion
+    findPreviousIncorrectQuestion,
+    // Limites de acesso
+    isProUser,
+    getAccessibleQuestionsCount,
+    isQuestionAccessible,
+    hasReachedLimit,
+    getProgressInfo,
+    getLimitMessage,
+    getProgressMessage
   } = useQuiz(id);
 
   useEffect(() => {
@@ -149,6 +158,8 @@ const Quiz = () => {
                 currentQuestionIndex={currentQuestionIndex}
                 onSelectQuestion={setCurrentQuestionIndex}
                 questionsStatus={questionsStatus}
+                isQuestionAccessible={isCreator ? undefined : isQuestionAccessible}
+                isProUser={isProUser || isCreator}
               />
             )}
             
@@ -182,19 +193,35 @@ const Quiz = () => {
                   previousResult={previousResult}
                 />
               ) : currentQuestion ? (
-                <QuestionCard
-                  question={currentQuestion}
-                  userAnswers={userAnswers}
-                  handleAnswer={handleAnswer}
-                  onOpenAddModal={isCreator ? handleOpenAddModal : undefined}
-                  onOpenEditModal={isCreator ? handleOpenEditModal : undefined}
-                  onDeleteQuestion={isCreator ? handleDeleteQuestion : undefined}
-                  currentIndex={currentQuestionIndex}
-                  totalQuestions={questions.length}
-                  isPublicQuiz={isPublicQuiz}
-                  onPrevious={goToPreviousQuestion}
-                  onNext={goToNextQuestion}
-                />
+                <>
+                  <QuestionCard
+                    question={currentQuestion}
+                    userAnswers={userAnswers}
+                    handleAnswer={handleAnswer}
+                    onOpenAddModal={isCreator ? handleOpenAddModal : undefined}
+                    onOpenEditModal={isCreator ? handleOpenEditModal : undefined}
+                    onDeleteQuestion={isCreator ? handleDeleteQuestion : undefined}
+                    currentIndex={currentQuestionIndex}
+                    totalQuestions={questions.length}
+                    isPublicQuiz={isPublicQuiz}
+                    onPrevious={goToPreviousQuestion}
+                    onNext={goToNextQuestion}
+                  />
+                  
+                  {/* Exibir limites de acesso apenas para quizzes da comunidade (não-PRO e não-criador) */}
+                  {!isCreator && !isProUser && questions.length > 0 && (
+                    <QuizAccessLimits
+                      currentQuestionIndex={currentQuestionIndex}
+                      totalQuestions={questions.length}
+                      accessibleCount={getAccessibleQuestionsCount()}
+                      remainingFree={getProgressInfo(currentQuestionIndex).remainingFree}
+                      lockedCount={getProgressInfo(currentQuestionIndex).lockedCount}
+                      percentageUsed={getProgressInfo(currentQuestionIndex).percentageUsed}
+                      percentageOfTotal={getProgressInfo(currentQuestionIndex).percentageOfTotal}
+                      onUpgradeClick={() => navigate('/subscription')}
+                    />
+                  )}
+                </>
               ) : null}
             </div>
           </div>

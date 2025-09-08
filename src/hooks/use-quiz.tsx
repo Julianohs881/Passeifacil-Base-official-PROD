@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { supabase } from '@/utils/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { useQuizAccessLimits } from './useQuizAccessLimits';
 import { Quiz, Question, QuestionStatus, QuizResult } from '@/types';
 
 export const useQuiz = (quizId: string | undefined) => {
@@ -28,6 +29,9 @@ export const useQuiz = (quizId: string | undefined) => {
   const [previousResult, setPreviousResult] = useState<QuizResult | null>(null);
   const [isRetryMode, setIsRetryMode] = useState(false);
   const [retryIncorrectOnly, setRetryIncorrectOnly] = useState(false);
+
+  // Hook para gerenciar limites de acesso
+  const quizAccessLimits = useQuizAccessLimits(questions.length, user && quiz ? user.id === quiz.user_id : false);
 
   // Buscar informações do quiz
   const fetchQuiz = async () => {
@@ -126,6 +130,23 @@ export const useQuiz = (quizId: string | undefined) => {
   // Navegar para a próxima questão
   const goToNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
+      const nextIndex = currentQuestionIndex + 1;
+      
+      // Verificar se a próxima questão está acessível
+      if (!quizAccessLimits.isQuestionAccessible(nextIndex)) {
+        // Mostrar toast de limite atingido
+        const limitMessage = quizAccessLimits.getLimitMessage(nextIndex);
+        if (limitMessage) {
+          toast({
+            title: limitMessage.title,
+            description: limitMessage.description,
+            variant: "destructive",
+            duration: 5000,
+          });
+        }
+        return;
+      }
+      
       if (retryIncorrectOnly) {
         // No modo retry, pular questões corretas
         const nextIncorrectIndex = findNextIncorrectQuestion(currentQuestionIndex);
@@ -133,7 +154,7 @@ export const useQuiz = (quizId: string | undefined) => {
           setCurrentQuestionIndex(nextIncorrectIndex);
         }
       } else {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setCurrentQuestionIndex(nextIndex);
       }
     }
   };
@@ -212,6 +233,20 @@ export const useQuiz = (quizId: string | undefined) => {
     if (!questions[currentQuestionIndex]) return;
     
     const questionId = questions[currentQuestionIndex].id;
+    
+    // Verificar se a questão atual está acessível
+    if (!quizAccessLimits.isQuestionAccessible(currentQuestionIndex)) {
+      const limitMessage = quizAccessLimits.getLimitMessage(currentQuestionIndex);
+      if (limitMessage) {
+        toast({
+          title: limitMessage.title,
+          description: limitMessage.description,
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+      return;
+    }
     
     // Se já respondeu, não faz nada
     if (userAnswers[questionId] !== undefined) {
@@ -485,5 +520,7 @@ export const useQuiz = (quizId: string | undefined) => {
     resetToNormalMode,
     findNextIncorrectQuestion,
     findPreviousIncorrectQuestion,
+    // Limites de acesso
+    ...quizAccessLimits,
   };
 };

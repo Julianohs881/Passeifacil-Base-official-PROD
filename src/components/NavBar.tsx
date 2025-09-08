@@ -151,18 +151,7 @@ const NavBar = () => {
                 <Link 
                   to="/explore" 
                   className="block py-2 px-4 rounded hover:bg-gray-100 transition-colors"
-                  onClick={(e) => {
-                    if (!isPro()) {
-                      e.preventDefault();
-                      setOpen(false); // Fechar o menu mobile
-                      navigate("/subscription"); // Redirecionar para a página de assinatura
-                      toast({
-                        title: "Recurso exclusivo PRO",
-                        description: "Faça upgrade para o plano PRO para acessar a comunidade de quizzes públicos.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
+                  onClick={() => setOpen(false)}
                 >
                   Comunidade
                 </Link>
@@ -214,17 +203,6 @@ const NavBar = () => {
           </Link>
           <Link to="/explore" 
             className="py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
-            onClick={(e) => {
-              if (!isPro()) {
-                e.preventDefault();
-                navigate("/subscription"); // Redirecionar para a página de assinatura
-                toast({
-                  title: "Recurso exclusivo PRO",
-                  description: "Faça upgrade para o plano PRO para acessar a comunidade de quizzes públicos.",
-                  variant: "destructive",
-                });
-              }
-            }}
           >
             Comunidade
           </Link>

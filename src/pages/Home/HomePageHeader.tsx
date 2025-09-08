@@ -52,26 +52,25 @@ export const HomePageHeader = ({
           </Button>
         )}
 
-        {/* Only show these buttons for premium users */}
+        {/* Botão Comunidade - disponível para todos os usuários */}
+        <Button 
+          onClick={() => navigate("/explore")} 
+          variant="ghost" 
+          className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none text-blue-900 border-0"
+        >
+          <span className="whitespace-nowrap">Comunidade</span>
+        </Button>
+        
+        {/* Botão Importar - apenas para usuários PRO */}
         {hasPremiumAccess && (
-          <>
-            <Button 
-              onClick={() => navigate("/explore")} 
-              variant="ghost" 
-              className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none text-blue-900 border-0"
-            >
-              <span className="whitespace-nowrap">Comunidade</span>
-            </Button>
-            
-            <Button 
-              onClick={onOpenImportDialog} 
-              variant="ghost" 
-              className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none font-normal text-sm border-0"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              <span className="whitespace-nowrap">Importar</span>
-            </Button>
-          </>
+          <Button 
+            onClick={onOpenImportDialog} 
+            variant="ghost" 
+            className="min-w-[40px] min-h-[40px] flex-1 sm:flex-none font-normal text-sm border-0"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            <span className="whitespace-nowrap">Importar</span>
+          </Button>
         )}
       </div>
     </div>

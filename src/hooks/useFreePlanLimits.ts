@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const FREE_PLAN_LIMITS = {
-  EXPLORED_QUIZZES: 5
+  // Limite de exploração removido - usuários podem ver todos os quizzes
 };
 
 export const useFreePlanLimits = () => {
@@ -47,15 +47,13 @@ export const useFreePlanLimits = () => {
   const canCreateQuiz = () => true; // Sempre permite criar quizzes
 
   const canExploreMore = () => {
-    if (isPro()) return true;
-    return exploredQuizzesCount < FREE_PLAN_LIMITS.EXPLORED_QUIZZES;
+    return true; // Sempre permite explorar - sem limite de quantidade
   };
 
   const getRemainingCreatedQuizzes = () => Infinity; // Sempre retorna infinito
 
   const getRemainingExploredQuizzes = () => {
-    if (isPro()) return Infinity;
-    return Math.max(0, FREE_PLAN_LIMITS.EXPLORED_QUIZZES - exploredQuizzesCount);
+    return Infinity; // Sem limite de exploração
   };
 
   const showUpgradeToast = (feature: "create" | "explore") => {
