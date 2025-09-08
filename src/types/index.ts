@@ -43,6 +43,23 @@ export interface Comment {
   user_answer?: number;
 }
 
+export interface QuizAnswer {
+  id: string;
+  question_id: string;
+  user_id: string;
+  selected_option: number;
+  is_correct: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnswerStats {
+  optionIndex: number;
+  count: number;
+  percentage: number;
+  isCorrect: boolean;
+}
+
 export interface QuizResult {
   correctAnswers: number;
   totalQuestions: number;

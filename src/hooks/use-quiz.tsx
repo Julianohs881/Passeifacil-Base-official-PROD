@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { supabase } from '@/utils/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { Quiz, Question, QuestionStatus, QuizResult } from '@/types';
 
 export const useQuiz = (quizId: string | undefined) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   
 
   
@@ -180,6 +182,31 @@ export const useQuiz = (quizId: string | undefined) => {
     return -1; // Não encontrou questão incorreta anterior
   };
 
+  // Salvar resposta no banco de dados
+  const saveAnswerToDatabase = async (questionId: string, optionIndex: number, isCorrect: boolean) => {
+    if (!user) return; // Não salvar se não estiver logado
+    
+    try {
+      const { error } = await supabase
+        .from('quiz_answers')
+        .upsert({
+          question_id: questionId,
+          user_id: user.id,
+          selected_option: optionIndex,
+          is_correct: isCorrect
+        }, {
+          onConflict: 'question_id,user_id'
+        });
+
+      if (error) {
+        console.error('Erro ao salvar resposta:', error);
+        // Não mostrar toast de erro para não interromper a experiência do usuário
+      }
+    } catch (error) {
+      console.error('Erro ao salvar resposta:', error);
+    }
+  };
+
   // Manipular resposta do usuário
   const handleAnswer = (optionIndex: number) => {
     if (!questions[currentQuestionIndex]) return;
@@ -203,6 +230,9 @@ export const useQuiz = (quizId: string | undefined) => {
       ...prev,
       [questionId]: isCorrect ? 'correct' : 'incorrect'
     }));
+
+    // Salvar resposta no banco de dados
+    saveAnswerToDatabase(questionId, optionIndex, isCorrect);
 
     // Se estiver no modo retry e respondeu corretamente, navegar para próxima questão incorreta
     if (retryIncorrectOnly && isCorrect) {

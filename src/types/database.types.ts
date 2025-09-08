@@ -97,6 +97,35 @@ export interface Database {
           created_at?: string
         }
       }
+      quiz_answers: {
+        Row: {
+          id: string
+          question_id: string
+          user_id: string
+          selected_option: number
+          is_correct: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          question_id: string
+          user_id: string
+          selected_option: number
+          is_correct: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          question_id?: string
+          user_id?: string
+          selected_option?: number
+          is_correct?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }

@@ -2,6 +2,8 @@
 import React from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import { Question } from "@/types";
+import { useAnswerStats } from "@/hooks/useAnswerStats";
+import AnswerStatsComponent from "./AnswerStats";
 
 interface QuestionOptionsProps {
   question: Question;
@@ -15,6 +17,7 @@ const QuestionOptions: React.FC<QuestionOptionsProps> = ({
   handleAnswer,
 }) => {
   const isAnswered = userAnswer !== undefined;
+  const { stats, loading, error } = useAnswerStats(question.id);
 
   // Function to render the statement with proper line breaks
   const renderFormattedText = (text: string) => {
@@ -82,6 +85,16 @@ const QuestionOptions: React.FC<QuestionOptionsProps> = ({
           </div>
         );
       })}
+      
+      {/* Exibir estatísticas das respostas após o usuário responder */}
+      {isAnswered && (
+        <AnswerStatsComponent
+          stats={stats}
+          userAnswer={userAnswer}
+          loading={loading}
+          error={error}
+        />
+      )}
     </div>
   );
 };
