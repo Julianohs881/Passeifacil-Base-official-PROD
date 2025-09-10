@@ -129,9 +129,18 @@ export const useQuiz = (quizId: string | undefined) => {
 
   // Buscar respostas salvas do usuário
   const fetchUserAnswers = async () => {
-    if (!quizId || !user) return;
+    if (!quizId || !user) {
+      console.log('fetchUserAnswers: quizId ou user não disponível', { quizId, user: !!user });
+      return;
+    }
 
     try {
+      console.log('fetchUserAnswers: Iniciando busca de respostas...', {
+        quizId,
+        userId: user.id,
+        questionsCount: questions.length
+      });
+
       // Buscar todas as respostas do usuário para este quiz
       const { data: answers, error } = await supabase
         .from('quiz_answers')
@@ -139,7 +148,12 @@ export const useQuiz = (quizId: string | undefined) => {
         .eq('user_id', user.id)
         .in('question_id', questions.map(q => q.id));
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro na query do Supabase:', error);
+        throw error;
+      }
+
+      console.log('fetchUserAnswers: Respostas encontradas:', answers);
 
       if (answers && answers.length > 0) {
         // Mapear as respostas para o estado userAnswers
@@ -157,11 +171,13 @@ export const useQuiz = (quizId: string | undefined) => {
           ...statusMap
         }));
 
-        console.log('Respostas carregadas:', answersMap);
-        console.log('Status carregado:', statusMap);
+        console.log('fetchUserAnswers: Respostas carregadas com sucesso:', answersMap);
+        console.log('fetchUserAnswers: Status carregado:', statusMap);
+      } else {
+        console.log('fetchUserAnswers: Nenhuma resposta encontrada para este usuário');
       }
     } catch (error) {
-      console.error('Erro ao carregar respostas do usuário:', error);
+      console.error('fetchUserAnswers: Erro ao carregar respostas do usuário:', error);
     }
   };
 
