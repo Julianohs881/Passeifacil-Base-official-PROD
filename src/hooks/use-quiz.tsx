@@ -33,6 +33,21 @@ export const useQuiz = (quizId: string | undefined) => {
   // Hook para gerenciar limites de acesso
   const quizAccessLimits = useQuizAccessLimits(questions.length, user && quiz ? user.id === quiz.user_id : false);
 
+  // Carregar dados do quiz quando o componente for montado
+  useEffect(() => {
+    if (quizId) {
+      fetchQuiz();
+      fetchQuestions();
+    }
+  }, [quizId]);
+
+  // Carregar respostas do usuário quando as questões estiverem carregadas
+  useEffect(() => {
+    if (questions.length > 0 && user) {
+      fetchUserAnswers();
+    }
+  }, [questions, user]);
+
   // Buscar informações do quiz
   const fetchQuiz = async () => {
     if (!quizId) return;
@@ -109,6 +124,44 @@ export const useQuiz = (quizId: string | undefined) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Buscar respostas salvas do usuário
+  const fetchUserAnswers = async () => {
+    if (!quizId || !user) return;
+
+    try {
+      // Buscar todas as respostas do usuário para este quiz
+      const { data: answers, error } = await supabase
+        .from('quiz_answers')
+        .select('question_id, selected_option, is_correct')
+        .eq('user_id', user.id)
+        .in('question_id', questions.map(q => q.id));
+
+      if (error) throw error;
+
+      if (answers && answers.length > 0) {
+        // Mapear as respostas para o estado userAnswers
+        const answersMap: Record<string, number> = {};
+        const statusMap: Record<string, QuestionStatus> = {};
+
+        answers.forEach(answer => {
+          answersMap[answer.question_id] = answer.selected_option;
+          statusMap[answer.question_id] = answer.is_correct ? 'correct' : 'incorrect';
+        });
+
+        setUserAnswers(answersMap);
+        setQuestionsStatus(prev => ({
+          ...prev,
+          ...statusMap
+        }));
+
+        console.log('Respostas carregadas:', answersMap);
+        console.log('Status carregado:', statusMap);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar respostas do usuário:', error);
     }
   };
 
@@ -505,6 +558,7 @@ export const useQuiz = (quizId: string | undefined) => {
     retryIncorrectOnly,
     fetchQuiz,
     fetchQuestions,
+    fetchUserAnswers,
     goToPreviousQuestion,
     goToNextQuestion,
     handleAddQuestion,
