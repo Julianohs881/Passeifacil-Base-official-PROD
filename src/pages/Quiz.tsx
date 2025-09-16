@@ -87,10 +87,10 @@ const Quiz = () => {
 
   // Verificar se o quiz foi concluído e mostrar resultado
   useEffect(() => {
-    if (isQuizComplete() && !showResult && !isCreator) {
+    if (isQuizComplete() && !showResult) {
       finishQuiz();
     }
-  }, [userAnswers, questions.length, showResult, isCreator]);
+  }, [userAnswers, questions.length, showResult]);
 
   const handleOpenAddModal = () => {
     setEditingQuestion(undefined);

@@ -146,7 +146,7 @@ const SidebarQuestionList = ({
               <div
                 key={question.id}
                 onClick={() => handleQuestionSelect(index)}
-                className={`flex cursor-pointer mb-2 p-3 rounded-lg transition-colors
+                className={`flex cursor-pointer mb-2 p-3 rounded-xl transition-colors
                   ${
                     isCurrent
                       ? "bg-[#E7F1FF] border-l-4 border-[#0D6EFD]"
@@ -255,7 +255,7 @@ const SidebarQuestionList = ({
                       <div
                         key={question.id}
                         onClick={() => handleQuestionSelect(index)}
-                        className={`flex cursor-pointer mb-2 p-3 rounded-lg transition-colors
+                        className={`flex cursor-pointer mb-2 p-3 rounded-xl transition-colors
                           ${
                             isCurrent
                               ? "bg-[#E7F1FF] border-l-4 border-[#0D6EFD]"

@@ -37,7 +37,7 @@ const QuestionOptions: React.FC<QuestionOptionsProps> = ({
         const isCorrectOption = question.correct_index === index;
 
         let optionClass =
-          "p-3 sm:p-4 border rounded-lg cursor-pointer transition-all w-full break-words";
+          "p-3 sm:p-4 border rounded-xl cursor-pointer transition-all w-full break-words";
 
         if (!isAnswered) {
           optionClass += " hover:bg-gray-50";

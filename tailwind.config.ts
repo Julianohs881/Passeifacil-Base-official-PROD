@@ -74,9 +74,12 @@ export default {
 				sf: ['SF Pro Display', 'system-ui', 'sans-serif'],
 			},
 			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				lg: 'var(--radius)', // 16px
+				md: 'calc(var(--radius) - 2px)', // 14px
+				sm: 'calc(var(--radius) - 4px)', // 12px
+				xl: 'calc(var(--radius) + 4px)', // 20px
+				'2xl': 'calc(var(--radius) + 8px)', // 24px
+				'3xl': 'calc(var(--radius) + 12px)', // 28px
 			},
 			keyframes: {
 				'accordion-down': {

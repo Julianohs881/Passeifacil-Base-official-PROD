@@ -6,6 +6,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @layer base {
+  :root {
+    --radius: 1rem; /* 16px - mais arredondado que o padrão */
+  }
+}
+
+@layer base {
   html, body {
     @apply overflow-x-hidden;
     max-width: 100vw;
@@ -25,7 +31,7 @@
 
 @layer components {
   .quiz-card {
-    @apply w-full rounded-xl shadow-md flex flex-col justify-between transition-all duration-200;
+    @apply w-full rounded-2xl shadow-md flex flex-col justify-between transition-all duration-200;
   }
 
   .btn-primary {
@@ -33,7 +39,7 @@
   }
 
   .btn-secondary {
-    @apply bg-transparent text-blue-900 px-6 py-3 hover:bg-blue-50 transition-all;
+    @apply bg-transparent text-blue-900 px-6 py-3 rounded-xl hover:bg-blue-50 transition-all;
   }
 
   .btn-cta {
@@ -41,7 +47,7 @@
   }
   
   .glassmorphism {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl shadow-md;
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 rounded-2xl shadow-md;
   }
 
   /* Container com largura máxima para garantir boa exibição em todas as telas */
