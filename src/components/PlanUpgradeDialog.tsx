@@ -109,7 +109,7 @@ const PlanUpgradeDialog: React.FC<PlanUpgradeDialogProps> = ({ isOpen, onClose }
                     R$0,00
                   </td>
                   <td className="p-3 text-center font-medium">
-                    R$14,90<span className="text-sm text-gray-500">/mês</span>
+                    R$19,90<span className="text-sm text-gray-500">/mês</span>
                   </td>
                 </tr>
               </tbody>

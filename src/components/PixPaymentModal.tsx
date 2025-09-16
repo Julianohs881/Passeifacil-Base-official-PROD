@@ -35,6 +35,12 @@ export const PixPaymentModal = ({ isOpen, onClose, onSuccess }: PixPaymentModalP
     }
   };
 
+  const handleRegeneratePayment = async () => {
+    setPaymentData(null);
+    setPaymentStatus('pending');
+    await handleCreatePayment();
+  };
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -134,7 +140,7 @@ export const PixPaymentModal = ({ isOpen, onClose, onSuccess }: PixPaymentModalP
             <>
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-4">
-                  Escaneie o QR Code ou copie o código PIX para pagar R$ 14,90
+                  Escaneie o QR Code ou copie o código PIX para pagar R$ 19,90
                 </p>
                 
                 <div className="bg-white p-4 rounded-lg border inline-block mb-4">
@@ -153,6 +159,16 @@ export const PixPaymentModal = ({ isOpen, onClose, onSuccess }: PixPaymentModalP
                       {copied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRegeneratePayment}
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    {loading ? "Gerando..." : "Gerar novo QR Code"}
+                  </Button>
                   
                   <Button
                     variant="outline"

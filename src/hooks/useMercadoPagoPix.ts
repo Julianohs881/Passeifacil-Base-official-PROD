@@ -36,12 +36,18 @@ export const useMercadoPagoPix = (): UseMercadoPagoPixReturn => {
 
     setLoading(true);
     setError(null);
+    
+    // Limpa cache do navegador para forçar nova requisição
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('pix_payment_cache');
+    }
 
     try {
       const { data, error: functionError } = await supabase.functions.invoke('create-pix', {
         body: {
           user_id: user.id,
-          email: user.email
+          email: user.email,
+          timestamp: Date.now() // Força regeneração
         }
       });
 

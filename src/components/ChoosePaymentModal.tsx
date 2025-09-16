@@ -35,6 +35,11 @@ const ChoosePaymentModal: React.FC<ChoosePaymentModalProps> = ({ open, onOpenCha
     }
   };
 
+  const handleRegeneratePayment = async () => {
+    setPaymentData(null);
+    await handlePix();
+  };
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -136,7 +141,7 @@ const ChoosePaymentModal: React.FC<ChoosePaymentModalProps> = ({ open, onOpenCha
           {paymentData && (
             <div className="flex flex-col items-center mt-6 gap-2">
               <p className="text-sm text-gray-600 mb-4">
-                Escaneie o QR Code ou copie o código PIX para pagar R$ 14,90
+                Escaneie o QR Code ou copie o código PIX para pagar R$ 19,90
               </p>
               
               <div className="bg-white p-4 rounded-lg border inline-block mb-4">
@@ -155,6 +160,16 @@ const ChoosePaymentModal: React.FC<ChoosePaymentModalProps> = ({ open, onOpenCha
                     {copied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRegeneratePayment}
+                  className="w-full"
+                  disabled={pixLoading}
+                >
+                  {pixLoading ? "Gerando..." : "Gerar novo QR Code"}
+                </Button>
                 
                 <Button
                   variant="outline"
