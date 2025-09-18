@@ -40,9 +40,9 @@ const QuizDetailModal: React.FC<QuizDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
             {quiz.title.toUpperCase()}
           </DialogTitle>
           <DialogDescription className="text-center text-gray-600">
@@ -50,68 +50,68 @@ const QuizDetailModal: React.FC<QuizDetailModalProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
+        <div className="space-y-3 py-4 max-h-[60vh] overflow-y-auto">
           {/* Informações do curso */}
           {quiz.faculty && (
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <School className="h-5 w-5 text-gray-600" />
-              <div>
-                <p className="font-medium text-gray-900">Faculdade</p>
-                <p className="text-sm text-gray-600">{quiz.faculty}</p>
+            <div className="flex items-center space-x-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+              <School className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">Faculdade</p>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">{quiz.faculty}</p>
               </div>
             </div>
           )}
           
           {quiz.course && (
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <Book className="h-5 w-5 text-gray-600" />
-              <div>
-                <p className="font-medium text-gray-900">Curso/Matéria</p>
-                <p className="text-sm text-gray-600">{quiz.course}</p>
+            <div className="flex items-center space-x-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+              <Book className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">Curso/Matéria</p>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">{quiz.course}</p>
               </div>
             </div>
           )}
           
           {quiz.course_year && (
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <User className="h-5 w-5 text-gray-600" />
-              <div>
-                <p className="font-medium text-gray-900">Ano/Série</p>
-                <p className="text-sm text-gray-600">{quiz.course_year}</p>
+            <div className="flex items-center space-x-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+              <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">Ano/Série</p>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">{quiz.course_year}</p>
               </div>
             </div>
           )}
 
           {/* Criador do quiz */}
-          <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-            <UserIcon className="h-5 w-5 text-gray-600" />
-            <div>
-              <p className="font-medium text-gray-900">Criado por</p>
-              <p className="text-sm text-gray-600">{creatorName}</p>
+          <div className="flex items-center space-x-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+            <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="font-medium text-gray-900 text-sm sm:text-base">Criado por</p>
+              <p className="text-xs sm:text-sm text-gray-600 truncate">{creatorName}</p>
             </div>
           </div>
           
           {/* Descrição */}
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="font-medium text-blue-900 mb-2">Sobre este quiz</h4>
-            <p className="text-sm text-blue-800">
+          <div className="p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-medium text-blue-900 mb-2 text-sm sm:text-base">Sobre este quiz</h4>
+            <p className="text-xs sm:text-sm text-blue-800 line-clamp-3">
               {quiz.description || "Este quiz contém questões relacionadas ao conteúdo estudado. Teste seus conhecimentos e veja como está seu aprendizado!"}
             </p>
           </div>
         </div>
         
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex-col sm:flex-row gap-2 mt-6 sticky bottom-0 bg-white pt-4 border-t">
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto order-2 sm:order-1"
           >
             Cancelar
           </Button>
           <Button
             onClick={handleStartQuiz}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 order-1 sm:order-2"
           >
             <Play className="mr-2 h-4 w-4" />
             Iniciar Quiz

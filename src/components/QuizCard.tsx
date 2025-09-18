@@ -81,7 +81,7 @@ const QuizCard = ({ quiz, onDelete, onEdit, onToggleVisibility, onStartQuiz }: Q
         onClick={handleCardClick}
         className="block hover:scale-105 transition-transform duration-200 cursor-pointer"
       >
-        <div className="quiz-card bg-gray-50 p-4 h-32 sm:h-44 relative rounded-xl shadow-md hover:shadow-lg">
+        <div className="quiz-card bg-gray-50 p-3 sm:p-4 h-28 sm:h-32 md:h-44 relative rounded-xl shadow-md hover:shadow-lg">
           {/* Indicador de visibilidade */}
           <div className="absolute top-2 left-2">
             {quiz.visibility === "public" ? (
@@ -158,8 +158,8 @@ const QuizCard = ({ quiz, onDelete, onEdit, onToggleVisibility, onStartQuiz }: Q
           </div>
           
           {/* Título do quiz centralizado */}
-          <div className="flex-grow flex items-center justify-center">
-            <h3 className="text-sm sm:text-base font-medium text-black text-center break-words line-clamp-3">
+          <div className="flex-grow flex items-center justify-center px-1">
+            <h3 className="text-xs sm:text-sm md:text-base font-medium text-black text-center break-words line-clamp-2 sm:line-clamp-3">
               {quiz.title.toUpperCase()}
             </h3>
           </div>
