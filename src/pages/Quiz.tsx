@@ -160,6 +160,7 @@ const Quiz = () => {
                 questionsStatus={questionsStatus}
                 isQuestionAccessible={isCreator ? undefined : isQuestionAccessible}
                 isProUser={isProUser || isCreator}
+                onUpgradeClick={() => navigate('/subscription')}
               />
             )}
             
@@ -206,6 +207,9 @@ const Quiz = () => {
                     isPublicQuiz={isPublicQuiz}
                     onPrevious={goToPreviousQuestion}
                     onNext={goToNextQuestion}
+                    isQuestionAccessible={isCreator ? undefined : isQuestionAccessible}
+                    isProUser={isProUser || isCreator}
+                    onUpgradeClick={() => navigate('/subscription')}
                   />
                   
                   {/* Exibir limites de acesso apenas para quizzes da comunidade (não-PRO e não-criador) */}

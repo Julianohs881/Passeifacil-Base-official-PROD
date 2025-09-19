@@ -27,6 +27,9 @@ interface QuestionCardProps {
   isPublicQuiz?: boolean;
   onPrevious?: () => void;
   onNext?: () => void;
+  isQuestionAccessible?: (index: number) => boolean;
+  isProUser?: boolean;
+  onUpgradeClick?: () => void;
 }
 const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
@@ -39,7 +42,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   totalQuestions,
   isPublicQuiz = false,
   onPrevious,
-  onNext
+  onNext,
+  isQuestionAccessible,
+  isProUser = true,
+  onUpgradeClick
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const userAnswer = userAnswers[question.id];
@@ -82,7 +88,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               currentIndex={currentIndex} 
               totalQuestions={totalQuestions} 
               onPrevious={onPrevious} 
-              onNext={onNext} 
+              onNext={onNext}
+              isQuestionAccessible={isQuestionAccessible}
+              isProUser={isProUser}
+              onUpgradeClick={onUpgradeClick}
             />
           </div>
         )}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Question } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, X, Lock } from "lucide-react";
+import { Menu, X, Lock, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -10,6 +10,14 @@ import {
   DrawerTrigger,
   DrawerClose,
 } from "@/components/ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export type QuestionStatus = 'unanswered' | 'correct' | 'incorrect';
 
@@ -25,6 +33,7 @@ interface SidebarQuestionListProps {
   questionsStatus: Record<string, QuestionStatus>;
   isQuestionAccessible?: (index: number) => boolean;
   isProUser?: boolean;
+  onUpgradeClick?: () => void;
 }
 
 const SidebarQuestionList = ({
@@ -34,12 +43,20 @@ const SidebarQuestionList = ({
   questionsStatus,
   isQuestionAccessible,
   isProUser = true,
+  onUpgradeClick,
 }: SidebarQuestionListProps) => {
   const isMobile = useIsMobile();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   // Handle closing drawer after selecting a question on mobile
   const handleQuestionSelect = (index: number) => {
+    // Verificar se a questão está bloqueada para usuários não-PRO
+    if (!isProUser && isQuestionAccessible && !isQuestionAccessible(index)) {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+    
     onSelectQuestion(index);
     if (isMobile) {
       setIsDrawerOpen(false);
@@ -307,9 +324,54 @@ const SidebarQuestionList = ({
   }
 
   return (
-    <div className="w-[280px] border-r flex-shrink-0 h-full bg-gray-50 hidden md:flex md:flex-col">
-      <QuestionList />
-    </div>
+    <>
+      <div className="w-[280px] border-r flex-shrink-0 h-full bg-gray-50 hidden md:flex md:flex-col">
+        <QuestionList />
+      </div>
+      
+      {/* Modal de Upgrade PRO */}
+      <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <Crown className="h-6 w-6 text-amber-500" />
+              <DialogTitle>Upgrade para PRO</DialogTitle>
+            </div>
+            <DialogDescription>
+              Esta questão está bloqueada no plano gratuito. Faça upgrade para PRO e tenha acesso a todas as questões do quiz!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4">
+              <h4 className="font-semibold text-amber-800 mb-2">Benefícios do PRO:</h4>
+              <ul className="text-sm text-amber-700 space-y-1">
+                <li>• Acesso a 100% das questões</li>
+                <li>• Criação ilimitada de quizzes</li>
+                <li>• Recursos avançados de IA</li>
+                <li>• Suporte prioritário</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsUpgradeModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 border-0"
+              onClick={() => {
+                setIsUpgradeModalOpen(false);
+                onUpgradeClick?.();
+              }}
+            >
+              Fazer Upgrade
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
