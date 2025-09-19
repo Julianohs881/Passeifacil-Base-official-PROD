@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
-const FREE_PLAN_ACCESS_PERCENTAGE = 0.3; // 30%
-
 export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean = false) => {
   const { isPro } = useAuth();
   const [isProUser, setIsProUser] = useState(false);
@@ -11,13 +9,22 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
     setIsProUser(isPro());
   }, [isPro]);
 
-  // Calcular quantas questões o usuário pode acessar
+  // Nova regra de acesso:
+  // Se total ≤ 20 → liberar 30% arredondado pra cima
+  // Se total > 20 → liberar o mínimo entre 10 e 30% do total
   const getAccessibleQuestionsCount = (): number => {
     if (isProUser || isCreator) {
       return totalQuestions; // Usuários PRO e criadores têm acesso total
     }
     
-    return Math.ceil(totalQuestions * FREE_PLAN_ACCESS_PERCENTAGE);
+    if (totalQuestions <= 20) {
+      // Para quizzes com 20 ou menos questões: 30% arredondado para cima
+      return Math.ceil(totalQuestions * 0.3);
+    } else {
+      // Para quizzes com mais de 20 questões: mínimo entre 10 e 30%
+      const thirtyPercent = Math.ceil(totalQuestions * 0.3);
+      return Math.min(10, thirtyPercent);
+    }
   };
 
   // Verificar se uma questão específica está acessível
@@ -64,9 +71,10 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
     }
     
     if (hasReachedLimit(currentQuestionIndex)) {
+      const percentage = totalQuestions <= 20 ? '30%' : 'até 10 questões';
       return {
         title: "Limite do plano gratuito atingido",
-        description: `Você respondeu ${progressInfo.accessibleCount} de ${progressInfo.totalCount} questões (30%). Desbloqueie o restante com o plano PRO!`,
+        description: `Você respondeu ${progressInfo.accessibleCount} de ${progressInfo.totalCount} questões (${percentage}). Desbloqueie o restante com o plano PRO!`,
         actionText: "Fazer upgrade para PRO"
       };
     }
@@ -100,7 +108,6 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
     hasReachedLimit,
     getProgressInfo,
     getLimitMessage,
-    getProgressMessage,
-    FREE_PLAN_ACCESS_PERCENTAGE
+    getProgressMessage
   };
 };
