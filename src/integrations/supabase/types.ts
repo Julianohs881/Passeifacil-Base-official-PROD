@@ -95,6 +95,7 @@ export type Database = {
           created_at: string
           explanation: string | null
           id: string
+          image_url: string | null
           options: string[]
           quiz_id: string
           share_code: string | null
@@ -105,6 +106,7 @@ export type Database = {
           created_at?: string
           explanation?: string | null
           id?: string
+          image_url?: string | null
           options: string[]
           quiz_id: string
           share_code?: string | null
@@ -115,6 +117,7 @@ export type Database = {
           created_at?: string
           explanation?: string | null
           id?: string
+          image_url?: string | null
           options?: string[]
           quiz_id?: string
           share_code?: string | null

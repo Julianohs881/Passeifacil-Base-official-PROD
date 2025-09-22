@@ -41,6 +41,7 @@ export interface Database {
           options: string[]
           correct_index: number
           explanation: string
+          image_url: string | null
           created_at: string
         }
         Insert: {
@@ -50,6 +51,7 @@ export interface Database {
           options: string[]
           correct_index: number
           explanation: string
+          image_url?: string | null
           created_at?: string
         }
         Update: {
@@ -59,6 +61,7 @@ export interface Database {
           options?: string[]
           correct_index?: number
           explanation?: string
+          image_url?: string | null
           created_at?: string
         }
       }

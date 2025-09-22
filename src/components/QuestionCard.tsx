@@ -81,6 +81,22 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <FormattedText text={question.statement} />
         </div>
 
+        {/* Exibir imagem da questão se existir */}
+        {question.image_url && (
+          <div className="mb-6">
+            <img
+              src={question.image_url}
+              alt="Imagem da questão"
+              className="w-full max-h-96 object-contain rounded-lg border border-gray-200 shadow-sm"
+              onError={(e) => {
+                // Fallback caso a imagem não carregue
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+
         {/* Navigation Buttons - show for all devices below the question */}
         {onPrevious && onNext && (
           <div className="mb-6 flex justify-center">

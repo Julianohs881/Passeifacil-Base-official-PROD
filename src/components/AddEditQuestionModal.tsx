@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,9 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Question } from "../types";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload, X, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { uploadQuestionImage, resizeImage } from "../utils/imageUpload";
 
 interface AddEditQuestionModalProps {
   isOpen: boolean;
@@ -38,7 +39,12 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
   const [options, setOptions] = useState<string[]>(["", ""]);
   const [correctIndex, setCorrectIndex] = useState<number>(0);
   const [explanation, setExplanation] = useState("");
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Reset form when modal opens/closes or question changes
@@ -48,6 +54,9 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
       setOptions(question?.options || ["", ""]);
       setCorrectIndex(question?.correct_index || 0);
       setExplanation(question?.explanation || "");
+      setImageUrl(question?.image_url || "");
+      setImageFile(null);
+      setImagePreview(question?.image_url || "");
     }
   }, [isOpen, question]);
 
@@ -82,6 +91,67 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
     } else if (index < correctIndex) {
       setCorrectIndex(correctIndex - 1);
     }
+  };
+
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingImage(true);
+      
+      // Redimensionar imagem se necessário
+      const resizedFile = await resizeImage(file);
+      setImageFile(resizedFile);
+      
+      // Criar preview
+      const previewUrl = URL.createObjectURL(resizedFile);
+      setImagePreview(previewUrl);
+      
+      // Fazer upload da imagem
+      const result = await uploadQuestionImage(resizedFile, quizId, question?.id);
+      
+      if (result.success && result.url) {
+        setImageUrl(result.url);
+        toast({
+          title: "Imagem carregada",
+          description: "A imagem foi enviada com sucesso.",
+        });
+      } else {
+        toast({
+          title: "Erro no upload",
+          description: result.error || "Não foi possível enviar a imagem.",
+          variant: "destructive",
+        });
+        // Limpar preview em caso de erro
+        setImagePreview("");
+        setImageFile(null);
+      }
+    } catch (error) {
+      console.error("Erro ao processar imagem:", error);
+      toast({
+        title: "Erro ao processar imagem",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
+      });
+      setImagePreview("");
+      setImageFile(null);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageUrl("");
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
   };
 
   const validateForm = () => {
@@ -131,6 +201,7 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
         options,
         correct_index: correctIndex,
         explanation,
+        image_url: imageUrl || undefined,
         share_code: null, // Added to fix TypeScript error
       });
       onClose();
@@ -171,6 +242,57 @@ const AddEditQuestionModal: React.FC<AddEditQuestionModalProps> = ({
               className="min-h-[100px] border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               required
             />
+          </div>
+
+          {/* Campo de Upload de Imagem */}
+          <div className="space-y-2">
+            <Label className="text-gray-700">Imagem (Opcional)</Label>
+            
+            {!imagePreview ? (
+              <div
+                onClick={handleImageClick}
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+              >
+                <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                <p className="text-sm text-gray-600 mb-1">
+                  Clique para adicionar uma imagem
+                </p>
+                <p className="text-xs text-gray-500">
+                  JPG, PNG, GIF ou WebP (máx. 5MB)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  disabled={isUploadingImage}
+                />
+              </div>
+            ) : (
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Preview da questão"
+                  className="w-full max-h-64 object-contain rounded-lg border border-gray-300"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={handleRemoveImage}
+                  className="absolute top-2 right-2 h-8 w-8"
+                  disabled={isUploadingImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                {isUploadingImage && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+                    <div className="text-white text-sm">Enviando...</div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="space-y-4">

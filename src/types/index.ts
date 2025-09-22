@@ -30,6 +30,7 @@ export interface Question {
   options: string[];
   correct_index: number;
   explanation?: string;
+  image_url?: string;
   user_id?: string;
   share_code: string | null;
 }
