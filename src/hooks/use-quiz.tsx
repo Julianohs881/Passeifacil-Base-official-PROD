@@ -19,6 +19,7 @@ export const useQuiz = (quizId: string | undefined) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [answersLoaded, setAnswersLoaded] = useState(false); // Flag para controlar se as respostas foram carregadas
 
   // Estado para rastrear o status de cada questão (respondida/não respondida)
   const [questionsStatus, setQuestionsStatus] = useState<Record<string, QuestionStatus>>({});
@@ -131,6 +132,7 @@ export const useQuiz = (quizId: string | undefined) => {
   const fetchUserAnswers = async () => {
     if (!quizId || !user) {
       console.log('fetchUserAnswers: quizId ou user não disponível', { quizId, user: !!user });
+      setAnswersLoaded(true); // Marcar como carregado mesmo se não houver usuário
       return;
     }
 
@@ -178,6 +180,9 @@ export const useQuiz = (quizId: string | undefined) => {
       }
     } catch (error) {
       console.error('fetchUserAnswers: Erro ao carregar respostas do usuário:', error);
+    } finally {
+      // Sempre marcar como carregado, independente de sucesso ou erro
+      setAnswersLoaded(true);
     }
   };
 
@@ -364,7 +369,8 @@ export const useQuiz = (quizId: string | undefined) => {
 
   // Verificar se todas as questões foram respondidas
   const isQuizComplete = (): boolean => {
-    return questions.length > 0 && Object.keys(userAnswers).length === questions.length;
+    // Só verificar se o quiz está completo se as respostas foram carregadas
+    return answersLoaded && questions.length > 0 && Object.keys(userAnswers).length === questions.length;
   };
 
   // Finalizar quiz e mostrar resultado
@@ -572,6 +578,7 @@ export const useQuiz = (quizId: string | undefined) => {
     previousResult,
     isRetryMode,
     retryIncorrectOnly,
+    answersLoaded,
     fetchQuiz,
     fetchQuestions,
     fetchUserAnswers,

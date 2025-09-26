@@ -45,6 +45,7 @@ const Quiz = () => {
     previousResult,
     isRetryMode,
     retryIncorrectOnly,
+    answersLoaded,
     fetchQuiz,
     fetchQuestions,
     goToPreviousQuestion,
@@ -87,10 +88,10 @@ const Quiz = () => {
 
   // Verificar se o quiz foi concluído e mostrar resultado
   useEffect(() => {
-    if (isQuizComplete() && !showResult) {
+    if (answersLoaded && isQuizComplete() && !showResult) {
       finishQuiz();
     }
-  }, [userAnswers, questions.length, showResult]);
+  }, [answersLoaded, userAnswers, questions.length, showResult]);
 
   const handleOpenAddModal = () => {
     setEditingQuestion(undefined);
