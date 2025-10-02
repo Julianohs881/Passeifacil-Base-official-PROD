@@ -10,26 +10,86 @@ export const useQuiz = (quizId: string | undefined) => {
   const { toast } = useToast();
   const { user } = useAuth();
   
-
+  // Chave para localStorage baseada no quizId e userId
+  const getStorageKey = (key: string) => `quiz_${quizId}_${user?.id}_${key}`;
   
+  // Função para carregar estado do localStorage
+  const loadFromStorage = (key: string, defaultValue: any) => {
+    if (typeof window === 'undefined' || !quizId || !user?.id) return defaultValue;
+    try {
+      const stored = localStorage.getItem(getStorageKey(key));
+      return stored ? JSON.parse(stored) : defaultValue;
+    } catch (error) {
+      console.error('Erro ao carregar do localStorage:', error);
+      return defaultValue;
+    }
+  };
 
+  // Função para salvar estado no localStorage
+  const saveToStorage = (key: string, value: any) => {
+    if (typeof window === 'undefined' || !quizId || !user?.id) return;
+    try {
+      localStorage.setItem(getStorageKey(key), JSON.stringify(value));
+    } catch (error) {
+      console.error('Erro ao salvar no localStorage:', error);
+    }
+  };
+
+  // Função para limpar o localStorage do quiz
+  const clearQuizStorage = () => {
+    if (typeof window === 'undefined' || !quizId || !user?.id) return;
+    try {
+      const keys = [
+        'currentQuestionIndex',
+        'userAnswers', 
+        'questionsStatus',
+        'showResult',
+        'quizResult',
+        'previousResult',
+        'isRetryMode',
+        'retryIncorrectOnly'
+      ];
+      
+      keys.forEach(key => {
+        localStorage.removeItem(getStorageKey(key));
+      });
+    } catch (error) {
+      console.error('Erro ao limpar localStorage:', error);
+    }
+  };
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(() => 
+    loadFromStorage('currentQuestionIndex', 0)
+  );
+  const [userAnswers, setUserAnswers] = useState<Record<string, number>>(() => 
+    loadFromStorage('userAnswers', {})
+  );
   const [loading, setLoading] = useState(true);
   const [answersLoaded, setAnswersLoaded] = useState(false); // Flag para controlar se as respostas foram carregadas
 
   // Estado para rastrear o status de cada questão (respondida/não respondida)
-  const [questionsStatus, setQuestionsStatus] = useState<Record<string, QuestionStatus>>({});
+  const [questionsStatus, setQuestionsStatus] = useState<Record<string, QuestionStatus>>(() => 
+    loadFromStorage('questionsStatus', {})
+  );
   
   // Estados para resultado e retry
-  const [showResult, setShowResult] = useState(false);
-  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
-  const [previousResult, setPreviousResult] = useState<QuizResult | null>(null);
-  const [isRetryMode, setIsRetryMode] = useState(false);
-  const [retryIncorrectOnly, setRetryIncorrectOnly] = useState(false);
+  const [showResult, setShowResult] = useState(() => 
+    loadFromStorage('showResult', false)
+  );
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(() => 
+    loadFromStorage('quizResult', null)
+  );
+  const [previousResult, setPreviousResult] = useState<QuizResult | null>(() => 
+    loadFromStorage('previousResult', null)
+  );
+  const [isRetryMode, setIsRetryMode] = useState(() => 
+    loadFromStorage('isRetryMode', false)
+  );
+  const [retryIncorrectOnly, setRetryIncorrectOnly] = useState(() => 
+    loadFromStorage('retryIncorrectOnly', false)
+  );
 
   // Hook para gerenciar limites de acesso
   const quizAccessLimits = useQuizAccessLimits(questions.length, user && quiz ? user.id === quiz.user_id : false);
@@ -48,6 +108,39 @@ export const useQuiz = (quizId: string | undefined) => {
       fetchUserAnswers();
     }
   }, [questions, user]);
+
+  // Persistir estado no localStorage sempre que mudar
+  useEffect(() => {
+    saveToStorage('currentQuestionIndex', currentQuestionIndex);
+  }, [currentQuestionIndex]);
+
+  useEffect(() => {
+    saveToStorage('userAnswers', userAnswers);
+  }, [userAnswers]);
+
+  useEffect(() => {
+    saveToStorage('questionsStatus', questionsStatus);
+  }, [questionsStatus]);
+
+  useEffect(() => {
+    saveToStorage('showResult', showResult);
+  }, [showResult]);
+
+  useEffect(() => {
+    saveToStorage('quizResult', quizResult);
+  }, [quizResult]);
+
+  useEffect(() => {
+    saveToStorage('previousResult', previousResult);
+  }, [previousResult]);
+
+  useEffect(() => {
+    saveToStorage('isRetryMode', isRetryMode);
+  }, [isRetryMode]);
+
+  useEffect(() => {
+    saveToStorage('retryIncorrectOnly', retryIncorrectOnly);
+  }, [retryIncorrectOnly]);
 
   // Buscar informações do quiz
   const fetchQuiz = async () => {
@@ -167,14 +260,19 @@ export const useQuiz = (quizId: string | undefined) => {
           statusMap[answer.question_id] = answer.is_correct ? 'correct' : 'incorrect';
         });
 
-        setUserAnswers(answersMap);
-        setQuestionsStatus(prev => ({
-          ...prev,
-          ...statusMap
-        }));
+        // Só atualizar se não houver dados no localStorage (primeira vez carregando)
+        const hasLocalData = Object.keys(userAnswers).length > 0 || Object.keys(questionsStatus).length > 0;
+        if (!hasLocalData) {
+          setUserAnswers(answersMap);
+          setQuestionsStatus(prev => ({
+            ...prev,
+            ...statusMap
+          }));
+        }
 
-        console.log('fetchUserAnswers: Respostas carregadas com sucesso:', answersMap);
-        console.log('fetchUserAnswers: Status carregado:', statusMap);
+        console.log('fetchUserAnswers: Respostas encontradas no banco:', answersMap);
+        console.log('fetchUserAnswers: Status encontrado no banco:', statusMap);
+        console.log('fetchUserAnswers: Dados locais existem:', hasLocalData);
       } else {
         console.log('fetchUserAnswers: Nenhuma resposta encontrada para este usuário');
       }
@@ -370,7 +468,11 @@ export const useQuiz = (quizId: string | undefined) => {
   // Verificar se todas as questões foram respondidas
   const isQuizComplete = (): boolean => {
     // Só verificar se o quiz está completo se as respostas foram carregadas
-    return answersLoaded && questions.length > 0 && Object.keys(userAnswers).length === questions.length;
+    // E se não estiver no modo retry (para evitar finalização prematura)
+    return answersLoaded && 
+           questions.length > 0 && 
+           Object.keys(userAnswers).length === questions.length &&
+           !isRetryMode;
   };
 
   // Finalizar quiz e mostrar resultado
@@ -380,6 +482,9 @@ export const useQuiz = (quizId: string | undefined) => {
     const result = calculateResult();
     setQuizResult(result);
     setShowResult(true);
+    
+    // Limpar o localStorage quando o quiz for finalizado
+    clearQuizStorage();
   };
 
   // Refazer apenas as questões incorretas
@@ -597,6 +702,7 @@ export const useQuiz = (quizId: string | undefined) => {
     resetToNormalMode,
     findNextIncorrectQuestion,
     findPreviousIncorrectQuestion,
+    clearQuizStorage,
     // Limites de acesso
     ...quizAccessLimits,
   };
