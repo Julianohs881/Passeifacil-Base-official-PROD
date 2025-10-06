@@ -88,7 +88,16 @@ const Quiz = () => {
 
   // Verificar se o quiz foi concluído e mostrar resultado
   useEffect(() => {
+    console.log('Quiz useEffect: Verificando conclusão', {
+      answersLoaded,
+      isComplete: isQuizComplete(),
+      showResult,
+      userAnswersCount: Object.keys(userAnswers).length,
+      questionsLength: questions.length
+    });
+    
     if (answersLoaded && isQuizComplete() && !showResult) {
+      console.log('Quiz useEffect: Chamando finishQuiz');
       finishQuiz();
     }
   }, [answersLoaded, userAnswers, questions.length, showResult]);
