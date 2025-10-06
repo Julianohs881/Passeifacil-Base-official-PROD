@@ -39,10 +39,9 @@ export const useQuiz = (quizId: string | undefined) => {
   const clearQuizStorage = () => {
     if (typeof window === 'undefined' || !quizId || !user?.id) return;
     try {
+      // Não limpar userAnswers e questionsStatus para manter as respostas persistidas
       const keys = [
         'currentQuestionIndex',
-        'userAnswers', 
-        'questionsStatus',
         'showResult',
         'quizResult',
         'previousResult',
@@ -50,6 +49,7 @@ export const useQuiz = (quizId: string | undefined) => {
         'retryIncorrectOnly'
       ];
       
+      console.log('clearQuizStorage: Limpando localStorage (mantendo respostas)');
       keys.forEach(key => {
         localStorage.removeItem(getStorageKey(key));
       });
@@ -104,7 +104,14 @@ export const useQuiz = (quizId: string | undefined) => {
 
   // Carregar respostas do usuário quando as questões estiverem carregadas
   useEffect(() => {
+    console.log('useEffect fetchUserAnswers: Verificando condições', {
+      questionsLength: questions.length,
+      hasUser: !!user,
+      shouldFetch: questions.length > 0 && user
+    });
+    
     if (questions.length > 0 && user) {
+      console.log('useEffect fetchUserAnswers: Chamando fetchUserAnswers');
       fetchUserAnswers();
     }
   }, [questions, user]);
@@ -260,19 +267,17 @@ export const useQuiz = (quizId: string | undefined) => {
           statusMap[answer.question_id] = answer.is_correct ? 'correct' : 'incorrect';
         });
 
-        // Só atualizar se não houver dados no localStorage (primeira vez carregando)
-        const hasLocalData = Object.keys(userAnswers).length > 0 || Object.keys(questionsStatus).length > 0;
-        if (!hasLocalData) {
-          setUserAnswers(answersMap);
-          setQuestionsStatus(prev => ({
-            ...prev,
-            ...statusMap
-          }));
-        }
+        // Sempre carregar do banco de dados, sobrescrevendo dados locais
+        // Isso garante que as respostas persistidas sejam sempre carregadas
+        console.log('fetchUserAnswers: Carregando respostas do banco de dados');
+        setUserAnswers(answersMap);
+        setQuestionsStatus(prev => ({
+          ...prev,
+          ...statusMap
+        }));
 
-        console.log('fetchUserAnswers: Respostas encontradas no banco:', answersMap);
-        console.log('fetchUserAnswers: Status encontrado no banco:', statusMap);
-        console.log('fetchUserAnswers: Dados locais existem:', hasLocalData);
+        console.log('fetchUserAnswers: Respostas carregadas do banco:', answersMap);
+        console.log('fetchUserAnswers: Status carregado do banco:', statusMap);
       } else {
         console.log('fetchUserAnswers: Nenhuma resposta encontrada para este usuário');
       }
@@ -377,7 +382,17 @@ export const useQuiz = (quizId: string | undefined) => {
 
   // Salvar resposta no banco de dados
   const saveAnswerToDatabase = async (questionId: string, optionIndex: number, isCorrect: boolean) => {
-    if (!user) return; // Não salvar se não estiver logado
+    if (!user) {
+      console.log('saveAnswerToDatabase: Usuário não logado, não salvando');
+      return; // Não salvar se não estiver logado
+    }
+    
+    console.log('saveAnswerToDatabase: Salvando resposta no banco', {
+      questionId,
+      optionIndex,
+      isCorrect,
+      userId: user.id
+    });
     
     try {
       const { error } = await supabase
@@ -392,11 +407,13 @@ export const useQuiz = (quizId: string | undefined) => {
         });
 
       if (error) {
-        console.error('Erro ao salvar resposta:', error);
+        console.error('saveAnswerToDatabase: Erro ao salvar resposta:', error);
         // Não mostrar toast de erro para não interromper a experiência do usuário
+      } else {
+        console.log('saveAnswerToDatabase: Resposta salva com sucesso');
       }
     } catch (error) {
-      console.error('Erro ao salvar resposta:', error);
+      console.error('saveAnswerToDatabase: Erro ao salvar resposta:', error);
     }
   };
 
@@ -433,10 +450,22 @@ export const useQuiz = (quizId: string | undefined) => {
     
     // Atualizar status da questão como respondida (correta ou incorreta)
     const isCorrect = optionIndex === questions[currentQuestionIndex].correct_index;
-    setQuestionsStatus(prev => ({
-      ...prev,
-      [questionId]: isCorrect ? 'correct' : 'incorrect'
-    }));
+    console.log('handleAnswer: Atualizando status da questão', {
+      questionId,
+      optionIndex,
+      correctIndex: questions[currentQuestionIndex].correct_index,
+      isCorrect,
+      newStatus: isCorrect ? 'correct' : 'incorrect'
+    });
+    
+    setQuestionsStatus(prev => {
+      const newStatus = {
+        ...prev,
+        [questionId]: isCorrect ? 'correct' : 'incorrect'
+      };
+      console.log('handleAnswer: Novo questionsStatus', newStatus);
+      return newStatus;
+    });
 
     // Salvar resposta no banco de dados
     saveAnswerToDatabase(questionId, optionIndex, isCorrect);
@@ -469,17 +498,53 @@ export const useQuiz = (quizId: string | undefined) => {
   const isQuizComplete = (): boolean => {
     // Só verificar se o quiz está completo se as respostas foram carregadas
     // E se não estiver no modo retry (para evitar finalização prematura)
-    return answersLoaded && 
-           questions.length > 0 && 
-           Object.keys(userAnswers).length === questions.length &&
-           !isRetryMode;
+    if (!answersLoaded || questions.length === 0 || isRetryMode) {
+      return false;
+    }
+    
+    // Calcular quantas questões o usuário pode realmente responder
+    const accessibleQuestionsCount = questions.filter((_, index) => 
+      quizAccessLimits.isQuestionAccessible(index)
+    ).length;
+    
+    // O quiz está completo quando todas as questões acessíveis foram respondidas
+    const answeredCount = Object.keys(userAnswers).length;
+    const isComplete = answeredCount === accessibleQuestionsCount;
+    
+    console.log('isQuizComplete: Verificando conclusão do quiz', {
+      answeredCount,
+      accessibleQuestionsCount,
+      totalQuestions: questions.length,
+      isComplete,
+      userAnswers: Object.keys(userAnswers),
+      accessibleQuestions: questions.map((_, index) => ({
+        index,
+        accessible: quizAccessLimits.isQuestionAccessible(index)
+      }))
+    });
+    
+    return isComplete;
   };
 
   // Finalizar quiz e mostrar resultado
   const finishQuiz = () => {
-    if (!isQuizComplete()) return;
+    console.log('finishQuiz: Tentando finalizar quiz', {
+      isComplete: isQuizComplete(),
+      answersLoaded,
+      questionsLength: questions.length,
+      userAnswersCount: Object.keys(userAnswers).length,
+      isRetryMode
+    });
     
+    if (!isQuizComplete()) {
+      console.log('finishQuiz: Quiz não está completo, não finalizando');
+      return;
+    }
+    
+    console.log('finishQuiz: Finalizando quiz e calculando resultado');
     const result = calculateResult();
+    console.log('finishQuiz: Resultado calculado', result);
+    
     setQuizResult(result);
     setShowResult(true);
     
