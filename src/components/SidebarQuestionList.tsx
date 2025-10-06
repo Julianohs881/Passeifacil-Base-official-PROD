@@ -75,6 +75,14 @@ const SidebarQuestionList = ({
     }
     
     const status = questionsStatus[questionId] || 'unanswered';
+    console.log('SidebarQuestionList: getQuestionStatusClass', {
+      questionId,
+      index,
+      status,
+      questionsStatus: questionsStatus[questionId],
+      allQuestionsStatus: questionsStatus
+    });
+    
     switch (status) {
       case 'correct':
         return "correct";
