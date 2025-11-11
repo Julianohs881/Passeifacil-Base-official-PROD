@@ -770,4 +770,5 @@ export const useQuiz = (quizId: string | undefined) => {
     // Limites de acesso
     ...quizAccessLimits,
   };
+
 };
