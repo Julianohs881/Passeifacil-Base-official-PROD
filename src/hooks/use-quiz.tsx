@@ -107,10 +107,10 @@ export const useQuiz = (quizId: string | undefined) => {
     console.log('useEffect fetchUserAnswers: Verificando condições', {
       questionsLength: questions.length,
       hasUser: !!user,
-      shouldFetch: questions.length > 0 && user
+      shouldFetch: questions.length > 0
     });
     
-    if (questions.length > 0 && user) {
+    if (questions.length > 0) {
       console.log('useEffect fetchUserAnswers: Chamando fetchUserAnswers');
       fetchUserAnswers();
     }
@@ -497,8 +497,7 @@ export const useQuiz = (quizId: string | undefined) => {
   // Verificar se todas as questões foram respondidas
   const isQuizComplete = (): boolean => {
     // Só verificar se o quiz está completo se as respostas foram carregadas
-    // E se não estiver no modo retry (para evitar finalização prematura)
-    if (!answersLoaded || questions.length === 0 || isRetryMode) {
+    if (!answersLoaded || questions.length === 0) {
       return false;
     }
     
