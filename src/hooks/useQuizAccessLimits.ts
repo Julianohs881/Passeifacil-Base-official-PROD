@@ -2,17 +2,33 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean = false) => {
-  const { isPro } = useAuth();
+  const { isPro, isProfileLoaded } = useAuth();
   const [isProUser, setIsProUser] = useState(false);
+  const [limitsReady, setLimitsReady] = useState(isCreator);
 
   useEffect(() => {
+    if (isCreator) {
+      setIsProUser(true);
+      setLimitsReady(true);
+      return;
+    }
+
+    if (!isProfileLoaded) {
+      return;
+    }
+
     setIsProUser(isPro());
-  }, [isPro]);
+    setLimitsReady(true);
+  }, [isPro, isProfileLoaded, isCreator]);
 
   // Nova regra de acesso:
   // Se total ≤ 20 → liberar 30% arredondado pra cima
   // Se total > 20 → liberar o mínimo entre 10 e 30% do total
   const getAccessibleQuestionsCount = (): number => {
+    if (!limitsReady) {
+      return totalQuestions;
+    }
+
     if (isProUser || isCreator) {
       return totalQuestions; // Usuários PRO e criadores têm acesso total
     }
@@ -29,6 +45,10 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
 
   // Verificar se uma questão específica está acessível
   const isQuestionAccessible = (questionIndex: number): boolean => {
+    if (!limitsReady) {
+      return true;
+    }
+
     if (isProUser || isCreator) {
       return true; // Usuários PRO e criadores têm acesso a todas as questões
     }
@@ -38,6 +58,10 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
 
   // Verificar se o usuário atingiu o limite
   const hasReachedLimit = (currentQuestionIndex: number): boolean => {
+    if (!limitsReady) {
+      return false;
+    }
+
     if (isProUser || isCreator) {
       return false; // Usuários PRO e criadores nunca atingem limite
     }
@@ -47,6 +71,17 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
 
   // Obter informações sobre o progresso
   const getProgressInfo = (currentQuestionIndex: number) => {
+    if (!limitsReady) {
+      return {
+        accessibleCount: totalQuestions,
+        totalCount: totalQuestions,
+        remainingFree: totalQuestions - (currentQuestionIndex + 1),
+        lockedCount: 0,
+        percentageUsed: totalQuestions === 0 ? 0 : Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100),
+        percentageOfTotal: totalQuestions === 0 ? 0 : Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100)
+      };
+    }
+
     const accessibleCount = getAccessibleQuestionsCount();
     const totalCount = totalQuestions;
     const remainingFree = Math.max(0, accessibleCount - currentQuestionIndex - 1);
@@ -64,6 +99,10 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
 
   // Obter mensagem de limite atingido
   const getLimitMessage = (currentQuestionIndex: number) => {
+    if (!limitsReady) {
+      return null;
+    }
+
     const progressInfo = getProgressInfo(currentQuestionIndex);
     
     if (isProUser || isCreator) {
@@ -84,6 +123,10 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
 
   // Obter mensagem de progresso (quando ainda não atingiu o limite)
   const getProgressMessage = (currentQuestionIndex: number) => {
+    if (!limitsReady) {
+      return null;
+    }
+
     if (isProUser || isCreator) {
       return null; // Usuários PRO e criadores não precisam de mensagens de progresso
     }
@@ -103,6 +146,7 @@ export const useQuizAccessLimits = (totalQuestions: number, isCreator: boolean =
 
   return {
     isProUser,
+    limitsReady,
     getAccessibleQuestionsCount,
     isQuestionAccessible,
     hasReachedLimit,

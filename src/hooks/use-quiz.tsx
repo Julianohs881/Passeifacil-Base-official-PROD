@@ -11,11 +11,14 @@ export const useQuiz = (quizId: string | undefined) => {
   const { user } = useAuth();
   
   // Chave para localStorage baseada no quizId e userId
-  const getStorageKey = (key: string) => `quiz_${quizId}_${user?.id}_${key}`;
+  const getStorageKey = (key: string) => {
+    const userKey = user?.id ?? 'guest';
+    return `quiz_${quizId}_${userKey}_${key}`;
+  };
   
   // Função para carregar estado do localStorage
   const loadFromStorage = (key: string, defaultValue: any) => {
-    if (typeof window === 'undefined' || !quizId || !user?.id) return defaultValue;
+    if (typeof window === 'undefined' || !quizId) return defaultValue;
     try {
       const stored = localStorage.getItem(getStorageKey(key));
       return stored ? JSON.parse(stored) : defaultValue;
@@ -27,7 +30,7 @@ export const useQuiz = (quizId: string | undefined) => {
 
   // Função para salvar estado no localStorage
   const saveToStorage = (key: string, value: any) => {
-    if (typeof window === 'undefined' || !quizId || !user?.id) return;
+    if (typeof window === 'undefined' || !quizId) return;
     try {
       localStorage.setItem(getStorageKey(key), JSON.stringify(value));
     } catch (error) {
@@ -37,7 +40,7 @@ export const useQuiz = (quizId: string | undefined) => {
 
   // Função para limpar o localStorage do quiz
   const clearQuizStorage = () => {
-    if (typeof window === 'undefined' || !quizId || !user?.id) return;
+    if (typeof window === 'undefined' || !quizId) return;
     try {
       // Não limpar userAnswers e questionsStatus para manter as respostas persistidas
       const keys = [
@@ -113,6 +116,8 @@ export const useQuiz = (quizId: string | undefined) => {
     if (questions.length > 0) {
       console.log('useEffect fetchUserAnswers: Chamando fetchUserAnswers');
       fetchUserAnswers();
+    } else {
+      setAnswersLoaded(true);
     }
   }, [questions, user]);
 
@@ -515,6 +520,8 @@ export const useQuiz = (quizId: string | undefined) => {
       accessibleQuestionsCount,
       totalQuestions: questions.length,
       isComplete,
+      answersLoaded,
+      showResult,
       userAnswers: Object.keys(userAnswers),
       accessibleQuestions: questions.map((_, index) => ({
         index,
@@ -522,7 +529,7 @@ export const useQuiz = (quizId: string | undefined) => {
       }))
     });
     
-    return isComplete;
+    return isComplete && quizAccessLimits.limitsReady;
   };
 
   // Finalizar quiz e mostrar resultado

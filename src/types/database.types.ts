@@ -16,6 +16,8 @@ export interface Database {
           user_id: string
           title: string
           color: string
+          area_of_interest: string | null
+          subarea_of_interest: string | null
           created_at: string
         }
         Insert: {
@@ -23,6 +25,8 @@ export interface Database {
           user_id: string
           title: string
           color?: string
+          area_of_interest?: string | null
+          subarea_of_interest?: string | null
           created_at?: string
         }
         Update: {
@@ -30,6 +34,8 @@ export interface Database {
           user_id?: string
           title?: string
           color?: string
+          area_of_interest?: string | null
+          subarea_of_interest?: string | null
           created_at?: string
         }
       }
@@ -75,6 +81,8 @@ export interface Database {
           subscription_id: string | null
           subscription_status: string | null
           subscription_end_date: string | null
+          interest_areas: string[]
+          interest_subareas: string[]
           created_at: string
         }
         Insert: {
@@ -86,6 +94,8 @@ export interface Database {
           subscription_id?: string | null
           subscription_status?: string | null
           subscription_end_date?: string | null
+          interest_areas?: string[]
+          interest_subareas?: string[]
           created_at?: string
         }
         Update: {
@@ -97,6 +107,57 @@ export interface Database {
           subscription_id?: string | null
           subscription_status?: string | null
           subscription_end_date?: string | null
+          interest_areas?: string[]
+          interest_subareas?: string[]
+          created_at?: string
+        }
+      }
+      interest_areas: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          icon: string | null
+          color: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          icon?: string | null
+          color?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          icon?: string | null
+          color?: string | null
+          created_at?: string
+        }
+      }
+      interest_subareas: {
+        Row: {
+          id: string
+          parent_area_id: string
+          name: string
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          parent_area_id: string
+          name: string
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          parent_area_id?: string
+          name?: string
+          description?: string | null
           created_at?: string
         }
       }

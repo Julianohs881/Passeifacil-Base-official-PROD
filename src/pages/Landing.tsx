@@ -51,7 +51,7 @@ const Landing = () => {
     <div className="min-h-screen bg-white mx-0 px-0 my-0 py-0">
       {/* Hero Section */}
       <section className="pt-24 pb-24 px-0 py-0">
-        <div className="container mx-auto px-6 md:px-8 lg:px-16">
+        <div className="mx-auto w-full max-w-[1280px] px-6 md:px-10 lg:px-12 xl:px-14">
           {/* Mobile-only logo at the top */}
           {isMobile && (
             <div className="flex justify-center mb-8 mt-0">
@@ -63,30 +63,30 @@ const Landing = () => {
             </div>
           )}
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="order-2 md:order-1 fade-in-element">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="order-2 md:order-1 fade-in-element w-full">
               {/* Logo removed - keeping only the header logo */}
               
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 leading-tight px-0 mx-[11px] my-0 py-0 lg:text-6xl tracking-tight">
+              <h1 className="text-4xl md:text-6xl lg:text-[72px] font-bold text-gray-800 mb-6 leading-[1.08] tracking-tight">
                 O jeito mais fácil de estudar e criar questões!
               </h1>
-              <p className="text-lg md:text-xl text-gray-600 mb-8">
+              <p className="text-lg md:text-2xl lg:text-[28px] text-gray-600 mb-8 max-w-3xl leading-relaxed">
                 Transforme textos e imagens em quizzes interativos em segundos. 
                 Prepare-se melhor para provas, concursos e OAB.
               </p>
               
               {/* Pricing display */}
-              <div className="mb-8 bg-blue-50 p-6 rounded-xl inline-block">
-                <p className="text-gray-600 mb-1">Assinatura mensal</p>
-                <div className="flex items-baseline">
-                  <span className="text-3xl font-bold text-gray-800">{PRICING_CONFIG.monthlyPriceDisplay}</span>
-                  <span className="text-gray-500 ml-2">/mês</span>
+              <div className="mb-10 bg-blue-50/90 px-8 py-9 rounded-3xl inline-block shadow-md">
+                <p className="text-gray-600 mb-3 text-xl">Assinatura mensal</p>
+                <div className="flex items-baseline gap-4">
+                  <span className="text-4xl md:text-5xl lg:text-[52px] font-bold text-gray-800">{PRICING_CONFIG.monthlyPriceDisplay}</span>
+                  <span className="text-gray-500 text-lg md:text-xl lg:text-2xl">/mês</span>
                 </div>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 mb-10">
                 <Link to={user ? "/quizzes" : "/register"}>
-                  <Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-8 py-6 text-lg font-medium shadow-md transition-transform hover:scale-105">
+                  <Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-12 py-6 text-xl lg:text-2xl font-semibold shadow-lg transition-transform hover:scale-105">
                     Assine Agora →
                   </Button>
                 </Link>
@@ -116,13 +116,13 @@ const Landing = () => {
               </div>
             </div>
             
-            <div className="order-1 md:order-2 flex justify-center md:justify-end fade-in-element">
+            <div className="order-1 md:order-2 flex justify-center md:justify-center fade-in-element">
               {/* Only show the illustration if we're not in mobile, or if in mobile, push it down */}
               <div className={`relative ${isMobile ? 'mt-8 order-3' : ''}`}>
                 <img 
                   src="/lovable-uploads/d0b7d885-b5b8-4bab-81b6-9afe1e2720a7.png" 
                   alt="Estudantes interagindo com quizzes" 
-                  className="w-full max-w-lg"
+                  className="w-full max-w-2xl md:max-w-[660px] lg:max-w-[760px]"
                 />
               </div>
             </div>

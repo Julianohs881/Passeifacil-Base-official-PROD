@@ -19,6 +19,8 @@ export interface Quiz {
   course_year?: string;
   course?: string;
   description?: string;
+  area_of_interest?: string | null;
+  subarea_of_interest?: string | null;
   share_code: string | null;
 }
 
@@ -74,6 +76,8 @@ export interface UserProfile {
   name?: string;
   avatar_url?: string;
   ai_questions_created?: number;
+  interest_areas?: string[];
+  interest_subareas?: string[];
   created_at?: string;
   // Subscription related fields
   has_access?: boolean;

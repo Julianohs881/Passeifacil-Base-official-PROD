@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { VisibilityOption } from "@/types";
 import { VisibilitySelector } from "./VisibilitySelector";
 import { CourseYearSelector } from "./CourseYearSelector";
+import AreaOfInterestSelector from "./AreaOfInterestSelector";
 
 interface QuizFormFieldsProps {
   title: string;
@@ -20,6 +21,10 @@ interface QuizFormFieldsProps {
   setCourse: (course: string) => void;
   description: string;
   setDescription: (description: string) => void;
+  areaOfInterest: string | null;
+  setAreaOfInterest: (areaOfInterest: string | null) => void;
+  subareaOfInterest: string | null;
+  setSubareaOfInterest: (subareaOfInterest: string | null) => void;
 }
 
 export const QuizFormFields: React.FC<QuizFormFieldsProps> = ({
@@ -35,6 +40,10 @@ export const QuizFormFields: React.FC<QuizFormFieldsProps> = ({
   setCourse,
   description,
   setDescription,
+  areaOfInterest,
+  setAreaOfInterest,
+  subareaOfInterest,
+  setSubareaOfInterest,
 }) => {
   return (
     <div className="grid gap-4 py-4">
@@ -97,6 +106,18 @@ export const QuizFormFields: React.FC<QuizFormFieldsProps> = ({
           placeholder="Descreva o conteúdo e objetivo deste quiz..."
           rows={3}
         />
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <div className="text-right"></div>
+        <div className="col-span-3">
+          <AreaOfInterestSelector
+            selectedArea={areaOfInterest}
+            selectedSubarea={subareaOfInterest}
+            onAreaChange={setAreaOfInterest}
+            onSubareaChange={setSubareaOfInterest}
+          />
+        </div>
       </div>
       
       <VisibilitySelector visibility={visibility} setVisibility={setVisibility} />

@@ -2,7 +2,7 @@
 project_id = "hrpchhrykumcdeolv tfs"
 
 # Torna TODAS as funções públicas (sem autenticação)
-[functions]
+[functions.verify_jwt]
 verify_jwt = false
 
 # Torna a função pública para que o Stripe possa chamá-la sem autenticação

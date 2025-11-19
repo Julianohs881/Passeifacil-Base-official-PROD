@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { signInWithGoogle, signUpWithEmail, supabase } from "@/integrations/supabase/client";
+import InterestAreasRegistration from "@/components/InterestAreasRegistration";
+import SubAreasRegistration from "@/components/SubAreasRegistration";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -13,6 +15,11 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showInterestAreas, setShowInterestAreas] = useState(false);
+  const [showSubAreas, setShowSubAreas] = useState(false);
+  const [selectedInterestAreas, setSelectedInterestAreas] = useState<string[]>([]);
+  const [selectedInterestSubareas, setSelectedInterestSubareas] = useState<string[]>([]);
+  const [userData, setUserData] = useState<{ name: string; email: string; password: string } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,16 +59,36 @@ const Register = () => {
       return;
     }
     
+    // Salvar dados do usuário e mostrar seleção de áreas de interesse
+    setUserData({ name, email, password });
+    setShowInterestAreas(true);
+  };
+
+  const handleInterestAreasContinue = () => {
+    // Ir para a próxima etapa (temáticas)
+    setShowInterestAreas(false);
+    setShowSubAreas(true);
+  };
+
+  const handleSubAreasBack = () => {
+    // Voltar para a etapa anterior (áreas principais)
+    setShowSubAreas(false);
+    setShowInterestAreas(true);
+  };
+
+  const handleSubAreasContinue = async () => {
+    if (!userData) return;
+    
     try {
       setLoading(true);
       setError("");
       
-      console.log("Iniciando cadastro para:", email, "com nome:", name);
+      console.log("Iniciando cadastro para:", userData.email, "com nome:", userData.name);
       
       // Criar conta com email e senha
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
+        email: userData.email,
+        password: userData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
@@ -85,16 +112,18 @@ const Register = () => {
         console.log("Perfil existente:", existingProfile);
         
         if (!existingProfile) {
-          // Criar perfil do usuário com o nome
+          // Criar perfil do usuário com o nome e áreas de interesse
           console.log("Criando perfil para usuário:", data.user.id);
           const { error: profileError } = await supabase
             .from('profiles')
             .insert([
               {
                 id: data.user.id,
-                name: name.trim(),
-                email: email,
-                plan: 'gratuito'
+                name: userData.name.trim(),
+                email: userData.email,
+                plan: 'gratuito',
+                interest_areas: selectedInterestAreas,
+                interest_subareas: selectedInterestSubareas
               }
             ]);
             
@@ -107,9 +136,11 @@ const Register = () => {
               .upsert([
                 {
                   id: data.user.id,
-                  name: name.trim(),
-                  email: email,
-                  plan: 'gratuito'
+                  name: userData.name.trim(),
+                  email: userData.email,
+                  plan: 'gratuito',
+                  interest_areas: selectedInterestAreas,
+                  interest_subareas: selectedInterestSubareas
                 }
               ]);
               
@@ -131,18 +162,22 @@ const Register = () => {
             
           console.log("Perfil verificado após criação:", verifyProfile);
         } else {
-          console.log("Perfil já existe, atualizando nome");
+          console.log("Perfil já existe, atualizando nome e áreas de interesse");
           
-          // Atualizar o nome se o perfil já existir
+          // Atualizar o nome e áreas de interesse se o perfil já existir
           const { error: updateError } = await supabase
             .from('profiles')
-            .update({ name: name.trim() })
+            .update({ 
+              name: userData.name.trim(),
+              interest_areas: selectedInterestAreas,
+              interest_subareas: selectedInterestSubareas
+            })
             .eq('id', data.user.id);
             
           if (updateError) {
-            console.error("Erro ao atualizar nome:", updateError);
+            console.error("Erro ao atualizar perfil:", updateError);
           } else {
-            console.log("Nome atualizado com sucesso");
+            console.log("Perfil atualizado com sucesso");
           }
         }
         
@@ -154,16 +189,190 @@ const Register = () => {
       }
     } catch (error: any) {
       console.error("Erro no cadastro:", error);
-      setError(error.message || "Falha no cadastro");
+      
+      let errorMessage = "Falha no cadastro";
+      
+      // Tratar erros específicos
+      if (error.message?.includes("User already registered")) {
+        errorMessage = "Este email já está cadastrado. Tente fazer login ou use outro email.";
+      } else if (error.message?.includes("Password should be at least")) {
+        errorMessage = "A senha deve ter pelo menos 6 caracteres.";
+      } else if (error.message?.includes("Invalid email")) {
+        errorMessage = "Por favor, insira um email válido.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
       toast({
         title: "Erro no cadastro",
-        description: error.message || "Erro inesperado",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
+
+  const handleInterestAreasSkip = () => {
+    // Pular temáticas e ir direto para o cadastro final
+    handleSubAreasContinue();
+  };
+
+  // Se estiver mostrando a seleção de temáticas
+  if (showSubAreas) {
+    return (
+      <div className="flex min-h-screen bg-white">
+        {/* Lado esquerdo - Logo e frase */}
+        <div className="hidden lg:flex lg:w-1/2 items-center p-12">
+          <div className="max-w-lg w-full">
+            <div className="flex justify-start mb-4">
+               <img 
+                src="/logo.png" 
+                alt="Passei Fácil Logo"
+                className="w-48"
+              />
+            </div>
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-gray-800 mb-4">
+                Especifique suas temáticas!
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Agora escolha as temáticas específicas que mais te interessam para receber recomendações ainda mais precisas.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Lado direito - Seleção de temáticas */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+          <div className="w-full max-w-2xl">
+            <SubAreasRegistration
+              selectedAreas={selectedInterestAreas}
+              selectedSubareas={selectedInterestSubareas}
+              onSubareasChange={setSelectedInterestSubareas}
+              onContinue={handleSubAreasContinue}
+              onBack={handleSubAreasBack}
+            />
+            
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
+                <div className="mb-2">
+                  {error}
+                </div>
+                {error.includes("já está cadastrado") && (
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/login')}
+                      className="flex-1"
+                    >
+                      Ir para Login
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setError("");
+                        setShowSubAreas(false);
+                        setShowInterestAreas(false);
+                        setUserData(null);
+                        setSelectedInterestAreas([]);
+                        setSelectedInterestSubareas([]);
+                      }}
+                      className="flex-1"
+                    >
+                      Tentar outro email
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Se estiver mostrando a seleção de áreas de interesse
+  if (showInterestAreas) {
+    return (
+      <div className="flex min-h-screen bg-white">
+        {/* Lado esquerdo - Logo e frase */}
+        <div className="hidden lg:flex lg:w-1/2 items-center p-12">
+          <div className="max-w-lg w-full">
+            {/* Logo alinhada à esquerda dentro do max-w-lg */}
+            <div className="flex justify-start mb-4">
+               <img 
+                src="/logo.png" 
+                alt="Passei Fácil Logo"
+                className="w-48"
+              />
+            </div>
+            {/* Frase e parágrafo centralizados dentro do max-w-lg */}
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-gray-800 mb-4">
+                Personalize sua experiência!
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Selecione suas áreas de interesse para receber recomendações
+                personalizadas de quizzes na comunidade.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Lado direito - Seleção de áreas de interesse */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+          <div className="w-full max-w-2xl">
+            <InterestAreasRegistration
+              selectedAreas={selectedInterestAreas}
+              selectedSubareas={selectedInterestSubareas}
+              onAreasChange={setSelectedInterestAreas}
+              onSubareasChange={setSelectedInterestSubareas}
+              onContinue={handleInterestAreasContinue}
+              onSkip={handleInterestAreasSkip}
+            />
+            
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 text-red-500 rounded-lg text-sm">
+                <div className="mb-2">
+                {error}
+                </div>
+                {error.includes("já está cadastrado") && (
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/login')}
+                      className="flex-1"
+                    >
+                      Ir para Login
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setError("");
+                        setShowInterestAreas(false);
+                        setUserData(null);
+                        setSelectedInterestAreas([]);
+                        setSelectedInterestSubareas([]);
+                      }}
+                      className="flex-1"
+                    >
+                      Tentar outro email
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-white">

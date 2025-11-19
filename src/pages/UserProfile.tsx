@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Calendar, Clock } from "lucide-react";
 import PlanBadge from "@/components/PlanBadge";
+import ProfileInterestAreas from "@/components/ProfileInterestAreas";
 import { UserPlan } from "@/types";
 import { useStripeSubscription } from "@/hooks/useStripeSubscription";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -363,6 +364,9 @@ const UserProfile = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Áreas de Interesse */}
+      <ProfileInterestAreas />
     </div>
   );
 };

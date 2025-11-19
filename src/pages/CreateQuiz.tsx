@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Quiz, VisibilityOption } from "@/types";
 import AddQuizModal from "@/components/QuizForms/AddQuizModal";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const CreateQuiz = () => {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -27,7 +28,11 @@ const CreateQuiz = () => {
 
           if (error) throw error;
           
-          setEditingQuiz({...data, color: "bg-gray-50"}); // Cor padrão fixa
+          setEditingQuiz({
+            ...data,
+            color: "bg-gray-50",
+            visibility: (data.visibility === "public" ? "public" : "private") as VisibilityOption
+          } as Quiz);
         } catch (error) {
           console.error("Erro ao carregar quiz para edição:", error);
           toast({
@@ -111,12 +116,14 @@ const CreateQuiz = () => {
 
   return (
     <div className="container py-8">
-      <AddQuizModal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-        onSave={handleSaveQuiz}
-        quiz={editingQuiz}
-      />
+      <ErrorBoundary>
+        <AddQuizModal 
+          isOpen={isModalOpen} 
+          onClose={handleCloseModal} 
+          onSave={handleSaveQuiz}
+          quiz={editingQuiz}
+        />
+      </ErrorBoundary>
     </div>
   );
 };

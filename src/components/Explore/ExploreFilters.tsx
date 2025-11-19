@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,12 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown, ChevronUp, Filter, Search, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useInterestAreas, InterestArea } from "@/hooks/useInterestAreas";
+import { getIconComponent } from "@/utils/iconMapper";
 
 export interface FilterValues {
   search: string;
   faculty: string;
   course: string;
   courseYear: string;
+  areaOfInterest: string;
+  subareaOfInterest: string;
 }
 
 interface ExploreFiltersProps {
@@ -34,23 +38,44 @@ const ExploreFilters = ({
 }: ExploreFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = useIsMobile();
+  const { interestAreas, loading: interestAreasLoading, getSubareasForArea } = useInterestAreas();
+  const [availableSubareas, setAvailableSubareas] = useState<any[]>([]);
   
   const handleFilterChange = (key: keyof FilterValues, value: string) => {
-    onFilterChange({
+    const newFilters = {
       ...filters,
       [key]: value
-    });
+    };
+    
+    // Se a área mudou, limpar a temática
+    if (key === 'areaOfInterest') {
+      newFilters.subareaOfInterest = 'all-subareas';
+    }
+    
+    onFilterChange(newFilters);
   };
 
+  // Atualizar temáticas quando a área mudar
+  useEffect(() => {
+    if (filters.areaOfInterest && filters.areaOfInterest !== 'all-areas') {
+      const subareas = getSubareasForArea(filters.areaOfInterest);
+      setAvailableSubareas(subareas);
+    } else {
+      setAvailableSubareas([]);
+    }
+  }, [filters.areaOfInterest, getSubareasForArea]);
+
   // Verificar se há filtros ativos
-  const hasActiveFilters = filters.search || filters.faculty || filters.course || filters.courseYear;
+  const hasActiveFilters = filters.search || filters.faculty || filters.course || filters.courseYear || filters.areaOfInterest || filters.subareaOfInterest;
 
   // Contar filtros ativos para exibir no badge
   const activeFiltersCount = [
     filters.search,
     filters.faculty !== 'all-faculties' ? filters.faculty : null,
     filters.course !== 'all-courses' ? filters.course : null,
-    filters.courseYear !== 'all-years' ? filters.courseYear : null
+    filters.courseYear !== 'all-years' ? filters.courseYear : null,
+    filters.areaOfInterest !== 'all-areas' ? filters.areaOfInterest : null,
+    filters.subareaOfInterest !== 'all-subareas' ? filters.subareaOfInterest : null
   ].filter(Boolean).length;
 
   return (
@@ -95,8 +120,8 @@ const ExploreFilters = ({
       {/* Conteúdo dos filtros - sempre visível no desktop, condicional no mobile */}
       <div className={`md:block ${isExpanded ? 'block' : 'hidden'}`}>
         <CardContent className="pt-0">
-          {/* Layout responsivo: 1 coluna no mobile, 2 no tablet, 4 no desktop */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Layout responsivo */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {/* Campo de busca */}
             <div className="space-y-2">
               <Label htmlFor="search" className="text-sm font-medium">Buscar</Label>
@@ -175,6 +200,61 @@ const ExploreFilters = ({
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Filtro de Área de Interesse */}
+            <div className="space-y-2">
+              <Label htmlFor="areaOfInterest" className="text-sm font-medium">Área de Interesse</Label>
+              <Select 
+                value={filters.areaOfInterest} 
+                onValueChange={(value) => handleFilterChange('areaOfInterest', value)}
+                disabled={interestAreasLoading}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder={interestAreasLoading ? "Carregando..." : "Todas as áreas"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-areas">Todas</SelectItem>
+                  {interestAreas.map((area) => (
+                    <SelectItem key={area.id} value={area.id} className="text-sm">
+                      <div className="flex items-center gap-2">
+                        {area.icon && (
+                          <div
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs"
+                            style={{ backgroundColor: area.color || '#6B7280' }}
+                          >
+                            {getIconComponent(area.icon, "h-3 w-3 text-white", 12)}
+                          </div>
+                        )}
+                        <span>{area.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filtro de Temática (só aparece se uma área for selecionada) */}
+            {filters.areaOfInterest && filters.areaOfInterest !== 'all-areas' && availableSubareas.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="subareaOfInterest" className="text-sm font-medium">Temática</Label>
+                <Select 
+                  value={filters.subareaOfInterest} 
+                  onValueChange={(value) => handleFilterChange('subareaOfInterest', value)}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Todas as temáticas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-subareas">Todas</SelectItem>
+                    {availableSubareas.map((subarea) => (
+                      <SelectItem key={subarea.id} value={subarea.id} className="text-sm">
+                        {subarea.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* Botão de limpar filtros */}
@@ -262,6 +342,19 @@ const ExploreFilters = ({
                         size="sm"
                         onClick={() => handleFilterChange('courseYear', 'all-years')}
                         className="h-4 w-4 p-0 hover:bg-purple-200 ml-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                  {filters.areaOfInterest && filters.areaOfInterest !== 'all-areas' && (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                      <span>🎯 {interestAreas.find(area => area.id === filters.areaOfInterest)?.name || 'Área'}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFilterChange('areaOfInterest', 'all-areas')}
+                        className="h-4 w-4 p-0 hover:bg-orange-200 ml-1"
                       >
                         <X className="h-3 w-3" />
                       </Button>
