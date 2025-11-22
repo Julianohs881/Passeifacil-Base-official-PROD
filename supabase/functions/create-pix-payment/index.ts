@@ -1,12 +1,10 @@
+import { corsHeaders } from "../_shared/cors.ts";
+
 Deno.serve(async (req) => {
   // CORS pré-flight
   if (req.method === "OPTIONS") {
     return new Response("ok", {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization"
-      }
+      headers: corsHeaders
     });
   }
   try {
@@ -18,7 +16,7 @@ Deno.serve(async (req) => {
         status: 500,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          ...corsHeaders
         }
       });
     }
@@ -29,7 +27,7 @@ Deno.serve(async (req) => {
         status: 405,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          ...corsHeaders
         }
       });
     }
@@ -41,7 +39,7 @@ Deno.serve(async (req) => {
         status: 400,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          ...corsHeaders
         }
       });
     }
@@ -67,14 +65,33 @@ Deno.serve(async (req) => {
           default_payment_method_id: "pix"
         },
         back_urls: {
-          success: "https://passeifacil.com/sucesso",
-          failure: "https://passeifacil.com/erro",
-          pending: "https://passeifacil.com/pendente"
+          success: "https://passeifacil.com.br/subscription?status=success",
+          failure: "https://passeifacil.com.br/subscription?status=error",
+          pending: "https://passeifacil.com.br/subscription?status=pending"
         },
         auto_return: "approved"
       })
     });
     const data = await response.json();
+    
+    // Log para debug
+    console.log("Resposta do Mercado Pago:", JSON.stringify(data, null, 2));
+    console.log("Status da resposta:", response.status);
+    
+    if (!response.ok) {
+      console.error("Erro na API do Mercado Pago:", data);
+      return new Response(JSON.stringify({
+        error: data.message || "Erro ao gerar link de pagamento Pix",
+        details: data.cause ? JSON.stringify(data.cause) : (data ? JSON.stringify(data) : "Resposta vazia do Mercado Pago")
+      }), {
+        status: response.status,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    }
+    
     if (data && data.init_point) {
       return new Response(JSON.stringify({
         init_point: data.init_point
@@ -82,10 +99,11 @@ Deno.serve(async (req) => {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          ...corsHeaders
         }
       });
     } else {
+      console.error("Resposta do Mercado Pago sem init_point:", data);
       return new Response(JSON.stringify({
         error: "Erro ao gerar link de pagamento Pix",
         details: data ? JSON.stringify(data) : "Resposta vazia do Mercado Pago"
@@ -93,7 +111,7 @@ Deno.serve(async (req) => {
         status: 500,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          ...corsHeaders
         }
       });
     }
@@ -105,7 +123,7 @@ Deno.serve(async (req) => {
       status: 500,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
+        ...corsHeaders
       }
     });
   }

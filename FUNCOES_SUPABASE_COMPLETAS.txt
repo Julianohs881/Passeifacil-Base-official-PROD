@@ -1,0 +1,403 @@
+============================================
+FUNÇÕES SUPABASE - PASSEI FÁCIL
+============================================
+
+INSTRUÇÕES:
+1. Acesse o Supabase Dashboard
+2. Vá em Edge Functions
+3. Crie ou edite cada função abaixo
+4. Cole o código correspondente
+5. Configure as variáveis de ambiente (Secrets)
+
+============================================
+FUNÇÃO 1: create-pix-payment
+============================================
+Nome da função: create-pix-payment
+Arquivo: index.ts
+
+CÓDIGO:
+
+// Headers CORS
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+};
+
+Deno.serve(async (req) => {
+  // CORS pré-flight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: corsHeaders
+    });
+  }
+  
+  try {
+    const mpToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
+    if (!mpToken) {
+      return new Response(JSON.stringify({
+        error: "MERCADOPAGO_ACCESS_TOKEN não configurado nas variáveis de ambiente."
+      }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    }
+    
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({
+        error: "Método não permitido"
+      }), {
+        status: 405,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    }
+    
+    const { email } = await req.json();
+    if (!email) {
+      return new Response(JSON.stringify({
+        error: "E-mail é obrigatório"
+      }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    }
+    
+    // Cria preferência de pagamento Pix usando fetch
+    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${mpToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        items: [
+          {
+            title: "Assinatura PRO Passei Fácil",
+            quantity: 1,
+            currency_id: "BRL",
+            unit_price: 14.90
+          }
+        ],
+        payer: { email },
+        payment_methods: {
+          excluded_payment_types: [{ id: "credit_card" }],
+          default_payment_method_id: "pix"
+        },
+        back_urls: {
+          success: "https://passeifacil.com.br/subscription?status=success",
+          failure: "https://passeifacil.com.br/subscription?status=error",
+          pending: "https://passeifacil.com.br/subscription?status=pending"
+        },
+        auto_return: "approved"
+      })
+    });
+    
+    const data = await response.json();
+    
+    // Log para debug
+    console.log("Resposta do Mercado Pago:", JSON.stringify(data, null, 2));
+    console.log("Status da resposta:", response.status);
+    
+    if (!response.ok) {
+      console.error("Erro na API do Mercado Pago:", data);
+      return new Response(JSON.stringify({
+        error: data.message || "Erro ao gerar link de pagamento Pix",
+        details: data.cause ? JSON.stringify(data.cause) : (data ? JSON.stringify(data) : "Resposta vazia do Mercado Pago")
+      }), {
+        status: response.status,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    }
+    
+    if (data && data.init_point) {
+      return new Response(JSON.stringify({
+        init_point: data.init_point
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    } else {
+      console.error("Resposta do Mercado Pago sem init_point:", data);
+      return new Response(JSON.stringify({
+        error: "Erro ao gerar link de pagamento Pix",
+        details: data ? JSON.stringify(data) : "Resposta vazia do Mercado Pago"
+      }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    }
+  } catch (err) {
+    return new Response(JSON.stringify({
+      error: "Erro inesperado ao tentar gerar pagamento Pix",
+      details: err && err.message ? err.message : String(err)
+    }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
+      }
+    });
+  }
+});
+
+
+============================================
+FUNÇÃO 2: mercadopago-webhook
+============================================
+Nome da função: mercadopago-webhook
+Arquivo: index.ts
+
+CÓDIGO:
+
+import { serve } from "https://deno.land/std/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+serve(async (req)=>{
+  const headers = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey"
+  };
+  if (req.method === "OPTIONS") {
+    return new Response("", {
+      status: 200,
+      headers
+    });
+  }
+  if (req.method === "GET") {
+    return new Response(JSON.stringify({
+      message: "Webhook funcionando!"
+    }), {
+      headers
+    });
+  }
+  if (req.method === "POST") {
+    try {
+      console.log("=== WEBHOOK RECEBIDO ===", new Date().toISOString());
+      const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+      const body = await req.json();
+      console.log("Body recebido:", JSON.stringify(body, null, 2));
+      
+      if (body.type === "payment") {
+        const paymentId = body.data.id;
+        console.log("Payment ID:", paymentId);
+        
+        // Buscar detalhes do pagamento no MercadoPago
+        const resp = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+          headers: {
+            Authorization: `Bearer ${Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")}`
+          }
+        });
+        
+        if (!resp.ok) {
+          console.error("Erro ao buscar pagamento no MercadoPago:", resp.status, resp.statusText);
+          return new Response(JSON.stringify({
+            error: "Erro ao buscar pagamento no MercadoPago"
+          }), {
+            status: 500,
+            headers
+          });
+        }
+        
+        const payment = await resp.json();
+        console.log("Payment status:", payment.status);
+        console.log("Payment external_reference:", payment.external_reference);
+        console.log("Payment payment_method_id:", payment.payment_method_id);
+        console.log("Payment date_approved:", payment.date_approved);
+        console.log("Payment amount:", payment.transaction_amount);
+        
+        // Verificar se o pagamento foi aprovado (incluindo PIX)
+        // Para PIX, verificamos se date_approved não é null (pagamento foi aprovado)
+        // Para outros métodos, verificamos se status é "approved"
+        const isPixPayment = payment.payment_method_id === "pix";
+        const isApproved = isPixPayment 
+          ? payment.date_approved !== null 
+          : payment.status === "approved";
+        
+        console.log("É pagamento PIX:", isPixPayment);
+        console.log("Pagamento aprovado:", isApproved);
+        
+        if (isApproved) {
+          const userId = payment.external_reference;
+          if (!userId) {
+            console.error("external_reference não encontrado no pagamento");
+            return new Response(JSON.stringify({
+              error: "external_reference não encontrado"
+            }), {
+              status: 400,
+              headers
+            });
+          }
+          
+          console.log("Verificando se usuário existe na tabela profiles:", userId);
+          const { data: userData, error: userError } = await supabase
+            .from("profiles")
+            .select("id, plan, has_access, subscription_status, subscription_end_date")
+            .eq("id", userId)
+            .single();
+            
+          if (userError) {
+            console.error("Erro ao buscar usuário:", userError);
+            return new Response(JSON.stringify({
+              error: "Usuário não encontrado: " + userError.message
+            }), {
+              status: 404,
+              headers
+            });
+          }
+          
+          console.log("Usuário encontrado:", userData);
+          
+          // Verificar se já não foi processado (evitar duplicação)
+          if (userData.has_access === true && 
+              (userData.plan === "assinante" || userData.plan === "pro") &&
+              userData.subscription_status === "active") {
+            console.log("Usuário já tem acesso ativo, não processando novamente");
+            return new Response(JSON.stringify({
+              received: true,
+              message: "Usuário já tem acesso ativo"
+            }), {
+              status: 200,
+              headers
+            });
+          }
+          
+          // Calcular data de expiração (30 dias a partir de agora)
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 30);
+          console.log("Data de expiração calculada:", expirationDate.toISOString());
+          
+          console.log("Atualizando usuário:", userId);
+          const { data, error } = await supabase
+            .from("profiles")
+            .update({
+              plan: "assinante",
+              has_access: true,
+              subscription_status: "active",
+              subscription_end_date: expirationDate.toISOString()
+            })
+            .eq("id", userId)
+            .select();
+            
+          if (error) {
+            console.error("Erro ao atualizar usuário:", error);
+            return new Response(JSON.stringify({
+              error: "Erro ao atualizar usuário: " + error.message
+            }), {
+              status: 500,
+              headers
+            });
+          } else {
+            console.log("Usuário atualizado com sucesso:", data);
+            console.log("Pagamento MercadoPago processado:", {
+              paymentId,
+              userId,
+              method: isPixPayment ? "pix" : payment.payment_method_id,
+              amount: payment.transaction_amount,
+              expirationDate: expirationDate.toISOString()
+            });
+          }
+        } else {
+          console.log("Pagamento não aprovado, status:", payment.status);
+          if (isPixPayment) {
+            console.log("Pagamento PIX ainda pendente, date_approved:", payment.date_approved);
+          }
+        }
+      } else {
+        console.log("Tipo de evento não é payment:", body.type);
+      }
+      
+      return new Response(JSON.stringify({
+        received: true
+      }), {
+        status: 200,
+        headers
+      });
+    } catch (error) {
+      console.error("Erro no webhook:", error);
+      return new Response(JSON.stringify({
+        error: error.message
+      }), {
+        status: 500,
+        headers
+      });
+    }
+  }
+  return new Response(JSON.stringify({
+    error: "Method not allowed"
+  }), {
+    status: 405,
+    headers
+  });
+});
+
+
+============================================
+VARIÁVEIS DE AMBIENTE (SECRETS)
+============================================
+Configure no Supabase Dashboard:
+Project Settings > Edge Functions > Secrets
+
+Adicione estas variáveis:
+
+1. MERCADOPAGO_ACCESS_TOKEN
+   - Seu token de acesso do Mercado Pago
+   - Obtenha em: https://www.mercadopago.com.br/developers/panel/credentials
+
+2. SUPABASE_URL
+   - URL do seu projeto Supabase
+   - Exemplo: https://xxxxx.supabase.co
+
+3. SUPABASE_SERVICE_ROLE_KEY
+   - Service Role Key do Supabase
+   - Encontre em: Project Settings > API > service_role key
+
+
+============================================
+CONFIGURAÇÃO DO WEBHOOK NO MERCADO PAGO
+============================================
+1. Acesse: https://www.mercadopago.com.br/developers/panel/app
+2. Vá em "Webhooks"
+3. Adicione a URL:
+   https://[SEU_PROJETO].supabase.co/functions/v1/mercadopago-webhook
+4. Selecione os eventos: "payment"
+5. Salve
+
+
+============================================
+TESTE
+============================================
+Após configurar tudo:
+
+1. Teste a função create-pix-payment:
+   - No Supabase Dashboard > Edge Functions > create-pix-payment
+   - Clique em "Invoke" e envie: {"email": "teste@email.com"}
+
+2. Teste o webhook:
+   - Acesse a URL do webhook no navegador (deve retornar "Webhook funcionando!")
+
+3. Teste no frontend:
+   - Tente fazer um pagamento Pix
+   - Verifique os logs no Supabase Dashboard
+
+============================================
+
