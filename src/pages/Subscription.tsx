@@ -105,14 +105,9 @@ const Subscription = () => {
               return;
             }
             
-            // Se já era PRO (ou se tornou PRO agora), redirecionar
-            toast({
-              title: "Assinatura ativa",
-              description: "Você já possui uma assinatura ativa!",
-              duration: 3000,
-            });
-            navigate("/quizzes");
-            return;
+            // Se já era PRO, NÃO redirecionar automaticamente
+            // Deixar o usuário ver a página de planos e gerenciar a assinatura se quiser
+            // O botão "Gerenciar Assinatura" já está disponível para usuários PRO
           }
           // Se tem has_access=true mas não é PRO, não faz nada (continua na página de assinatura)
         }
@@ -167,7 +162,8 @@ const Subscription = () => {
                 description: "Seu acesso foi liberado com sucesso.",
                 duration: 3000,
               });
-              navigate("/quizzes");
+              // Não redirecionar automaticamente - deixar o usuário ver a página de planos
+              // Ele pode escolher o que fazer (gerenciar assinatura ou continuar)
             });
           } else {
             // Incrementar tentativas de verificação automática

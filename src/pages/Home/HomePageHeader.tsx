@@ -48,7 +48,7 @@ export const HomePageHeader = ({
             onClick={() => navigate("/subscription")}
             className="bg-violet-600 hover:bg-violet-700 text-white min-w-[40px] min-h-[40px] flex-1 sm:flex-none"
           >
-            PROimage.png
+            Assine aqui
           </Button>
         )}
 
