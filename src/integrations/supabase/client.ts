@@ -30,7 +30,7 @@ export const signInWithGoogle = async () => {
   // Detectar se está em produção ou desenvolvimento
   const isProduction = window.location.hostname !== 'localhost';
   const redirectUrl = isProduction 
-    ? 'https://passeifacil.com.br/auth/callback'
+    ? `${window.location.origin}/auth/callback`
     : `${window.location.origin.replace(':5173', ':8080')}/auth/callback`;
   
   console.log('URL de redirecionamento:', redirectUrl);
@@ -67,7 +67,7 @@ export const signUpWithEmail = async (email: string, password: string) => {
   // Detectar se está em produção ou desenvolvimento
   const isProduction = window.location.hostname !== 'localhost';
   const redirectUrl = isProduction 
-    ? 'https://passeifacil.com.br/auth/callback'
+    ? `${window.location.origin}/auth/callback`
     : `${window.location.origin.replace(':5173', ':8080')}/auth/callback`;
   
   const { data, error } = await supabase.auth.signUp({
